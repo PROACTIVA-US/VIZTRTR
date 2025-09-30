@@ -28,11 +28,7 @@ export class PuppeteerCapturePlugin implements VIZTRITRPlugin {
   async init() {
     this.browser = await puppeteer.launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
-      ]
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
   }
 
@@ -50,13 +46,13 @@ export class PuppeteerCapturePlugin implements VIZTRITRPlugin {
       await page.setViewport({
         width: config.width,
         height: config.height,
-        deviceScaleFactor: 2 // Retina quality
+        deviceScaleFactor: 2, // Retina quality
       });
 
       // Navigate to URL
       await page.goto(url, {
         waitUntil: 'networkidle2',
-        timeout: 30000
+        timeout: 30000,
       });
 
       // Wait for specific selector if provided
@@ -85,7 +81,7 @@ export class PuppeteerCapturePlugin implements VIZTRITRPlugin {
       } else {
         await page.screenshot({
           path: tempPath,
-          fullPage: config.fullPage || false
+          fullPage: config.fullPage || false,
         });
       }
 
@@ -100,7 +96,7 @@ export class PuppeteerCapturePlugin implements VIZTRITRPlugin {
         base64,
         width: config.width,
         height: config.height,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     } finally {
       await page.close();

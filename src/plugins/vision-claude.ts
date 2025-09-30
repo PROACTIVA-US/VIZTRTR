@@ -26,23 +26,25 @@ export class ClaudeOpusVisionPlugin implements VIZTRITRPlugin {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: 'image/png',
-              data: screenshot.base64
-            }
-          },
-          {
-            type: 'text',
-            text: this.getAnalysisPrompt()
-          }
-        ]
-      }]
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/png',
+                data: screenshot.base64,
+              },
+            },
+            {
+              type: 'text',
+              text: this.getAnalysisPrompt(),
+            },
+          ],
+        },
+      ],
     });
 
     // Parse Claude's response into structured DesignSpec
@@ -171,7 +173,7 @@ Analyze the screenshot now and respond with JSON only.`;
       currentIssues: parsed.issues || [],
       recommendations: parsed.recommendations || [],
       prioritizedChanges: this.prioritizeChanges(parsed.recommendations || []),
-      estimatedNewScore: parsed.estimatedNewScore || 0
+      estimatedNewScore: parsed.estimatedNewScore || 0,
     };
   }
 

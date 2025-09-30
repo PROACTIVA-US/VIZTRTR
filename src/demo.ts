@@ -31,12 +31,12 @@ async function main() {
     screenshotConfig: {
       width: 1440,
       height: 900,
-      fullPage: false
+      fullPage: false,
     },
 
     // Output
     outputDir: path.join(__dirname, '../../viztritr-output'),
-    verbose: true
+    verbose: true,
   };
 
   // Validate API key

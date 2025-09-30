@@ -4,8 +4,17 @@
  * Coordinates iteration cycles: capture → analyze → implement → evaluate → repeat
  */
 
-import { VIZTRITRConfig, IterationReport, IterationResult, Screenshot, DesignSpec, Changes, EvaluationResult } from './types';
+import {
+  VIZTRITRConfig,
+  IterationReport,
+  IterationResult,
+  Screenshot,
+  DesignSpec,
+  Changes,
+  EvaluationResult,
+} from './types';
 import { ClaudeOpusVisionPlugin } from './plugins/vision-claude';
+import { ClaudeSonnetImplementationPlugin } from './plugins/implementation-claude';
 import { PuppeteerCapturePlugin } from './plugins/capture-puppeteer';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -13,6 +22,7 @@ import * as path from 'path';
 export class VIZTRITROrchestrator {
   private config: VIZTRITRConfig;
   private visionPlugin: ClaudeOpusVisionPlugin;
+  private implementationPlugin: ClaudeSonnetImplementationPlugin;
   private capturePlugin: PuppeteerCapturePlugin;
   private iterations: IterationResult[] = [];
   private startTime: Date | null = null;
@@ -22,6 +32,7 @@ export class VIZTRITROrchestrator {
 
     // Initialize plugins
     this.visionPlugin = new ClaudeOpusVisionPlugin(config.anthropicApiKey!);
+    this.implementationPlugin = new ClaudeSonnetImplementationPlugin(config.anthropicApiKey!);
     this.capturePlugin = new PuppeteerCapturePlugin();
 
     // Ensure output directory exists
@@ -79,9 +90,13 @@ export class VIZTRITROrchestrator {
       console.log(`\n${'='.repeat(70)}`);
       console.log(`✅ VIZTRITR COMPLETE`);
       console.log(`${'='.repeat(70)}`);
-      console.log(`   Starting Score: ${this.iterations[0]?.designSpec.currentScore.toFixed(1) || 0}/10`);
+      console.log(
+        `   Starting Score: ${this.iterations[0]?.designSpec.currentScore.toFixed(1) || 0}/10`
+      );
       console.log(`   Final Score: ${currentScore.toFixed(1)}/10`);
-      console.log(`   Improvement: +${(currentScore - (this.iterations[0]?.designSpec.currentScore || 0)).toFixed(1)}`);
+      console.log(
+        `   Improvement: +${(currentScore - (this.iterations[0]?.designSpec.currentScore || 0)).toFixed(1)}`
+      );
       console.log(`   Iterations: ${this.iterations.length}`);
       console.log(`   Report: ${report.reportPath}\n`);
 
@@ -153,9 +168,10 @@ export class VIZTRITROrchestrator {
     const evalPath = path.join(iterationDir, 'evaluation.json');
     await fs.writeFile(evalPath, JSON.stringify(evaluation, null, 2));
 
-    const previousScore = iterationNum > 0
-      ? this.iterations[iterationNum - 1].evaluation.compositeScore
-      : designSpec.currentScore;
+    const previousScore =
+      iterationNum > 0
+        ? this.iterations[iterationNum - 1].evaluation.compositeScore
+        : designSpec.currentScore;
 
     const scoreDelta = evaluation.compositeScore - previousScore;
 
@@ -168,37 +184,13 @@ export class VIZTRITROrchestrator {
       changes,
       evaluation,
       scoreDelta,
-      targetReached: evaluation.targetReached
+      targetReached: evaluation.targetReached,
     };
   }
 
   private async implementChanges(spec: DesignSpec): Promise<Changes> {
-    // For MVP, we'll implement the top 3 highest-priority recommendations
-    const topChanges = spec.prioritizedChanges.slice(0, 3);
-
-    console.log(`   Implementing top ${topChanges.length} recommendations...`);
-
-    const fileChanges = [];
-
-    for (const change of topChanges) {
-      console.log(`   - ${change.title}`);
-
-      // For MVP, we'd need to use Claude Sonnet API to actually generate code
-      // For now, we'll create placeholder changes
-      // In production, this would call Claude Sonnet API with:
-      // - The current file content
-      // - The design recommendation
-      // - Request for specific code changes
-
-      // TODO: Implement actual code generation via Claude Sonnet API
-    }
-
-    return {
-      files: fileChanges,
-      summary: `Applied ${topChanges.length} design improvements`,
-      buildCommand: 'npm run build',
-      testCommand: 'npm test'
-    };
+    // Use Claude Sonnet implementation plugin
+    return await this.implementationPlugin.implementChanges(spec, this.config.projectPath);
   }
 
   private async evaluate(screenshot: Screenshot): Promise<EvaluationResult> {
@@ -221,13 +213,13 @@ export class VIZTRITROrchestrator {
         component_design: 0,
         animation_interaction: 0,
         accessibility: 0,
-        overall_aesthetic: 0
+        overall_aesthetic: 0,
       },
       dimensions: {},
       strengths: [],
       weaknesses: spec.currentIssues.map(i => `${i.dimension}: ${i.description}`),
       summary: `Current score: ${spec.currentScore}/10`,
-      priorityImprovements: []
+      priorityImprovements: [],
     };
   }
 
@@ -251,7 +243,7 @@ export class VIZTRITROrchestrator {
       totalIterations: this.iterations.length,
       bestIteration: this.findBestIteration(),
       iterations: this.iterations,
-      reportPath: path.join(this.config.outputDir, 'report.json')
+      reportPath: path.join(this.config.outputDir, 'report.json'),
     };
 
     // Save report
@@ -297,7 +289,9 @@ Generated: ${new Date().toISOString()}
 
 ## Iteration History
 
-${report.iterations.map((iter, idx) => `
+${report.iterations
+  .map(
+    (iter, idx) => `
 ### Iteration ${idx}
 
 - **Score:** ${iter.evaluation.compositeScore.toFixed(1)}/10
@@ -306,13 +300,15 @@ ${report.iterations.map((iter, idx) => `
 - **After:** [screenshot](./iteration_${idx}/after.png)
 - **Spec:** [design_spec.json](./iteration_${idx}/design_spec.json)
 - **Changes:** [changes.json](./iteration_${idx}/changes.json)
-`).join('\n')}
+`
+  )
+  .join('\n')}
 
 ## Recommendations
 
-${report.iterations[report.bestIteration]?.designSpec.recommendations.map(r =>
-  `- **${r.title}** (${r.dimension}): ${r.description}`
-).join('\n')}
+${report.iterations[report.bestIteration]?.designSpec.recommendations
+  .map(r => `- **${r.title}** (${r.dimension}): ${r.description}`)
+  .join('\n')}
 
 ---
 
