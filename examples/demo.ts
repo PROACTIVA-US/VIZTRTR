@@ -4,8 +4,8 @@
  * Runs VIZTRITR on the Performia upload interface
  */
 
-import { VIZTRITROrchestrator } from './orchestrator';
-import { VIZTRITRConfig } from './types';
+import { VIZTRITROrchestrator } from '../src/core/orchestrator';
+import { VIZTRITRConfig } from '../src/core/types';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 

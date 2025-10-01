@@ -5,7 +5,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { DesignSpec, Changes, FileChange } from '../types';
+import { DesignSpec, Changes, FileChange } from '../core/types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -56,18 +56,41 @@ Description: ${recommendation.description}
 Impact: ${recommendation.impact}/10
 Effort: ${recommendation.effort}/10
 
-**Task:**
-1. Identify which file(s) in the project need to be modified
-2. Generate the specific code changes needed
-3. Ensure changes follow best practices (TypeScript, React/Vue/etc.)
-4. Maintain existing code style and patterns
+**CRITICAL CONTEXT RULES - RESPECT UI BOUNDARIES:**
+
+This is a performance teleprompter app with THREE distinct UI contexts:
+
+1. **Settings Panel / Header (Desktop Controls)**
+   - Files: SettingsPanel.tsx, Header.tsx, LibraryView.tsx
+   - Design: NORMAL desktop sizing (buttons 32-36px, text 0.875-1rem)
+   - Purpose: User configuration, song selection
+   - Viewing distance: 1-2 feet (normal desktop use)
+   - DO NOT apply "stage friendly" large sizing here!
+
+2. **Teleprompter View (Stage Performance)**
+   - Files: TeleprompterView.tsx and related lyric/chord components
+   - Design: LARGE sizing for distance reading (text 3-4.5rem, high contrast)
+   - Purpose: Display lyrics/chords during performance
+   - Viewing distance: 3-10 feet (stage use)
+
+3. **Blueprint View (Song Editing)**
+   - Files: BlueprintView.tsx and related structure components
+   - Design: NORMAL sizing with clear information architecture
+   - Purpose: Edit song structure
+   - Viewing distance: 1-2 feet (normal desktop use)
+
+**Your Task:**
+1. Identify which UI CONTEXT this recommendation applies to
+2. Apply CONTEXT-APPROPRIATE sizing and design criteria
+3. ONLY modify files relevant to that context
+4. Follow existing code style and patterns
 
 **Project Path:** ${projectPath}
 
 Please think through:
-- What files are most likely affected?
-- What specific code changes are needed?
-- How to maintain consistency with existing patterns?
+- What UI context does this recommendation target?
+- What files should be modified (respect context boundaries!)?
+- What are the appropriate sizes/styles for THIS context?
 
 Return your response as JSON:
 {
@@ -101,14 +124,27 @@ Return your response as JSON:
         }
       }
 
-      // Try to parse JSON response
-      const jsonMatch = implementationText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
+      // Try to parse JSON response - handle markdown code blocks
+      let jsonText = implementationText;
+
+      // Remove markdown code blocks if present
+      const codeBlockMatch = implementationText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        jsonText = codeBlockMatch[1];
+      } else {
+        // Try to extract JSON object
+        const jsonMatch = implementationText.match(/\{[\s\S]*?\n\}/);
+        if (jsonMatch) {
+          jsonText = jsonMatch[0];
+        }
+      }
+
+      if (!jsonText.trim()) {
         console.warn('   ⚠️  Could not parse implementation response');
         return null;
       }
 
-      const implementation = JSON.parse(jsonMatch[0]);
+      const implementation = JSON.parse(jsonText);
       const fullPath = path.join(projectPath, implementation.filePath);
 
       // Read existing file if it exists

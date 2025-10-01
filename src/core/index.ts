@@ -5,7 +5,7 @@
  */
 
 export { VIZTRITROrchestrator } from './orchestrator';
-export { ClaudeOpusVisionPlugin } from './plugins/vision-claude';
-export { PuppeteerCapturePlugin } from './plugins/capture-puppeteer';
+export { ClaudeOpusVisionPlugin } from '../plugins/vision-claude';
+export { PuppeteerCapturePlugin } from '../plugins/capture-puppeteer';
 
 export * from './types';

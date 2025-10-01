@@ -5,7 +5,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { Screenshot, VIZTRITRPlugin } from '../types';
+import { Screenshot, VIZTRITRPlugin } from '../core/types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -72,9 +72,29 @@ export class PuppeteerCapturePlugin implements VIZTRITRPlugin {
 
       // Capture screenshot
       if (config.selector) {
-        const element = await page.$(config.selector);
+        // Retry logic for element screenshots (handles post-rollback re-renders)
+        let element = await page.$(config.selector);
+        let retries = 3;
+
+        while ((!element || !(await element.boundingBox())) && retries > 0) {
+          console.log(`   ⏳ Waiting for element to render (${retries} retries left)...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          element = await page.$(config.selector);
+          retries--;
+        }
+
         if (element) {
-          await element.screenshot({ path: tempPath });
+          // Check if element has dimensions
+          const box = await element.boundingBox();
+          if (box && box.height > 0 && box.width > 0) {
+            await element.screenshot({ path: tempPath });
+          } else {
+            console.log(`   ⚠️  Element has zero dimensions, falling back to full page`);
+            await page.screenshot({
+              path: tempPath,
+              fullPage: config.fullPage || false,
+            });
+          }
         } else {
           throw new Error(`Selector not found: ${config.selector}`);
         }

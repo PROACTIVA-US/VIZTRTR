@@ -2,8 +2,8 @@
   "name": "viztritr",
   "version": "0.1.0",
   "description": "Visual Iteration Orchestrator - Autonomous UI/UX improvement system",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/core/index.js",
+  "types": "dist/core/index.d.ts",
   "bin": {
     "viztritr": "dist/cli.js"
   },
@@ -12,8 +12,8 @@
     "dev": "tsc --watch",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:performia": "npm run build && node dist/test-performia.js",
-    "demo": "npm run build && node dist/demo.js",
+    "test:performia": "npm run build && node dist/projects/performia/test.js",
+    "demo": "npm run build && node dist/examples/demo.js",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "format": "prettier --write 'src/**/*.{ts,json}'",

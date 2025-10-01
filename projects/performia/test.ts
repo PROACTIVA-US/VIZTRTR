@@ -6,8 +6,8 @@
  *   2. Run this script: npm run test:performia
  */
 
-import { VIZTRITROrchestrator } from './src/orchestrator';
-import performiaConfig from './performia.config';
+import { VIZTRITROrchestrator } from '../../src/core/orchestrator';
+import performiaConfig from './config';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

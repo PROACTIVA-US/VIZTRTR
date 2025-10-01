@@ -5,7 +5,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { Screenshot, DesignSpec, Issue, Recommendation, VIZTRITRPlugin } from '../types';
+import { Screenshot, DesignSpec, Issue, Recommendation, VIZTRITRPlugin } from '../core/types';
 import * as fs from 'fs';
 
 export class ClaudeOpusVisionPlugin implements VIZTRITRPlugin {
@@ -20,7 +20,7 @@ export class ClaudeOpusVisionPlugin implements VIZTRITRPlugin {
     this.client = new Anthropic({ apiKey });
   }
 
-  async analyzeScreenshot(screenshot: Screenshot): Promise<DesignSpec> {
+  async analyzeScreenshot(screenshot: Screenshot, memoryContext?: string): Promise<DesignSpec> {
     console.log(`🔍 Analyzing screenshot with ${this.model}...`);
 
     const response = await this.client.messages.create({
@@ -40,7 +40,7 @@ export class ClaudeOpusVisionPlugin implements VIZTRITRPlugin {
             },
             {
               type: 'text',
-              text: this.getAnalysisPrompt(),
+              text: this.getAnalysisPrompt(memoryContext),
             },
           ],
         },
@@ -52,11 +52,34 @@ export class ClaudeOpusVisionPlugin implements VIZTRITRPlugin {
     return this.parseAnalysis(analysisText);
   }
 
-  private getAnalysisPrompt(): string {
+  private getAnalysisPrompt(memoryContext?: string): string {
+    const contextSection = memoryContext ? `
+
+**ITERATION MEMORY:**
+${memoryContext}
+
+**IMPORTANT:** Do NOT recommend changes that have already been attempted without success.
+Focus on NEW approaches or DIFFERENT UI contexts than what has been tried before.
+
+---
+` : '';
+
     return `You are a world-class UI/UX designer and accessibility expert analyzing this user interface.
+${contextSection}
+**CRITICAL: Context Detection First**
+Before analyzing, identify the UI context from the screenshot:
+- **TELEPROMPTER MODE:** Large text display for stage performance (3-10 ft viewing distance)
+- **SETTINGS PANEL:** Desktop control panel with buttons, sliders, tabs (1-2 ft viewing distance)
+- **BLUEPRINT VIEW:** Song structure editing interface (1-2 ft viewing distance)
+- **HEADER/FOOTER:** Navigation and controls (should be normal desktop sizing)
+
+Apply context-specific criteria:
+- Teleprompter: Optimize for distance readability (large text 3-4.5rem, very high contrast 7:1)
+- Settings/Controls: Optimize for desktop precision (normal text 0.875-1rem, standard contrast 4.5:1, 32-36px buttons)
+- Blueprint: Optimize for information architecture (normal to large text, clear sections)
 
 **Your Task:**
-Analyze this UI across 8 critical dimensions and provide a detailed evaluation.
+Identify the UI context, then analyze across 8 critical dimensions with context-appropriate criteria.
 
 **8 Design Dimensions:**
 

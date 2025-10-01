@@ -5,7 +5,7 @@
  * Focus: Living Chart teleprompter and blueprint editor views
  */
 
-import { VIZTRITRConfig } from './src/types';
+import { VIZTRITRConfig } from '../../src/core/types';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -15,7 +15,7 @@ export const performiaConfig: VIZTRITRConfig = {
   projectPath: '/Users/danielconnolly/Projects/Performia/frontend',
   frontendUrl: 'http://localhost:5001',
   targetScore: 8.5,
-  maxIterations: 5,
+  maxIterations: 2, // Limited for Phase 1 testing
 
   // AI Models
   visionModel: 'claude-opus',

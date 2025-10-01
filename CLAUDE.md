@@ -6,48 +6,91 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VIZTRITR is an autonomous UI/UX improvement system that uses AI vision models to analyze, improve, and evaluate web interfaces through iterative cycles. The goal is to automatically improve designs until they reach production-ready quality (8.5+/10 score).
 
+## Project Structure
+
+```
+VIZTRITR/
+├── src/
+│   ├── core/                 # Core orchestrator, types, exports
+│   ├── plugins/              # Vision, capture, implementation plugins
+│   ├── agents/               # AI agents (Orchestrator, Reflection, Verification)
+│   └── memory/               # Persistent memory system
+├── projects/                 # Project-specific configurations
+│   └── performia/           # Example project
+├── examples/                 # Demo scripts
+├── tests/unit/              # Unit tests
+├── docs/
+│   ├── architecture/        # Architecture docs
+│   ├── guides/             # How-to guides
+│   └── status/             # Status reports
+└── dist/                   # Compiled output
+```
+
 ## Key Commands
 
 ### Development
 ```bash
 npm run build          # Compile TypeScript to dist/
 npm run dev           # Watch mode for development
-npm run test          # Run Jest tests
-npm run demo          # Build and run demo script
+npm run typecheck     # Type-check without compiling
+npm run test          # Run Jest unit tests
+npm run test:coverage # Run tests with coverage
+```
+
+### Testing Projects
+```bash
+npm run demo              # Run basic demo
+npm run test:performia    # Test on Performia project
+```
+
+### Code Quality
+```bash
+npm run lint          # Lint TypeScript files
+npm run lint:fix      # Auto-fix linting issues
+npm run format        # Format with Prettier
+npm run format:check  # Check formatting
+npm run precommit     # Run all checks
 ```
 
 ### Setup
 ```bash
 npm install           # Install dependencies
-cp .env.example .env  # Create environment file (add ANTHROPIC_API_KEY)
+# Create .env file with: ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ## Architecture
 
 ### Core Workflow
-The orchestrator runs an iterative loop:
+The orchestrator runs an iterative loop with AI agents and persistent memory:
+
 1. **Capture** - Screenshot the UI (Puppeteer)
-2. **Analyze** - AI vision analyzes design quality (Claude Opus)
-3. **Implement** - Apply code changes (currently placeholder, planned: Claude Sonnet)
-4. **Evaluate** - Score the result against 8 design dimensions
-5. **Repeat** - Continue until target score (8.5+/10) or max iterations reached
+2. **Analyze** - Claude Opus 4 analyzes design quality with memory context
+3. **Orchestrate** - OrchestratorAgent selects improvement (filters failed attempts)
+4. **Implement** - Claude Sonnet 4 applies code changes (extended thinking)
+5. **Verify** - VerificationAgent validates changes
+6. **Evaluate** - Score against 8 design dimensions
+7. **Reflect** - ReflectionAgent records outcomes to memory
+8. **Repeat** - Continue until target score (8.5+/10) or max iterations
 
 ### Key Components
 
-**Orchestrator** (`src/orchestrator.ts`)
-- Main iteration loop logic
-- Coordinates all plugins
-- Generates reports (JSON + Markdown)
-- Manages output directory structure
+**Core** (`src/core/`)
+- `orchestrator.ts` - Main coordinator, iteration loop
+- `types.ts` - All TypeScript interfaces and types
+- `index.ts` - Public API exports
 
-**Type System** (`src/types.ts`)
-- Defines all interfaces: `VIZTRITRConfig`, `Screenshot`, `DesignSpec`, `EvaluationResult`, `IterationReport`
-- Plugin interface `VIZTRITRPlugin` for extensibility
+**Agents** (`src/agents/`)
+- `OrchestratorAgent.ts` - Selects improvements, filters failed attempts
+- `ReflectionAgent.ts` - Analyzes outcomes, records to memory
+- `VerificationAgent.ts` - Validates file changes, checks for errors
+
+**Memory** (`src/memory/`)
+- `IterationMemoryManager.ts` - Persistent learning, tracks attempts/outcomes
 
 **Plugins** (`src/plugins/`)
 - `vision-claude.ts` - Claude Opus 4 vision analysis
+- `implementation-claude.ts` - Claude Sonnet 4 code implementation (extended thinking)
 - `capture-puppeteer.ts` - Headless Chrome screenshot capture
-- Future: GPT-4V, Gemini, Claude Sonnet implementation agent
 
 ### 8-Dimension Scoring System
 
@@ -67,26 +110,34 @@ Each UI is evaluated on weighted dimensions:
 ```
 viztritr-output/
 ├── iteration_0/
-│   ├── before.png
-│   ├── after.png
-│   ├── design_spec.json
-│   ├── changes.json
-│   └── evaluation.json
+│   ├── before.png         # Screenshot before changes
+│   ├── after.png          # Screenshot after changes
+│   ├── design_spec.json   # Vision analysis
+│   ├── changes.json       # Code changes with diffs
+│   └── evaluation.json    # 8-dimension scores
 ├── iteration_N/
-├── report.json
-└── REPORT.md
+├── memory/
+│   └── iteration-memory.json  # Persistent learning
+├── report.json            # Full report
+└── REPORT.md              # Human-readable summary
 ```
 
 ## Important Implementation Notes
 
-### Current State (MVP)
-- ✅ Core orchestrator complete
-- ✅ Claude Opus vision integration with vision API
-- ✅ Claude Sonnet implementation agent with extended thinking
+### Current State
+**Completed Features:**
+- ✅ Core orchestrator with iteration loop
+- ✅ Multi-agent architecture (Orchestrator, Reflection, Verification)
+- ✅ Persistent memory system with learning
+- ✅ Claude Opus 4 vision integration
+- ✅ Claude Sonnet 4 implementation with extended thinking (2000 token budget)
 - ✅ Puppeteer screenshot capture
 - ✅ 8-dimension scoring system
+- ✅ Automatic file detection and backup
+- ✅ Structured diff generation
+- ✅ Comprehensive reporting (JSON + Markdown)
 - ✅ Best practices tooling (ESLint, Prettier, Jest, TypeScript)
-- ✅ CI/CD pipeline (GitHub Actions)
+- ✅ Clean project structure with organized directories
 
 ### Agent-Based Implementation
 The code implementation agent (`src/plugins/implementation-claude.ts`) uses:
@@ -110,38 +161,68 @@ To add a new plugin, implement the `VIZTRITRPlugin` interface:
 - Implement relevant method(s): `analyzeScreenshot`, `implementChanges`, `scoreDesign`, or `captureScreenshot`
 
 ### Configuration
-Main config object (`VIZTRITRConfig`) controls:
-- `projectPath` - Target frontend project
+Main config object (`VIZTRITRConfig` in `src/core/types.ts`) controls:
+- `projectPath` - Absolute path to frontend project
 - `frontendUrl` - Running dev server URL
-- `targetScore` - Quality threshold (default: 8.5)
+- `targetScore` - Quality threshold (0-10, default: 8.5)
 - `maxIterations` - Safety limit (default: 5)
-- `visionModel` - Which AI vision model to use
+- `visionModel` - 'claude-opus' | 'gpt4v' | 'gemini'
+- `implementationModel` - 'claude-sonnet' (currently)
 - `anthropicApiKey` - Required for Claude models
+- `screenshotConfig` - Width, height, fullPage, selector
+- `outputDir` - Where to save results
+- `verbose` - Enable detailed logging
 
 ## Development Guidelines
 
 ### When Adding Features
-- Update type definitions in `src/types.ts` first
+- Update type definitions in `src/core/types.ts` first
+- Core functionality goes in `src/core/`
 - Plugins should be self-contained in `src/plugins/`
-- All async operations should have proper error handling
+- Agents go in `src/agents/`
+- All async operations must have proper error handling
 - Output artifacts go to configured `outputDir`
 
-### Testing Workflow
-1. Ensure a frontend dev server is running (e.g., `http://localhost:5001`)
-2. Set `ANTHROPIC_API_KEY` in `.env`
-3. Run `npm run demo` to test the full cycle
-4. Check `viztritr-output/` for results
+### When Adding a New Project
+1. Create `projects/project-name/` directory
+2. Add `config.ts` with `VIZTRITRConfig` object
+3. Add `test.ts` with test runner
+4. Add npm script: `"test:project-name": "npm run build && node dist/projects/project-name/test.js"`
+5. Document in project README or guide
 
-### File Modifications
-When implementing code changes:
-- Always backup original files before modification
-- Use structured diffs (not whole file replacements when possible)
-- Include rollback capability
-- Wait for rebuild (3 second delay currently for hot-reload)
+### Testing Workflow
+1. Ensure target frontend dev server is running
+2. Set `ANTHROPIC_API_KEY` in `.env`
+3. Run `npm run build`
+4. Run `npm run demo` for basic test
+5. Run `npm run test:performia` for full integration test
+6. Check output directory for results
+
+### File Organization
+- **Source files**: `src/` - Core library code only
+- **Project configs**: `projects/` - Project-specific configurations
+- **Examples**: `examples/` - Demo and example scripts
+- **Tests**: `tests/unit/` - Unit tests
+- **Docs**: `docs/` - All documentation
+- **Build output**: `dist/` - Compiled JavaScript
+
+### Code Quality
+Before committing:
+```bash
+npm run precommit  # Runs lint, format check, typecheck
+```
+
+## Important File Paths
+
+When writing code that references files:
+- Core types: `import { Type } from '../../src/core/types'`
+- Orchestrator: `import { VIZTRITROrchestrator } from '../../src/core/orchestrator'`
+- From agents to types: `import { Type } from '../core/types'`
+- From plugins to types: `import { Type } from '../core/types'`
 
 ## Next Development Phases
 
-**Phase 1 (Current)**: MVP with Claude Opus vision
-**Phase 2**: CLI interface + plugin system
+**Phase 1 (Complete)**: Multi-agent MVP with memory system
+**Phase 2 (Next)**: Enhanced learning, CLI interface, additional plugins
 **Phase 3**: Production features (API server, queue, caching)
 **Phase 4**: Ecosystem (GitHub Action, VS Code extension, npm package)

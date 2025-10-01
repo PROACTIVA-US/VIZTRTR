@@ -13,17 +13,23 @@ import {
   Changes,
   EvaluationResult,
 } from './types';
-import { ClaudeOpusVisionPlugin } from './plugins/vision-claude';
-import { ClaudeSonnetImplementationPlugin } from './plugins/implementation-claude';
-import { PuppeteerCapturePlugin } from './plugins/capture-puppeteer';
+import { ClaudeOpusVisionPlugin } from '../plugins/vision-claude';
+import { PuppeteerCapturePlugin } from '../plugins/capture-puppeteer';
+import { IterationMemoryManager } from '../memory/IterationMemoryManager';
+import { VerificationAgent } from '../agents/VerificationAgent';
+import { ReflectionAgent } from '../agents/ReflectionAgent';
+import { OrchestratorAgent } from '../agents/OrchestratorAgent';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 export class VIZTRITROrchestrator {
   private config: VIZTRITRConfig;
   private visionPlugin: ClaudeOpusVisionPlugin;
-  private implementationPlugin: ClaudeSonnetImplementationPlugin;
+  private orchestratorAgent: OrchestratorAgent;
   private capturePlugin: PuppeteerCapturePlugin;
+  private memory: IterationMemoryManager;
+  private verificationAgent: VerificationAgent;
+  private reflectionAgent: ReflectionAgent;
   private iterations: IterationResult[] = [];
   private startTime: Date | null = null;
 
@@ -32,8 +38,13 @@ export class VIZTRITROrchestrator {
 
     // Initialize plugins
     this.visionPlugin = new ClaudeOpusVisionPlugin(config.anthropicApiKey!);
-    this.implementationPlugin = new ClaudeSonnetImplementationPlugin(config.anthropicApiKey!);
+    this.orchestratorAgent = new OrchestratorAgent(config.anthropicApiKey!);
     this.capturePlugin = new PuppeteerCapturePlugin();
+
+    // Initialize memory and agents
+    this.memory = new IterationMemoryManager(config.outputDir);
+    this.verificationAgent = new VerificationAgent(config.projectPath);
+    this.reflectionAgent = new ReflectionAgent(config.anthropicApiKey!);
 
     // Ensure output directory exists
     this.ensureOutputDir();
@@ -49,6 +60,10 @@ export class VIZTRITROrchestrator {
     console.log(`   Target Score: ${this.config.targetScore}/10`);
     console.log(`   Max Iterations: ${this.config.maxIterations}`);
     console.log(`   Output: ${this.config.outputDir}\n`);
+
+    // Load existing memory
+    console.log('📚 Loading iteration memory...');
+    await this.memory.load();
 
     try {
       let currentScore = 0;
@@ -122,9 +137,12 @@ export class VIZTRITROrchestrator {
     await fs.copyFile(beforeScreenshot.path, beforePath);
     beforeScreenshot.path = beforePath;
 
-    // Step 2: Analyze with vision model
-    console.log('🔍 Step 2: Analyzing UI with Claude Opus vision...');
-    const designSpec = await this.visionPlugin.analyzeScreenshot(beforeScreenshot);
+    // Step 2: Analyze with vision model + memory context
+    console.log('🔍 Step 2: Analyzing UI with memory context...');
+    const memoryContext = this.memory.getContextSummary();
+    console.log('\n' + memoryContext);
+
+    const designSpec = await this.visionPlugin.analyzeScreenshot(beforeScreenshot, memoryContext);
     designSpec.iteration = iterationNum;
 
     // Save design spec
@@ -145,11 +163,40 @@ export class VIZTRITROrchestrator {
 
     console.log(`   Files Modified: ${changes.files.length}`);
 
-    // Step 4: Wait for rebuild (if dev server is running, it should hot-reload)
-    console.log('⏳ Step 4: Waiting for rebuild...');
+    // Step 4: Verify implementation
+    console.log('🔍 Step 4: Verifying implementation...');
+    const verification = await this.verificationAgent.verify(changes);
+
+    // If verification failed critically, record and potentially rollback
+    if (!verification.buildSucceeded) {
+      console.error('   ❌ Build failed! Recording failure and rolling back...');
+
+      // Record failed attempts
+      for (const rec of designSpec.prioritizedChanges) {
+        this.memory.recordAttempt(
+          rec,
+          iterationNum,
+          'broke_build',
+          changes.files.map(f => f.path),
+          'Build failed after implementation'
+        );
+      }
+
+      // Rollback changes
+      await this.rollbackChanges(changes);
+
+      // Save memory
+      await this.memory.save();
+
+      // Continue with next iteration (before screenshot will show reverted state)
+      throw new Error('Build failed - changes rolled back');
+    }
+
+    // Step 5: Wait for rebuild (if dev server is running, it should hot-reload)
+    console.log('⏳ Step 5: Waiting for rebuild...');
     await new Promise(resolve => setTimeout(resolve, 3000)); // 3 second delay
 
-    // Step 5: Capture after screenshot
+    // Step 6: Capture after screenshot
     console.log('📸 Step 5: Capturing after screenshot...');
     const afterScreenshot = await this.capturePlugin.captureScreenshot(
       this.config.frontendUrl,
@@ -160,8 +207,8 @@ export class VIZTRITROrchestrator {
     await fs.copyFile(afterScreenshot.path, afterPath);
     afterScreenshot.path = afterPath;
 
-    // Step 6: Evaluate
-    console.log('📊 Step 6: Evaluating result...');
+    // Step 7: Evaluate
+    console.log('📊 Step 7: Evaluating result...');
     const evaluation = await this.evaluate(afterScreenshot);
 
     // Save evaluation
@@ -174,6 +221,66 @@ export class VIZTRITROrchestrator {
         : designSpec.currentScore;
 
     const scoreDelta = evaluation.compositeScore - previousScore;
+
+    // Step 8: Reflect on results
+    console.log('🤔 Step 8: Reflecting on iteration...');
+    const reflection = await this.reflectionAgent.reflect(
+      iterationNum,
+      designSpec,
+      changes,
+      verification,
+      previousScore,
+      evaluation.compositeScore,
+      this.memory.getMemory()
+    );
+
+    // Save reflection
+    const reflectionPath = path.join(iterationDir, 'reflection.json');
+    await fs.writeFile(reflectionPath, JSON.stringify(reflection, null, 2));
+
+    // Step 9: Update memory
+    console.log('💾 Step 9: Updating iteration memory...');
+
+    // Record attempts
+    const status = verification.success && scoreDelta > 0 ? 'success' :
+                   verification.success && scoreDelta === 0 ? 'no_effect' : 'failed';
+
+    for (const rec of designSpec.prioritizedChanges) {
+      this.memory.recordAttempt(
+        rec,
+        iterationNum,
+        status,
+        changes.files.map(f => f.path),
+        reflection.reasoning
+      );
+    }
+
+    // Record successful changes if any
+    if (status === 'success') {
+      this.memory.recordSuccessfulChanges(changes.files);
+    }
+
+    // Record score
+    this.memory.recordScore({
+      iteration: iterationNum,
+      beforeScore: previousScore,
+      afterScore: evaluation.compositeScore,
+      delta: scoreDelta,
+    });
+
+    // Update context
+    if (designSpec.detectedContext) {
+      this.memory.updateContext(designSpec.detectedContext);
+    }
+
+    // Handle rollback if reflection suggests it
+    if (reflection.shouldRollback) {
+      console.log('   ⏪ Reflection suggests rollback - reverting changes...');
+      await this.rollbackChanges(changes);
+    }
+
+    // Save memory to disk
+    await this.memory.save();
 
     return {
       iteration: iterationNum,
@@ -189,8 +296,8 @@ export class VIZTRITROrchestrator {
   }
 
   private async implementChanges(spec: DesignSpec): Promise<Changes> {
-    // Use Claude Sonnet implementation plugin
-    return await this.implementationPlugin.implementChanges(spec, this.config.projectPath);
+    // Use Orchestrator Agent with specialized agents
+    return await this.orchestratorAgent.implementChanges(spec, this.config.projectPath);
   }
 
   private async evaluate(screenshot: Screenshot): Promise<EvaluationResult> {
@@ -316,6 +423,22 @@ ${report.iterations[report.bestIteration]?.designSpec.recommendations
 `;
 
     await fs.writeFile(mdPath, md);
+  }
+
+  private async rollbackChanges(changes: Changes): Promise<void> {
+    console.log('   ⏪ Rolling back changes...');
+
+    for (const file of changes.files) {
+      if (file.oldContent && file.type === 'edit') {
+        const filePath = path.join(this.config.projectPath, file.path);
+        try {
+          await fs.writeFile(filePath, file.oldContent);
+          console.log(`   ✅ Rolled back: ${file.path}`);
+        } catch (error) {
+          console.error(`   ❌ Failed to rollback ${file.path}:`, error);
+        }
+      }
+    }
   }
 
   private async cleanup() {

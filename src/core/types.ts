@@ -72,6 +72,40 @@ export interface DesignSpec {
   recommendations: Recommendation[];
   prioritizedChanges: Recommendation[];
   estimatedNewScore: number;
+  detectedContext?: 'teleprompter' | 'settings' | 'blueprint' | 'header' | 'mixed';
+}
+
+// Memory system for tracking iteration history
+export interface AttemptedRecommendation extends Recommendation {
+  iteration: number;
+  status: 'success' | 'failed' | 'no_effect' | 'broke_build';
+  reason?: string;
+  filesModified?: string[];
+}
+
+export interface ScoreHistoryEntry {
+  iteration: number;
+  beforeScore: number;
+  afterScore: number;
+  delta: number;
+  dimension_scores?: Record<string, number>;
+}
+
+export interface IterationMemory {
+  attemptedRecommendations: AttemptedRecommendation[];
+  successfulChanges: FileChange[];
+  failedChanges: Array<{
+    recommendation: Recommendation;
+    reason: string;
+    iteration: number;
+  }>;
+  scoreHistory: ScoreHistoryEntry[];
+  plateauCount: number;
+  contextAwareness: {
+    lastModifiedContext?: 'teleprompter' | 'settings' | 'blueprint' | 'header' | 'mixed';
+    componentsModified: string[];
+    modificationCount: Record<string, number>;
+  };
 }
 
 export interface FileChange {
@@ -87,6 +121,26 @@ export interface Changes {
   summary: string;
   buildCommand?: string;
   testCommand?: string;
+}
+
+// Verification system
+export interface VerificationResult {
+  success: boolean;
+  buildSucceeded: boolean;
+  filesModified: boolean;
+  visualChangesDetected: boolean;
+  errors: string[];
+  warnings: string[];
+  pixelDiffCount?: number;
+  consoleErrors?: string[];
+}
+
+export interface ReflectionResult {
+  shouldContinue: boolean;
+  shouldRollback: boolean;
+  reasoning: string;
+  lessonsLearned: string[];
+  suggestedNextSteps: string[];
 }
 
 export interface DimensionScore {
