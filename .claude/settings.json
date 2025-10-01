@@ -1,0 +1,12 @@
+{
+  "project": "VIZTRTR",
+  "description": "Visual Iteration Orchestrator - Autonomous UI/UX improvement system",
+  "memory_file": "memory.md",
+  "context_files": [
+    "CLAUDE.md",
+    "VIZTRTR_PRD.md",
+    "README.md"
+  ],
+  "auto_update_memory": true,
+  "session_tracking": true
+}

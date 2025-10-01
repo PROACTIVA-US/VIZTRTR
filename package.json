@@ -12,6 +12,7 @@
     "dev": "tsc --watch",
     "test": "jest",
     "test:coverage": "jest --coverage",
+    "test:performia": "npm run build && node dist/test-performia.js",
     "demo": "npm run build && node dist/demo.js",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
