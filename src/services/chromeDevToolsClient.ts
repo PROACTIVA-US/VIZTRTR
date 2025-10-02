@@ -349,26 +349,37 @@ export class ChromeDevToolsClient {
    */
   private parsePerformanceTrace(result: any): PerformanceTrace {
     // Extract performance data from MCP tool result
-    // The actual structure depends on chrome-devtools-mcp's response format
-    const textContent = result.content?.[0]?.text || '{}';
-    const data = JSON.parse(textContent);
+    // chrome-devtools-mcp returns markdown text, not JSON
+    const textContent = result.content?.[0]?.text || '';
+
+    // Parse markdown output to extract metrics
+    // Example format:
+    // # Performance Metrics
+    // - LCP: 1250ms
+    // - FID: 50ms
+    // - CLS: 0.05
+
+    const extractMetric = (text: string, pattern: RegExp): number => {
+      const match = text.match(pattern);
+      return match ? parseFloat(match[1]) : 0;
+    };
 
     return {
-      insights: data.insights || [],
+      insights: [], // Could parse from text if needed
       coreWebVitals: {
-        lcp: data.metrics?.LCP || 0,
-        fid: data.metrics?.FID || 0,
-        cls: data.metrics?.CLS || 0,
-        inp: data.metrics?.INP || 0,
-        ttfb: data.metrics?.TTFB || 0
+        lcp: extractMetric(textContent, /LCP:\s*(\d+\.?\d*)/i),
+        fid: extractMetric(textContent, /FID:\s*(\d+\.?\d*)/i),
+        cls: extractMetric(textContent, /CLS:\s*(\d+\.?\d*)/i),
+        inp: extractMetric(textContent, /INP:\s*(\d+\.?\d*)/i),
+        ttfb: extractMetric(textContent, /TTFB:\s*(\d+\.?\d*)/i)
       },
       metrics: {
-        firstContentfulPaint: data.metrics?.FCP || 0,
-        speedIndex: data.metrics?.SI || 0,
-        totalBlockingTime: data.metrics?.TBT || 0,
-        timeToInteractive: data.metrics?.TTI || 0
+        firstContentfulPaint: extractMetric(textContent, /FCP:\s*(\d+\.?\d*)/i),
+        speedIndex: extractMetric(textContent, /Speed Index:\s*(\d+\.?\d*)/i),
+        totalBlockingTime: extractMetric(textContent, /TBT:\s*(\d+\.?\d*)/i),
+        timeToInteractive: extractMetric(textContent, /TTI:\s*(\d+\.?\d*)/i)
       },
-      rawTrace: data.trace
+      rawTrace: textContent // Store the raw markdown
     };
   }
 
@@ -382,6 +393,9 @@ export class ChromeDevToolsClient {
     return {
       elements: data.elements || [],
       violations: data.violations || [],
+      warnings: data.warnings || [],
+      contrastIssues: data.contrastIssues || [],
+      ariaRoles: data.ariaRoles || [],
       summary: data.summary || {
         totalElements: 0,
         elementsWithARIA: 0,

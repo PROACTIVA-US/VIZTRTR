@@ -51,6 +51,9 @@ export interface PerformanceMetrics {
 export interface AccessibilitySnapshot {
   elements: AccessibilityElement[];
   violations: AccessibilityViolation[];
+  warnings: AccessibilityViolation[]; // Less severe issues
+  contrastIssues: Array<{ uid: string; ratio: number; required: number }>;
+  ariaRoles: string[]; // List of detected ARIA roles
   summary: {
     totalElements: number;
     elementsWithARIA: number;
