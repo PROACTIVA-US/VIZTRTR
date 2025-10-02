@@ -19,6 +19,50 @@ export interface HumanLoopConfig {
   enableMemoryAnnotation?: boolean;
 }
 
+// Multi-Provider Model Configuration
+export type ModelProvider = 'anthropic' | 'openai' | 'google' | 'zai';
+
+export interface ModelConfig {
+  provider: ModelProvider;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  thinkingBudget?: number; // For extended thinking models
+}
+
+export interface ProviderCredentials {
+  anthropic?: { apiKey: string; baseUrl?: string };
+  openai?: { apiKey: string; baseUrl?: string };
+  google?: { apiKey: string; baseUrl?: string };
+  zai?: { apiKey: string; baseUrl?: string };
+}
+
+// Available models per provider
+export const AVAILABLE_MODELS = {
+  anthropic: [
+    'claude-opus-4-20250514',
+    'claude-sonnet-4-20250514',
+    'claude-sonnet-4.5-20250402',
+    'claude-haiku-4-20250402'
+  ],
+  openai: [
+    'gpt-4o',
+    'gpt-4o-mini',
+    'gpt-4-turbo',
+    'gpt-4',
+    'gpt-3.5-turbo'
+  ],
+  google: [
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro',
+    'gemini-1.5-flash',
+    'gemini-1.0-pro'
+  ],
+  zai: [
+    'zai-default' // Z.AI models - will be populated from their API
+  ]
+} as const;
+
 export interface VIZTRTRConfig {
   // Project settings
   projectPath: string;
@@ -26,11 +70,17 @@ export interface VIZTRTRConfig {
   targetScore: number;
   maxIterations: number;
 
-  // Plugin selection
-  visionModel: 'claude-opus' | 'gpt4v' | 'gemini' | 'custom';
-  implementationModel: 'claude-sonnet' | 'gpt4' | 'deepseek' | 'custom';
+  // Multi-provider model configuration (optional - new)
+  providers?: ProviderCredentials;
+  models?: {
+    vision: ModelConfig;
+    implementation: ModelConfig;
+    evaluation: ModelConfig;
+  };
 
-  // API credentials
+  // Legacy API (backward compatibility - will auto-convert to providers/models)
+  visionModel?: 'claude-opus' | 'gpt4v' | 'gemini' | 'custom';
+  implementationModel?: 'claude-sonnet' | 'gpt4' | 'deepseek' | 'custom';
   anthropicApiKey?: string;
   openaiApiKey?: string;
   googleApiKey?: string;
@@ -67,6 +117,13 @@ export interface VIZTRTRConfig {
   scoringWeights?: {
     vision: number; // Default: 0.6 (60%)
     metrics: number; // Default: 0.4 (40%)
+  };
+
+  // Performance optimization
+  cache?: {
+    enabled: boolean;
+    ttl?: number; // Time to live in seconds
+    maxSize?: number; // Max cache entries
   };
 }
 
