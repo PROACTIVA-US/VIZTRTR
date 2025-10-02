@@ -11,17 +11,26 @@ VIZTRTR is an autonomous UI/UX improvement system that uses AI vision models to 
 ```
 VIZTRTR/
 ├── src/
-│   ├── core/                 # Core orchestrator, types, exports
-│   ├── plugins/              # Vision, capture, implementation plugins
-│   ├── agents/               # AI agents (Orchestrator, Reflection, Verification)
-│   └── memory/               # Persistent memory system
+│   ├── core/                 # Core orchestrator, types, exports, validation
+│   ├── plugins/              # Vision, capture, implementation, video plugins
+│   ├── agents/               # AI agents (Orchestrator, Reflection, specialized)
+│   │   └── specialized/     # ControlPanel, Teleprompter agents
+│   ├── memory/               # Persistent memory system
+│   ├── tools/                # Video analyzer and other tools
+│   ├── utils/                # Grep helpers and utilities
+│   └── __tests__/            # Integration tests
+├── ui/
+│   ├── frontend/             # React + Vite + Tailwind web UI
+│   ├── server/               # Express API server
+│   └── shared/               # Shared TypeScript types
 ├── projects/                 # Project-specific configurations
-│   └── performia/           # Example project
-├── examples/                 # Demo scripts
+│   ├── performia/           # Performia integration project
+│   └── viztrtr-ui/          # Self-improvement UI project
+├── examples/                 # Demo scripts (including video analysis)
 ├── tests/unit/              # Unit tests
 ├── docs/
 │   ├── architecture/        # Architecture docs
-│   ├── guides/             # How-to guides
+│   ├── guides/             # How-to guides (including video processing)
 │   └── status/             # Status reports
 └── dist/                   # Compiled output
 ```
@@ -41,6 +50,16 @@ npm run test:coverage # Run tests with coverage
 ```bash
 npm run demo              # Run basic demo
 npm run test:performia    # Test on Performia project
+npm run test:cross-file   # Test cross-file validation
+```
+
+### UI Development
+```bash
+# Start backend server
+cd ui/server && npm install && npm run dev
+
+# Start frontend (in new terminal)
+cd ui/frontend && npm install && npm run dev
 ```
 
 ### Code Quality
@@ -82,15 +101,28 @@ The orchestrator runs an iterative loop with AI agents and persistent memory:
 **Agents** (`src/agents/`)
 - `OrchestratorAgent.ts` - Selects improvements, filters failed attempts
 - `ReflectionAgent.ts` - Analyzes outcomes, records to memory
-- `VerificationAgent.ts` - Validates file changes, checks for errors
+- `InterfaceValidationAgent.ts` - Cross-file interface validation
+- `specialized/ControlPanelAgent.ts` - UI state management
+- `specialized/TeleprompterAgent.ts` - Video analysis coordination
 
 **Memory** (`src/memory/`)
 - `IterationMemoryManager.ts` - Persistent learning, tracks attempts/outcomes
 
 **Plugins** (`src/plugins/`)
 - `vision-claude.ts` - Claude Opus 4 vision analysis
-- `implementation-claude.ts` - Claude Sonnet 4 code implementation (extended thinking)
+- `implementation-claude.ts` - Claude Sonnet 4 code implementation (extended thinking, scope constraints)
 - `capture-puppeteer.ts` - Headless Chrome screenshot capture
+- `vision-video-claude.ts.skip` - Video frame analysis (planned)
+- `video-processor.ts.skip` - FFmpeg video frame extraction (planned)
+
+**Validation** (`src/core/`)
+- `validation.ts` - Cross-file interface validation logic
+
+**Tools** (`src/tools/`)
+- `video-analyzer.ts.skip` - Video analysis tools (planned)
+
+**Utils** (`src/utils/`)
+- `grep-helper.ts` - Code search utilities
 
 ### 8-Dimension Scoring System
 
@@ -127,17 +159,22 @@ viztritr-output/
 ### Current State
 **Completed Features:**
 - ✅ Core orchestrator with iteration loop
-- ✅ Multi-agent architecture (Orchestrator, Reflection, Verification)
+- ✅ Multi-agent architecture (Orchestrator, Reflection, specialized agents)
 - ✅ Persistent memory system with learning
 - ✅ Claude Opus 4 vision integration
 - ✅ Claude Sonnet 4 implementation with extended thinking (2000 token budget)
 - ✅ Puppeteer screenshot capture
 - ✅ 8-dimension scoring system
-- ✅ Automatic file detection and backup
+- ✅ Automatic file detection and backup with timestamps
 - ✅ Structured diff generation
 - ✅ Comprehensive reporting (JSON + Markdown)
 - ✅ Best practices tooling (ESLint, Prettier, Jest, TypeScript)
 - ✅ Clean project structure with organized directories
+- ✅ **Web UI** - React + Express full-stack interface
+- ✅ **Video Processing** - Frame extraction and analysis (planned integration)
+- ✅ **Cross-File Validation** - Interface validation across TypeScript files
+- ✅ **Scope Constraints** - Security controls for file modifications
+- ✅ **Agent SDK Integration** - Claude Agent SDK with tools
 
 ### Agent-Based Implementation
 The code implementation agent (`src/plugins/implementation-claude.ts`) uses:
@@ -146,14 +183,23 @@ The code implementation agent (`src/plugins/implementation-claude.ts`) uses:
 - **Automatic file detection** - identifies which files need modification
 - **Backup system** - creates timestamped backups before changes
 - **Diff generation** - structured diffs for all changes
+- **Scope constraints** - security controls to prevent unauthorized file access
+- **Path validation** - absolute/relative path resolution with safety checks
 
 The agent workflow:
 1. Receives design recommendation from vision analysis
 2. Uses extended thinking to plan the implementation
-3. Identifies target files and generates code
-4. Creates backups of existing files
-5. Applies changes and generates diffs
-6. Returns structured `Changes` object
+3. Validates file paths are within project scope
+4. Identifies target files and generates code
+5. Creates timestamped backups of existing files
+6. Applies changes and generates diffs
+7. Returns structured `Changes` object with rollback capability
+
+**Security Features:**
+- Whitelist: Only files within `projectPath`
+- Blacklist: Prevents modification of `node_modules`, `.git`, `.env`, etc.
+- Path traversal prevention
+- Automatic validation of all file operations
 
 ### Plugin Architecture
 To add a new plugin, implement the `VIZTRTRPlugin` interface:
@@ -220,9 +266,74 @@ When writing code that references files:
 - From agents to types: `import { Type } from '../core/types'`
 - From plugins to types: `import { Type } from '../core/types'`
 
+## Web UI
+
+**Location**: `/Users/danielconnolly/Projects/VIZTRTR/ui/`
+
+### Frontend (React + Vite + Tailwind)
+- Real-time agent monitoring dashboard
+- Interactive prompt input with streaming responses
+- Agent card displays showing status and thinking
+- Video upload interface (planned)
+- Live build monitoring
+- AI evaluation panel with 8-dimension scores
+
+**Tech Stack**: React 18, Vite, Tailwind CSS, Zustand, Server-Sent Events
+
+### Backend (Express + TypeScript)
+- `/api/evaluate` - Submit UI analysis requests
+- `/api/projects` - List available projects
+- `/api/runs/:id` - Get run status and results
+- `/api/runs/:id/stream` - SSE stream for real-time updates
+
+**Tech Stack**: Express, TypeScript, SQLite, CORS
+
+### Running the UI
+```bash
+# Terminal 1: Start backend
+cd ui/server && npm install && npm run dev
+
+# Terminal 2: Start frontend
+cd ui/frontend && npm install && npm run dev
+
+# Access at http://localhost:5173
+```
+
+## Video Processing (Planned)
+
+**Files**: `src/plugins/vision-video-claude.ts.skip`, `src/plugins/video-processor.ts.skip`
+
+Features:
+- FFmpeg-based frame extraction
+- Multi-frame vision analysis
+- Temporal UI/UX pattern detection
+- Video-specific design recommendations
+
+To enable:
+1. Remove `.skip` extensions
+2. Install FFmpeg: `brew install ffmpeg`
+3. Update config with video options
+4. Test with `examples/video-analysis-demo.ts`
+
+## Cross-File Validation
+
+**Files**: `src/core/validation.ts`, `src/agents/InterfaceValidationAgent.ts`
+
+Features:
+- TypeScript interface extraction and parsing
+- Cross-file interface matching
+- Missing interface detection
+- Type mismatch reporting
+- Automatic fix suggestions
+
+Usage:
+```bash
+npm run test:cross-file
+```
+
 ## Next Development Phases
 
 **Phase 1 (Complete)**: Multi-agent MVP with memory system
-**Phase 2 (Next)**: Enhanced learning, CLI interface, additional plugins
-**Phase 3**: Production features (API server, queue, caching)
+**Phase 2 (Current)**: Web UI, video processing, cross-file validation
+**Phase 3 (Next)**: Production features (authentication, monitoring, caching)
 **Phase 4**: Ecosystem (GitHub Action, VS Code extension, npm package)
