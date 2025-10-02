@@ -237,6 +237,18 @@ export interface IterationResult {
   evaluation: EvaluationResult;
   scoreDelta: number;
   targetReached: boolean;
+  // Hybrid scoring data (optional for backward compatibility)
+  hybridScore?: {
+    compositeScore: number;
+    visionScore: number;
+    metricsScore: number;
+    confidence: number;
+    metricsBreakdown?: {
+      performance: number;
+      accessibility: number;
+      bestPractices: number;
+    };
+  };
 }
 
 export interface IterationReport {

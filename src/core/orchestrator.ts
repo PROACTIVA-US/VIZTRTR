@@ -14,6 +14,7 @@ import {
   EvaluationResult,
 } from './types';
 import { ClaudeOpusVisionPlugin } from '../plugins/vision-claude';
+import { HybridScoringAgent } from '../agents/HybridScoringAgent';
 import { PuppeteerCapturePlugin } from '../plugins/capture-puppeteer';
 import { IterationMemoryManager } from '../memory/IterationMemoryManager';
 import { VerificationAgent } from '../agents/VerificationAgent';
@@ -34,6 +35,7 @@ export class VIZTRTROrchestrator {
   private reflectionAgent: ReflectionAgent;
   private filterAgent: RecommendationFilterAgent;
   private humanLoopAgent: HumanLoopAgent;
+  private hybridScoringAgent: HybridScoringAgent | null = null;
   private iterations: IterationResult[] = [];
   private startTime: Date | null = null;
 
@@ -51,6 +53,17 @@ export class VIZTRTROrchestrator {
     this.reflectionAgent = new ReflectionAgent(config.anthropicApiKey!);
     this.filterAgent = new RecommendationFilterAgent();
     this.humanLoopAgent = new HumanLoopAgent(config.humanLoop);
+
+    // Initialize hybrid scoring if enabled
+    if (config.useChromeDevTools) {
+      const visionWeight = config.scoringWeights?.vision ?? 0.6;
+      const metricsWeight = config.scoringWeights?.metrics ?? 0.4;
+      this.hybridScoringAgent = new HybridScoringAgent(
+        config.anthropicApiKey!,
+        visionWeight,
+        metricsWeight
+      );
+    }
 
     // Ensure output directory exists
     this.ensureOutputDir();
@@ -252,9 +265,31 @@ export class VIZTRTROrchestrator {
       afterScreenshot.path = afterPath;
     }
 
-    // Step 7: Evaluate
+    // Step 7: Evaluate (with hybrid scoring if enabled)
     console.log('📊 Step 7: Evaluating result...');
     const evaluation = await this.evaluate(afterScreenshot);
+
+    // Hybrid scoring (if enabled)
+    let hybridScore;
+    if (this.hybridScoringAgent) {
+      console.log('🔬 Running hybrid scoring analysis...');
+      const result = await this.hybridScoringAgent.score(afterScreenshot, this.config.frontendUrl);
+      hybridScore = {
+        compositeScore: result.compositeScore,
+        visionScore: result.visionScore,
+        metricsScore: result.metricsScore,
+        confidence: result.confidence,
+        metricsBreakdown: {
+          performance: result.metrics?.performance || 0,
+          accessibility: result.metrics?.accessibility || 0,
+          bestPractices: result.metrics?.bestPractices || 0
+        }
+      };
+      console.log(`   Hybrid Score: ${result.compositeScore.toFixed(1)}/10 (confidence: ${(result.confidence * 100).toFixed(0)}%)`);
+
+      // Use hybrid composite score as the primary evaluation score
+      evaluation.compositeScore = result.compositeScore;
+    }
 
     // Save evaluation
     const evalPath = path.join(iterationDir, 'evaluation.json');
@@ -337,6 +372,7 @@ export class VIZTRTROrchestrator {
       evaluation,
       scoreDelta,
       targetReached: evaluation.targetReached,
+      hybridScore
     };
   }
 
@@ -424,6 +460,9 @@ export class VIZTRTROrchestrator {
   private async generateMarkdownReport(report: IterationReport) {
     const mdPath = path.join(this.config.outputDir, 'REPORT.md');
 
+    // Check if any iteration has hybrid scoring
+    const hasHybridScoring = report.iterations.some(iter => iter.hybridScore);
+
     const md = `# VIZTRTR Report
 
 Generated: ${new Date().toISOString()}
@@ -438,6 +477,7 @@ Generated: ${new Date().toISOString()}
 - **Total Iterations:** ${report.totalIterations}
 - **Best Iteration:** ${report.bestIteration}
 - **Duration:** ${Math.round(report.duration / 1000)}s
+${hasHybridScoring ? '- **Hybrid Scoring:** Enabled (Vision 60% + Metrics 40%)' : ''}
 
 ## Iteration History
 
@@ -448,6 +488,13 @@ ${report.iterations
 
 - **Score:** ${iter.evaluation.compositeScore.toFixed(1)}/10
 - **Delta:** ${iter.scoreDelta > 0 ? '+' : ''}${iter.scoreDelta.toFixed(1)}
+${iter.hybridScore ? `- **Hybrid Breakdown:**
+  - Vision: ${iter.hybridScore.visionScore.toFixed(1)}/10 (60%)
+  - Metrics: ${iter.hybridScore.metricsScore.toFixed(1)}/10 (40%)
+  - Confidence: ${(iter.hybridScore.confidence * 100).toFixed(0)}%
+  - Performance: ${iter.hybridScore.metricsBreakdown?.performance.toFixed(1)}/10
+  - Accessibility: ${iter.hybridScore.metricsBreakdown?.accessibility.toFixed(1)}/10
+  - Best Practices: ${iter.hybridScore.metricsBreakdown?.bestPractices.toFixed(1)}/10` : ''}
 - **Before:** [screenshot](./iteration_${idx}/before.png)
 - **After:** [screenshot](./iteration_${idx}/after.png)
 - **Spec:** [design_spec.json](./iteration_${idx}/design_spec.json)
@@ -488,5 +535,8 @@ ${report.iterations[report.bestIteration]?.designSpec.recommendations
 
   private async cleanup() {
     await this.capturePlugin.close();
+    if (this.hybridScoringAgent) {
+      await this.hybridScoringAgent.dispose();
+    }
   }
 }
