@@ -1,4 +1,4 @@
-# VIZTRITR Testing Guide
+# VIZTRTR Testing Guide
 
 ## Setup
 
@@ -7,7 +7,7 @@
 Create `.env` file:
 
 ```bash
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 nano .env
 ```
 
@@ -33,17 +33,17 @@ Should show:
 ➜  Local:   http://localhost:5001/
 ```
 
-### 3. Run VIZTRITR
+### 3. Run VIZTRTR
 
 ```bash
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run demo
 ```
 
 ## Expected Output
 
 ```
-🎨 VIZTRITR - Visual Iteration Orchestrator
+🎨 VIZTRTR - Visual Iteration Orchestrator
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Project: /Users/danielconnolly/Projects/Performia/frontend
    URL: http://localhost:5001
@@ -51,10 +51,10 @@ npm run demo
    Max Iterations: 3
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🚀 Starting VIZTRITR iteration cycle...
+🚀 Starting VIZTRTR iteration cycle...
    Target Score: 8.5/10
    Max Iterations: 3
-   Output: /Users/danielconnolly/Projects/VIZTRITR/viztritr-output
+   Output: /Users/danielconnolly/Projects/VIZTRTR/viztritr-output
 
 ══════════════════════════════════════════════════════════════════════
 📍 ITERATION 1/3

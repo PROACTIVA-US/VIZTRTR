@@ -41,7 +41,7 @@ npm run dev
 ### Terminal 2: Run VIZTRTR Test
 
 ```bash
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run test:performia
 ```
 

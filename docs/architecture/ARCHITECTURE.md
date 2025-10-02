@@ -1,10 +1,10 @@
-# VIZTRITR - Visual Iteration Orchestrator
+# VIZTRTR - Visual Iteration Orchestrator
 
 **Best-in-class autonomous UI/UX improvement system for any web project**
 
 ## Vision
 
-VIZTRITR is an autonomous design iteration system that:
+VIZTRTR is an autonomous design iteration system that:
 1. Captures screenshots of your UI
 2. Analyzes design quality using AI vision models
 3. Generates detailed improvement specifications
@@ -15,7 +15,7 @@ VIZTRITR is an autonomous design iteration system that:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      VIZTRITR Core                          │
+│                      VIZTRTR Core                          │
 │                   (Orchestrator Engine)                     │
 └─────────────────────────────────────────────────────────────┘
                              │
@@ -39,7 +39,7 @@ VIZTRITR is an autonomous design iteration system that:
 ## Plugin Architecture
 
 ```typescript
-interface VIZTRITRPlugin {
+interface VIZTRTRPlugin {
   name: string;
   type: 'vision' | 'implementation' | 'evaluation' | 'capture';
 
@@ -88,14 +88,14 @@ interface VIZTRITRPlugin {
 
 ### 1. Core Orchestrator
 ```typescript
-class VIZTRITROrchestrator {
-  constructor(config: VIZTRITRConfig);
+class VIZTRTROrchestrator {
+  constructor(config: VIZTRTRConfig);
 
   // Main iteration loop
   async run(): Promise<IterationReport>;
 
   // Plugin management
-  registerPlugin(plugin: VIZTRITRPlugin): void;
+  registerPlugin(plugin: VIZTRTRPlugin): void;
 
   // Iteration control
   async runIteration(n: number): Promise<IterationResult>;
@@ -105,7 +105,7 @@ class VIZTRITROrchestrator {
 
 ### 2. Configuration
 ```typescript
-interface VIZTRITRConfig {
+interface VIZTRTRConfig {
   // Project settings
   projectPath: string;
   frontendUrl: string;
@@ -232,7 +232,7 @@ viztritr iterate
 
 ### Method 2: GitHub Action
 ```yaml
-name: VIZTRITR UI Review
+name: VIZTRTR UI Review
 on: [pull_request]
 jobs:
   ui-review:
@@ -256,7 +256,7 @@ viztritr serve --port 3000
 ### Method 4: VS Code Extension
 ```javascript
 // In VS Code
-Command Palette → "VIZTRITR: Analyze Current UI"
+Command Palette → "VIZTRTR: Analyze Current UI"
 // Launches browser, captures, analyzes, suggests
 ```
 
@@ -485,4 +485,4 @@ viztritr/
 
 ---
 
-**VIZTRITR: Because great design shouldn't require great designers**
+**VIZTRTR: Because great design shouldn't require great designers**

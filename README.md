@@ -1,8 +1,8 @@
-# VIZTRITR - Visual Iteration Orchestrator
+# VIZTRTR - Visual Iteration Orchestrator
 
 **Autonomous UI/UX improvement system powered by AI vision models**
 
-VIZTRITR automatically analyzes, improves, and evaluates web interfaces through iterative cycles until they reach design excellence (8.5+/10 score).
+VIZTRTR automatically analyzes, improves, and evaluates web interfaces through iterative cycles until they reach design excellence (8.5+/10 score).
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-18+-green)](https://nodejs.org/)
@@ -39,7 +39,7 @@ VIZTRITR automatically analyzes, improves, and evaluates web interfaces through 
 ## Project Structure
 
 ```
-VIZTRITR/
+VIZTRTR/
 ├── src/                          # Core library source code
 │   ├── core/                     # Core functionality
 │   │   ├── orchestrator.ts       # Main iteration orchestrator
@@ -77,7 +77,7 @@ VIZTRITR/
 
 ```bash
 git clone <repository-url>
-cd VIZTRITR
+cd VIZTRTR
 npm install
 ```
 
@@ -105,7 +105,7 @@ First, ensure you have a frontend dev server running (e.g., at `http://localhost
 npm run demo
 ```
 
-This will run VIZTRITR on your local frontend and generate a detailed report.
+This will run VIZTRTR on your local frontend and generate a detailed report.
 
 ### 5. Test with Performia Project
 
@@ -191,12 +191,12 @@ npm run test:performia
 
 ## Configuration
 
-Create a configuration object implementing `VIZTRITRConfig`:
+Create a configuration object implementing `VIZTRTRConfig`:
 
 ```typescript
-import { VIZTRITRConfig } from './src/core/types';
+import { VIZTRTRConfig } from './src/core/types';
 
-const config: VIZTRITRConfig = {
+const config: VIZTRTRConfig = {
   // Project Settings
   projectPath: '/absolute/path/to/your/frontend/project',
   frontendUrl: 'http://localhost:3000',
@@ -228,7 +228,7 @@ const config: VIZTRITRConfig = {
 
 ## Scoring System
 
-VIZTRITR evaluates UIs across **8 weighted dimensions**:
+VIZTRTR evaluates UIs across **8 weighted dimensions**:
 
 | Dimension | Weight | Description |
 |-----------|--------|-------------|
@@ -252,7 +252,7 @@ Each dimension is scored 0-10 with specific criteria. Accessibility has the high
 
 ## Creating Your Own Project
 
-To use VIZTRITR on your own project:
+To use VIZTRTR on your own project:
 
 ### 1. Create Project Directory
 
@@ -265,12 +265,12 @@ mkdir -p projects/my-project
 Create `projects/my-project/config.ts`:
 
 ```typescript
-import { VIZTRITRConfig } from '../../src/core/types';
+import { VIZTRTRConfig } from '../../src/core/types';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-export const myProjectConfig: VIZTRITRConfig = {
+export const myProjectConfig: VIZTRTRConfig = {
   projectPath: '/absolute/path/to/my-frontend',
   frontendUrl: 'http://localhost:3000',
   targetScore: 8.5,
@@ -296,14 +296,14 @@ export default myProjectConfig;
 Create `projects/my-project/test.ts`:
 
 ```typescript
-import { VIZTRITROrchestrator } from '../../src/core/orchestrator';
+import { VIZTRTROrchestrator } from '../../src/core/orchestrator';
 import myProjectConfig from './config';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 async function main() {
-  console.log('🎨 VIZTRITR - My Project');
+  console.log('🎨 VIZTRTR - My Project');
   console.log('='.repeat(70));
 
   // Validate API key
@@ -323,8 +323,8 @@ async function main() {
     process.exit(1);
   }
 
-  // Run VIZTRITR
-  const orchestrator = new VIZTRITROrchestrator(myProjectConfig);
+  // Run VIZTRTR
+  const orchestrator = new VIZTRTROrchestrator(myProjectConfig);
   const report = await orchestrator.run();
 
   // Print results
@@ -383,7 +383,7 @@ npm run precommit      # Run all checks (lint + format + typecheck)
 
 ## Output Structure
 
-After running VIZTRITR, check your configured `outputDir`:
+After running VIZTRTR, check your configured `outputDir`:
 
 ```
 viztritr-output/
@@ -421,11 +421,11 @@ viztritr-output/
 
 ## Architecture
 
-VIZTRITR uses a **multi-agent architecture** with persistent memory:
+VIZTRTR uses a **multi-agent architecture** with persistent memory:
 
 ### Core Components
 
-1. **VIZTRITROrchestrator** (`src/core/orchestrator.ts`)
+1. **VIZTRTROrchestrator** (`src/core/orchestrator.ts`)
    - Main coordinator for iteration cycles
    - Manages plugins and agents
    - Generates reports
@@ -453,19 +453,19 @@ VIZTRITR uses a **multi-agent architecture** with persistent memory:
 
 ### Plugin System
 
-VIZTRITR uses a plugin architecture for extensibility:
+VIZTRTR uses a plugin architecture for extensibility:
 
 - **Vision Plugins** - Analyze UI screenshots (Claude Opus, GPT-4V, Gemini)
 - **Capture Plugins** - Take screenshots (Puppeteer, Playwright, Selenium)
 - **Implementation Plugins** - Apply code changes (Claude Sonnet, GPT-4, Copilot)
 - **Evaluation Plugins** - Score designs (AI-based, Lighthouse, custom)
 
-See `src/core/types.ts` for the `VIZTRITRPlugin` interface.
+See `src/core/types.ts` for the `VIZTRTRPlugin` interface.
 
 ## Use Cases
 
 ### 1. Pre-Launch QA
-Run VIZTRITR before shipping to ensure your UI meets design standards:
+Run VIZTRTR before shipping to ensure your UI meets design standards:
 ```bash
 npm run test:my-app
 ```
@@ -474,7 +474,7 @@ npm run test:my-app
 Get expert-level UI critique without hiring consultants. Review the generated `REPORT.md` for specific recommendations.
 
 ### 3. Accessibility Audits
-VIZTRITR prioritizes accessibility (1.3× weight). Use it to identify and fix WCAG compliance issues.
+VIZTRTR prioritizes accessibility (1.3× weight). Use it to identify and fix WCAG compliance issues.
 
 ### 4. Continuous Improvement
 Integrate into CI/CD to maintain design quality across releases.
@@ -547,7 +547,7 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ## Contributing
 
-VIZTRITR is in active development. Contributions are welcome!
+VIZTRTR is in active development. Contributions are welcome!
 
 ### How to Contribute
 
@@ -601,4 +601,4 @@ For issues, questions, or feature requests:
 
 ---
 
-**VIZTRITR: Because great design shouldn't require great designers** 🎨
+**VIZTRTR: Because great design shouldn't require great designers** 🎨

@@ -1,0 +1,8 @@
+# VIZTRTR output directory
+viztrtr-output/
+
+# Node modules if any are added
+node_modules/
+
+# Environment variables
+.env.local

@@ -1,0 +1,388 @@
+/**
+ * Video Processor Plugin
+ *
+ * Extracts frames from videos for AI analysis using fluent-ffmpeg
+ */
+
+import ffmpeg from 'fluent-ffmpeg';
+import * as fs from 'fs';
+import * as path from 'path';
+import { promisify } from 'util';
+import {
+  VideoMetadata,
+  VideoProcessingOptions,
+  VideoFrame,
+  VideoFrameResult,
+  SceneChange,
+  ProgressInfo,
+  VIZTRTRPlugin,
+} from '../core/types';
+
+const mkdir = promisify(fs.mkdir);
+const readFile = promisify(fs.readFile);
+const unlink = promisify(fs.unlink);
+const exists = promisify(fs.exists);
+
+export class VideoProcessor implements VIZTRTRPlugin {
+  name = 'video-processor';
+  version = '1.0.0';
+  type = 'capture' as const;
+
+  private defaultOptions: Required<Omit<VideoProcessingOptions, 'onProgress'>> = {
+    fps: 2,
+    keyframesOnly: false,
+    startTime: 0,
+    endTime: 0, // 0 means end of video
+    maxFrames: 100,
+    resize: {
+      width: 1920,
+      height: 1080,
+    },
+    quality: 85,
+    sceneChangeThreshold: 0.3,
+  };
+
+  /**
+   * Check if ffmpeg is available
+   */
+  async checkFFmpeg(): Promise<boolean> {
+    return new Promise((resolve) => {
+      ffmpeg.getAvailableFormats((err) => {
+        if (err) {
+          console.error('FFmpeg not found. Please install ffmpeg:');
+          console.error('  macOS: brew install ffmpeg');
+          console.error('  Ubuntu: sudo apt install ffmpeg');
+          console.error('  Windows: Download from https://ffmpeg.org/download.html');
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  /**
+   * Get video metadata
+   */
+  async getMetadata(videoPath: string): Promise<VideoMetadata> {
+    return new Promise((resolve, reject) => {
+      ffmpeg.ffprobe(videoPath, (err, metadata) => {
+        if (err) {
+          reject(new Error(`Failed to read video metadata: ${err.message}`));
+          return;
+        }
+
+        const videoStream = metadata.streams.find((s) => s.codec_type === 'video');
+        if (!videoStream) {
+          reject(new Error('No video stream found in file'));
+          return;
+        }
+
+        const duration = metadata.format.duration || 0;
+        const fps = this.parseFps(videoStream.r_frame_rate || videoStream.avg_frame_rate || '30/1');
+
+        resolve({
+          duration,
+          fps,
+          width: videoStream.width || 0,
+          height: videoStream.height || 0,
+          format: metadata.format.format_name || 'unknown',
+          codec: videoStream.codec_name || 'unknown',
+          bitrate: metadata.format.bit_rate || 0,
+          fileSize: metadata.format.size || 0,
+        });
+      });
+    });
+  }
+
+  /**
+   * Parse FPS from fraction string (e.g., "30/1" -> 30)
+   */
+  private parseFps(fpsString: string): number {
+    const parts = fpsString.split('/');
+    const numerator = parseInt(parts[0], 10);
+    const denominator = parseInt(parts[1] || '1', 10);
+    return numerator / denominator;
+  }
+
+  /**
+   * Detect keyframes (scene changes) in video
+   */
+  async detectKeyFrames(
+    videoPath: string,
+    threshold: number = 0.3
+  ): Promise<SceneChange[]> {
+    const metadata = await this.getMetadata(videoPath);
+    const sceneChanges: SceneChange[] = [];
+
+    return new Promise((resolve, reject) => {
+      const tempFile = path.join(
+        path.dirname(videoPath),
+        `.scenes_${Date.now()}.txt`
+      );
+
+      // Use ffmpeg's scene detection filter
+      ffmpeg(videoPath)
+        .outputOptions([
+          '-vf',
+          `select='gt(scene,${threshold})',showinfo`,
+          '-f',
+          'null',
+        ])
+        .output('-')
+        .on('stderr', (stderrLine) => {
+          // Parse scene detection output
+          const match = stderrLine.match(/pts_time:([\d.]+).*scene:([\d.]+)/);
+          if (match) {
+            const timestamp = parseFloat(match[1]);
+            const score = parseFloat(match[2]);
+            const frameNumber = Math.floor(timestamp * metadata.fps);
+
+            sceneChanges.push({
+              timestamp,
+              frameNumber,
+              score,
+              description: `Scene change detected (score: ${score.toFixed(3)})`,
+            });
+          }
+        })
+        .on('end', () => {
+          resolve(sceneChanges);
+        })
+        .on('error', (err) => {
+          reject(new Error(`Scene detection failed: ${err.message}`));
+        })
+        .run();
+    });
+  }
+
+  /**
+   * Extract frames from video at specific timestamps
+   */
+  async extractFrames(
+    videoPath: string,
+    timestamps: number[],
+    outputDir: string
+  ): Promise<VideoFrame[]> {
+    await this.ensureDir(outputDir);
+
+    const metadata = await this.getMetadata(videoPath);
+    const frames: VideoFrame[] = [];
+
+    for (let i = 0; i < timestamps.length; i++) {
+      const timestamp = timestamps[i];
+      const frameNumber = Math.floor(timestamp * metadata.fps);
+      const outputPath = path.join(
+        outputDir,
+        `frame_${String(i).padStart(5, '0')}_t${timestamp.toFixed(2)}s.png`
+      );
+
+      await this.extractSingleFrame(videoPath, timestamp, outputPath);
+
+      frames.push({
+        path: outputPath,
+        timestamp,
+        frameNumber,
+        width: this.defaultOptions.resize.width,
+        height: this.defaultOptions.resize.height,
+        isKeyframe: false, // Will be updated by processVideo
+      });
+    }
+
+    return frames;
+  }
+
+  /**
+   * Extract a single frame at a specific timestamp
+   */
+  private async extractSingleFrame(
+    videoPath: string,
+    timestamp: number,
+    outputPath: string
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      ffmpeg(videoPath)
+        .seekInput(timestamp)
+        .frames(1)
+        .size(`${this.defaultOptions.resize.width}x${this.defaultOptions.resize.height}`)
+        .output(outputPath)
+        .on('end', () => resolve())
+        .on('error', (err) => reject(new Error(`Frame extraction failed: ${err.message}`)))
+        .run();
+    });
+  }
+
+  /**
+   * Main video processing function
+   */
+  async processVideo(
+    videoPath: string,
+    outputDir: string,
+    options: VideoProcessingOptions = {}
+  ): Promise<VideoFrameResult> {
+    const startTime = Date.now();
+
+    // Validate ffmpeg
+    const hasFFmpeg = await this.checkFFmpeg();
+    if (!hasFFmpeg) {
+      throw new Error('FFmpeg is not available. Please install it first.');
+    }
+
+    // Validate video file
+    if (!fs.existsSync(videoPath)) {
+      throw new Error(`Video file not found: ${videoPath}`);
+    }
+
+    // Merge options with defaults
+    const opts = { ...this.defaultOptions, ...options };
+
+    // Report progress
+    const reportProgress = (phase: ProgressInfo['phase'], current: number, total: number) => {
+      if (options.onProgress) {
+        options.onProgress({
+          phase,
+          current,
+          total,
+          percentage: Math.round((current / total) * 100),
+        });
+      }
+    };
+
+    // Get video metadata
+    reportProgress('metadata', 1, 4);
+    const metadata = await this.getMetadata(videoPath);
+    console.log(`Video duration: ${metadata.duration.toFixed(2)}s @ ${metadata.fps.toFixed(2)} FPS`);
+
+    const effectiveEndTime = opts.endTime > 0 ? opts.endTime : metadata.duration;
+    const effectiveStartTime = opts.startTime;
+    const duration = effectiveEndTime - effectiveStartTime;
+
+    let timestamps: number[] = [];
+    let sceneChanges: SceneChange[] = [];
+
+    if (opts.keyframesOnly) {
+      // Extract keyframes based on scene detection
+      reportProgress('keyframe-detection', 2, 4);
+      console.log('Detecting scene changes...');
+      sceneChanges = await this.detectKeyFrames(videoPath, opts.sceneChangeThreshold);
+
+      // Filter scene changes by time range
+      sceneChanges = sceneChanges.filter(
+        (sc) => sc.timestamp >= effectiveStartTime && sc.timestamp <= effectiveEndTime
+      );
+
+      timestamps = sceneChanges.map((sc) => sc.timestamp);
+
+      // Limit to maxFrames
+      if (timestamps.length > opts.maxFrames) {
+        console.log(`Limiting ${timestamps.length} keyframes to ${opts.maxFrames} frames`);
+        timestamps = this.selectEvenly(timestamps, opts.maxFrames);
+      }
+
+      console.log(`Found ${sceneChanges.length} scene changes, extracting ${timestamps.length} frames`);
+    } else {
+      // Extract frames at regular intervals
+      const interval = 1 / opts.fps;
+      const frameCount = Math.min(
+        Math.floor(duration * opts.fps),
+        opts.maxFrames
+      );
+
+      timestamps = Array.from({ length: frameCount }, (_, i) =>
+        effectiveStartTime + i * interval
+      );
+
+      console.log(`Extracting ${timestamps.length} frames at ${opts.fps} FPS`);
+    }
+
+    // Extract frames
+    reportProgress('extraction', 3, 4);
+    await this.ensureDir(outputDir);
+    const frames = await this.extractFrames(videoPath, timestamps, outputDir);
+
+    // Mark keyframes
+    if (sceneChanges.length > 0) {
+      const keyframeTimestamps = new Set(sceneChanges.map((sc) => sc.timestamp));
+      frames.forEach((frame) => {
+        frame.isKeyframe = keyframeTimestamps.has(frame.timestamp);
+      });
+    }
+
+    const extractionTime = Date.now() - startTime;
+    reportProgress('complete', 4, 4);
+
+    console.log(`Extracted ${frames.length} frames in ${(extractionTime / 1000).toFixed(2)}s`);
+
+    return {
+      videoPath,
+      metadata,
+      frames,
+      sceneChanges,
+      extractionTime,
+      outputDirectory: outputDir,
+    };
+  }
+
+  /**
+   * Load frame as base64 for AI analysis
+   */
+  async loadFrameAsBase64(framePath: string): Promise<string> {
+    const buffer = await readFile(framePath);
+    return buffer.toString('base64');
+  }
+
+  /**
+   * Clean up extracted frames
+   */
+  async cleanupFrames(outputDir: string): Promise<void> {
+    if (fs.existsSync(outputDir)) {
+      const files = fs.readdirSync(outputDir);
+      for (const file of files) {
+        if (file.startsWith('frame_') && file.endsWith('.png')) {
+          await unlink(path.join(outputDir, file));
+        }
+      }
+    }
+  }
+
+  /**
+   * Ensure directory exists
+   */
+  private async ensureDir(dir: string): Promise<void> {
+    if (!fs.existsSync(dir)) {
+      await mkdir(dir, { recursive: true });
+    }
+  }
+
+  /**
+   * Select evenly spaced items from array
+   */
+  private selectEvenly<T>(array: T[], count: number): T[] {
+    if (array.length <= count) return array;
+
+    const result: T[] = [];
+    const step = (array.length - 1) / (count - 1);
+
+    for (let i = 0; i < count; i++) {
+      const index = Math.round(i * step);
+      result.push(array[index]);
+    }
+
+    return result;
+  }
+
+  /**
+   * Get supported video formats
+   */
+  getSupportedFormats(): string[] {
+    return ['mp4', 'mov', 'avi', 'webm', 'mkv', 'flv', 'm4v'];
+  }
+
+  /**
+   * Validate video format
+   */
+  isSupportedFormat(videoPath: string): boolean {
+    const ext = path.extname(videoPath).toLowerCase().slice(1);
+    return this.getSupportedFormats().includes(ext);
+  }
+}

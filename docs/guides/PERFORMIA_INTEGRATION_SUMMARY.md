@@ -129,7 +129,7 @@ npm run dev
 
 **Terminal 2 - Run VIZTRTR:**
 ```bash
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run test:performia
 ```
 
@@ -318,7 +318,7 @@ Evaluation Agent (8D Rubric)
 cd /Users/danielconnolly/Projects/Performia/frontend && npm run dev
 
 # Terminal 2
-cd /Users/danielconnolly/Projects/VIZTRITR && npm run test:performia
+cd /Users/danielconnolly/Projects/VIZTRTR && npm run test:performia
 ```
 
 ---

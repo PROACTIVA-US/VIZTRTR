@@ -230,7 +230,7 @@ Composite = Σ(dimension_score × weight) / Σ(weights)
 ### Data Flow
 
 ```typescript
-interface VIZTRITRConfig {
+interface VIZTRTRConfig {
   projectPath: string;           // '/Users/.../Performia/frontend'
   frontendUrl: string;            // 'http://localhost:5001'
   targetScore: number;            // 8.5
@@ -432,7 +432,7 @@ viztritr-output/
 ### B. VIZTRTR Configuration for Performia
 
 ```typescript
-const performiaConfig: VIZTRITRConfig = {
+const performiaConfig: VIZTRTRConfig = {
   projectPath: '/Users/danielconnolly/Projects/Performia/frontend',
   frontendUrl: 'http://localhost:5001',
   targetScore: 8.5,

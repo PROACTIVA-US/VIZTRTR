@@ -215,7 +215,7 @@ cd /Users/danielconnolly/Projects/Performia/frontend
 npm run dev
 
 # Terminal 2
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run test:performia
 ```
 

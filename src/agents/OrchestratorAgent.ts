@@ -138,7 +138,7 @@ export class OrchestratorAgent {
   }
 
   private buildRoutingPrompt(spec: DesignSpec): string {
-    return `You are the ORCHESTRATOR AGENT for VIZTRITR's multi-agent UI improvement system.
+    return `You are the ORCHESTRATOR AGENT for VIZTRTR's multi-agent UI improvement system.
 
 **YOUR ROLE:**
 Analyze design recommendations and route them to the appropriate specialist agent.
@@ -146,19 +146,22 @@ Analyze design recommendations and route them to the appropriate specialist agen
 **AVAILABLE SPECIALIST AGENTS:**
 
 1. **ControlPanelAgent**
-   - Manages: Settings Panel, Header, Library View
-   - Files: SettingsPanel.tsx, Header.tsx, LibraryView.tsx
-   - Expertise: Desktop UI (32-36px buttons, 0.875-1rem text)
-   - Viewing Distance: 1-2 feet (normal desktop use)
+   - Manages: All standard web UI components
+   - Files: Header.tsx, PromptInput.tsx, Footer.tsx, AgentCard.tsx, AgentOrchestration.tsx
+   - Expertise: Modern web UI (buttons, forms, layouts, navigation)
+   - Design: Standard web sizing (32-48px buttons, 0.875-1.125rem text)
+   - Viewing Distance: 1-2 feet (normal desktop/laptop use)
 
 2. **TeleprompterAgent**
-   - Manages: TeleprompterView (lyrics/chords for performance)
-   - Files: TeleprompterView.tsx
-   - Expertise: Stage performance UI (3-4.5rem text, 7:1 contrast)
+   - Manages: Stage performance teleprompter views (if present)
+   - Files: None in this project
+   - Expertise: Large-scale performance UI
+   - Design: Extra-large text (3-4.5rem), very high contrast
    - Viewing Distance: 3-10 feet (stage use)
+   - **NOTE:** This project appears to be a web builder UI, not a teleprompter app
 
 **CURRENT DESIGN SPEC:**
-- UI Context Detected: ${spec.detectedContext || 'unknown'}
+- UI Context Detected: ${spec.detectedContext || 'Modern web application builder UI'}
 - Current Score: ${spec.currentScore}/10
 - Issues Found: ${spec.currentIssues.length}
 
@@ -176,10 +179,9 @@ ${idx + 1}. **${rec.title}** (${rec.dimension})
 
 **YOUR TASK:**
 Think strategically about:
-1. Which recommendations belong to which UI context?
-2. Which specialist agent should handle each?
+1. This appears to be a web builder UI - most changes should go to ControlPanelAgent
+2. Which recommendations can be implemented vs should be skipped?
 3. What's the priority order?
-4. Should any recommendations be skipped?
 
 Return a routing plan as JSON:
 
@@ -187,20 +189,12 @@ Return a routing plan as JSON:
 {
   "decisions": [
     {
-      "agent": "TeleprompterAgent",
+      "agent": "ControlPanelAgent",
       "recommendations": [
-        /* Subset of recommendations that match this agent's expertise */
+        /* Include recommendations that improve the web UI */
       ],
       "reasoning": "Why these belong to this agent",
       "priority": "high"
-    },
-    {
-      "agent": "ControlPanelAgent",
-      "recommendations": [
-        /* Subset of recommendations for control panel */
-      ],
-      "reasoning": "Why these belong to this agent",
-      "priority": "medium"
     }
   ],
   "strategy": "Overall strategy explanation",
@@ -209,12 +203,12 @@ Return a routing plan as JSON:
 \`\`\`
 
 **IMPORTANT:**
-- Route recommendations to the specialist with matching expertise
-- Don't assign teleprompter changes to ControlPanelAgent (wrong sizing!)
-- Don't assign settings changes to TeleprompterAgent (wrong context!)
-- Use 'skip' for recommendations that don't fit any specialist
+- Most recommendations should go to ControlPanelAgent for this project
+- Skip recommendations that require new files or major refactoring
+- Focus on actionable improvements to existing components
+- TeleprompterAgent will likely have no work (wrong project type)
 
-Think carefully about UI context boundaries, then provide your routing plan.`;
+Think carefully about which changes are feasible, then provide your routing plan.`;
   }
 
   /**

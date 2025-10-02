@@ -130,7 +130,7 @@ cd /Users/danielconnolly/Projects/Performia/frontend
 npm run dev
 
 # Terminal 2: Run VIZTRTR (limit to 2 iterations for testing)
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run build
 node dist/test-performia.js
 ```
@@ -138,7 +138,7 @@ node dist/test-performia.js
 ### Expected Log Output:
 
 ```
-🚀 Starting VIZTRITR iteration cycle...
+🚀 Starting VIZTRTR iteration cycle...
    Target Score: 8.5/10
    Max Iterations: 5
    Output: /Users/danielconnolly/Projects/Performia/viztritr-output

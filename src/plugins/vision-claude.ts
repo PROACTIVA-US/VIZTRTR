@@ -5,10 +5,10 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { Screenshot, DesignSpec, Issue, Recommendation, VIZTRITRPlugin } from '../core/types';
+import { Screenshot, DesignSpec, Issue, Recommendation, VIZTRTRPlugin } from '../core/types';
 import * as fs from 'fs';
 
-export class ClaudeOpusVisionPlugin implements VIZTRITRPlugin {
+export class ClaudeOpusVisionPlugin implements VIZTRTRPlugin {
   name = 'claude-opus-vision';
   version = '1.0.0';
   type = 'vision' as const;

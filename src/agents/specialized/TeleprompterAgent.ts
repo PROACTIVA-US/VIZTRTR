@@ -24,7 +24,9 @@ export class TeleprompterAgent {
   private model = 'claude-sonnet-4-20250514';
 
   // Known files this agent is responsible for
-  private readonly MANAGED_FILES = ['components/TeleprompterView.tsx'];
+  // Note: This project doesn't have a teleprompter view - it's a VIZTRTR UI builder
+  // This agent should skip recommendations unless they're truly performance-critical
+  private readonly MANAGED_FILES: string[] = [];
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
@@ -91,22 +93,42 @@ export class TeleprompterAgent {
       const jsonText = jsonMatch[1] || jsonMatch[0];
       const implementation = JSON.parse(jsonText);
 
-      // Validate file is in our managed set
-      if (!this.MANAGED_FILES.includes(implementation.filePath)) {
-        console.warn(
-          `   ⚠️  File not managed by TeleprompterAgent: ${implementation.filePath}`
-        );
+      // Normalize file path (remove leading slashes, normalize separators)
+      const normalizedPath = implementation.filePath.replace(/^\/+/, '').replace(/\\/g, '/');
+
+      // Skip if no managed files (this project may not have teleprompter components)
+      if (this.MANAGED_FILES.length === 0) {
+        console.warn(`   ⚠️  TeleprompterAgent has no managed files for this project`);
         return null;
       }
 
-      const fullPath = path.join(projectPath, implementation.filePath);
+      // Validate file is in our managed set
+      if (!this.MANAGED_FILES.includes(normalizedPath)) {
+        console.warn(
+          `   ⚠️  File not managed by TeleprompterAgent: ${normalizedPath}`
+        );
+        console.warn(`   📋 Managed files: ${this.MANAGED_FILES.join(', ')}`);
+        return null;
+      }
+
+      const fullPath = path.join(projectPath, normalizedPath);
+
+      // Check file exists before attempting to read
+      try {
+        await fs.access(fullPath);
+      } catch (e) {
+        console.error(`   ❌ File not found: ${fullPath}`);
+        console.error(`   💡 Project path: ${projectPath}`);
+        console.error(`   💡 Attempted file: ${normalizedPath}`);
+        return null;
+      }
 
       // Read existing content
       let oldContent = '';
       try {
         oldContent = await fs.readFile(fullPath, 'utf-8');
       } catch (e) {
-        console.error(`   ❌ File not found: ${fullPath}`);
+        console.error(`   ❌ Error reading file: ${fullPath}`, e);
         return null;
       }
 

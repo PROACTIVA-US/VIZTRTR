@@ -1,11 +1,11 @@
 /**
- * VIZTRITR Demo
+ * VIZTRTR Demo
  *
- * Runs VIZTRITR on the Performia upload interface
+ * Runs VIZTRTR on the Performia upload interface
  */
 
-import { VIZTRITROrchestrator } from '../src/core/orchestrator';
-import { VIZTRITRConfig } from '../src/core/types';
+import { VIZTRTROrchestrator } from '../src/core/orchestrator';
+import { VIZTRTRConfig } from '../src/core/types';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -13,7 +13,7 @@ import * as path from 'path';
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 async function main() {
-  const config: VIZTRITRConfig = {
+  const config: VIZTRTRConfig = {
     // Project settings
     projectPath: path.join(__dirname, '../../frontend'),
     frontendUrl: 'http://localhost:5001',
@@ -47,7 +47,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('🎨 VIZTRITR - Visual Iteration Orchestrator');
+  console.log('🎨 VIZTRTR - Visual Iteration Orchestrator');
   console.log('━'.repeat(70));
   console.log(`   Project: ${config.projectPath}`);
   console.log(`   URL: ${config.frontendUrl}`);
@@ -57,7 +57,7 @@ async function main() {
   console.log();
 
   // Create orchestrator
-  const orchestrator = new VIZTRITROrchestrator(config);
+  const orchestrator = new VIZTRTROrchestrator(config);
 
   try {
     // Run iteration cycle

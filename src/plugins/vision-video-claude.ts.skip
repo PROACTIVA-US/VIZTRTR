@@ -1,0 +1,500 @@
+/**
+ * Claude Video Vision Plugin
+ *
+ * Analyzes video frames sequentially to understand animations, transitions,
+ * and interaction flows using Claude Opus vision capabilities
+ */
+
+import Anthropic from '@anthropic-ai/sdk';
+import * as fs from 'fs';
+import {
+  VideoDesignSpec,
+  VideoFrame,
+  AnimationPattern,
+  TransitionPattern,
+  InteractionFlow,
+  Issue,
+  Recommendation,
+  Screenshot,
+  DesignSpec,
+} from '../core/types';
+import { ClaudeOpusVisionPlugin } from './vision-claude';
+import { VideoProcessor } from './video-processor';
+
+export class ClaudeVideoVisionPlugin extends ClaudeOpusVisionPlugin {
+  name = 'claude-video-vision';
+  version = '1.0.0';
+
+  private videoProcessor: VideoProcessor;
+
+  constructor(apiKey: string) {
+    super(apiKey);
+    this.videoProcessor = new VideoProcessor();
+  }
+
+  /**
+   * Analyze entire video and extract design insights
+   */
+  async analyzeVideo(videoPath: string, outputDir?: string): Promise<VideoDesignSpec> {
+    console.log(`Analyzing video: ${videoPath}`);
+
+    // Process video to extract frames
+    const frameOutputDir = outputDir || `./video-frames-${Date.now()}`;
+    const result = await this.videoProcessor.processVideo(videoPath, frameOutputDir, {
+      fps: 2,
+      keyframesOnly: true,
+      maxFrames: 30, // Limit to 30 frames for cost efficiency
+      sceneChangeThreshold: 0.3,
+    });
+
+    console.log(`Extracted ${result.frames.length} frames, analyzing...`);
+
+    // Analyze frame sequence
+    return await this.analyzeFrameSequence(result.frames);
+  }
+
+  /**
+   * Analyze a sequence of video frames
+   */
+  async analyzeFrameSequence(frames: VideoFrame[]): Promise<VideoDesignSpec> {
+    if (frames.length === 0) {
+      throw new Error('No frames to analyze');
+    }
+
+    // Analyze individual frames
+    console.log('Analyzing individual frames...');
+    const frameAnalyses = await this.analyzeIndividualFrames(frames);
+
+    // Detect animations across frames
+    console.log('Detecting animation patterns...');
+    const animations = await this.detectAnimations(frames);
+
+    // Detect transitions
+    console.log('Detecting transitions...');
+    const transitions = await this.detectTransitions(frames);
+
+    // Detect interaction flows
+    console.log('Detecting interaction flows...');
+    const interactionFlows = await this.detectInteractionFlows(frames);
+
+    // Aggregate overall design spec
+    console.log('Generating comprehensive design specification...');
+    const overallSpec = await this.generateOverallSpec(frames, frameAnalyses);
+
+    // Identify temporal issues (animation/transition problems)
+    const temporalIssues = this.identifyTemporalIssues(animations, transitions);
+
+    return {
+      ...overallSpec,
+      animations,
+      transitions,
+      interactionFlows,
+      temporalIssues,
+      frameAnalyses,
+    };
+  }
+
+  /**
+   * Analyze individual frames
+   */
+  private async analyzeIndividualFrames(
+    frames: VideoFrame[]
+  ): Promise<VideoDesignSpec['frameAnalyses']> {
+    const analyses: VideoDesignSpec['frameAnalyses'] = [];
+
+    // Sample frames for detailed analysis (every 5th frame or keyframes)
+    const samplesToAnalyze = frames.filter(
+      (f, i) => f.isKeyframe || i % 5 === 0
+    ).slice(0, 10); // Max 10 detailed analyses
+
+    for (const frame of samplesToAnalyze) {
+      try {
+        const base64 = await this.videoProcessor.loadFrameAsBase64(frame.path);
+        const screenshot: Screenshot = {
+          path: frame.path,
+          base64,
+          width: frame.width,
+          height: frame.height,
+          timestamp: new Date(),
+        };
+
+        const spec = await this.analyzeScreenshot(screenshot);
+
+        analyses.push({
+          frameNumber: frame.frameNumber,
+          timestamp: frame.timestamp,
+          score: spec.currentScore,
+          issues: spec.currentIssues,
+        });
+      } catch (error) {
+        console.warn(`Failed to analyze frame ${frame.frameNumber}:`, error);
+      }
+    }
+
+    return analyses;
+  }
+
+  /**
+   * Detect animation patterns across frame sequence
+   */
+  async detectAnimations(frames: VideoFrame[]): Promise<AnimationPattern[]> {
+    if (frames.length < 3) {
+      return [];
+    }
+
+    // Load first, middle, and last frames for comparison
+    const sampleIndices = [
+      0,
+      Math.floor(frames.length / 3),
+      Math.floor((2 * frames.length) / 3),
+      frames.length - 1,
+    ];
+
+    const sampleFrames = await Promise.all(
+      sampleIndices.map(async (i) => ({
+        frame: frames[i],
+        base64: await this.videoProcessor.loadFrameAsBase64(frames[i].path),
+      }))
+    );
+
+    const response = await (this as any).client.messages.create({
+      model: (this as any).model,
+      max_tokens: 4096,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            ...sampleFrames.map((sf, idx) => ({
+              type: 'image' as const,
+              source: {
+                type: 'base64' as const,
+                media_type: 'image/png' as const,
+                data: sf.base64,
+              },
+            })),
+            {
+              type: 'text',
+              text: this.getAnimationDetectionPrompt(sampleFrames.map((sf) => sf.frame)),
+            },
+          ],
+        },
+      ],
+    });
+
+    const analysisText =
+      response.content[0].type === 'text' ? response.content[0].text : '';
+    return this.parseAnimations(analysisText, frames);
+  }
+
+  /**
+   * Detect transitions between scenes
+   */
+  async detectTransitions(frames: VideoFrame[]): Promise<TransitionPattern[]> {
+    const transitions: TransitionPattern[] = [];
+
+    // Focus on keyframes which mark scene changes
+    const keyframes = frames.filter((f) => f.isKeyframe);
+
+    for (let i = 0; i < keyframes.length - 1; i++) {
+      const fromFrame = keyframes[i];
+      const toFrame = keyframes[i + 1];
+
+      transitions.push({
+        type: 'cut', // Default to cut, can be refined with deeper analysis
+        fromFrame: fromFrame.frameNumber,
+        toFrame: toFrame.frameNumber,
+        duration: toFrame.timestamp - fromFrame.timestamp,
+        quality: 7, // Default quality score
+      });
+    }
+
+    return transitions;
+  }
+
+  /**
+   * Detect interaction flows from frame sequence
+   */
+  async detectInteractionFlows(frames: VideoFrame[]): Promise<InteractionFlow[]> {
+    if (frames.length < 5) {
+      return [];
+    }
+
+    // Sample key interaction points (beginning, middle, end)
+    const sampleIndices = [
+      0,
+      Math.floor(frames.length / 4),
+      Math.floor(frames.length / 2),
+      Math.floor((3 * frames.length) / 4),
+      frames.length - 1,
+    ];
+
+    const sampleFrames = await Promise.all(
+      sampleIndices.map(async (i) => ({
+        frame: frames[i],
+        base64: await this.videoProcessor.loadFrameAsBase64(frames[i].path),
+      }))
+    );
+
+    const response = await (this as any).client.messages.create({
+      model: (this as any).model,
+      max_tokens: 4096,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            ...sampleFrames.map((sf) => ({
+              type: 'image' as const,
+              source: {
+                type: 'base64' as const,
+                media_type: 'image/png' as const,
+                data: sf.base64,
+              },
+            })),
+            {
+              type: 'text',
+              text: this.getInteractionFlowPrompt(sampleFrames.map((sf) => sf.frame)),
+            },
+          ],
+        },
+      ],
+    });
+
+    const analysisText =
+      response.content[0].type === 'text' ? response.content[0].text : '';
+    return this.parseInteractionFlows(analysisText, sampleFrames.map((sf) => sf.frame));
+  }
+
+  /**
+   * Generate overall design specification from all frame analyses
+   */
+  private async generateOverallSpec(
+    frames: VideoFrame[],
+    frameAnalyses: VideoDesignSpec['frameAnalyses']
+  ): Promise<DesignSpec> {
+    // Use the first frame for base analysis
+    const firstFrame = frames[0];
+    const base64 = await this.videoProcessor.loadFrameAsBase64(firstFrame.path);
+
+    const screenshot: Screenshot = {
+      path: firstFrame.path,
+      base64,
+      width: firstFrame.width,
+      height: firstFrame.height,
+      timestamp: new Date(),
+    };
+
+    const baseSpec = await this.analyzeScreenshot(screenshot);
+
+    // Calculate average score across analyzed frames
+    const avgScore =
+      frameAnalyses.reduce((sum, fa) => sum + fa.score, 0) / frameAnalyses.length || baseSpec.currentScore;
+
+    // Aggregate all issues
+    const allIssues = frameAnalyses.flatMap((fa) => fa.issues);
+    const uniqueIssues = this.deduplicateIssues(allIssues);
+
+    return {
+      ...baseSpec,
+      currentScore: avgScore,
+      currentIssues: uniqueIssues,
+      estimatedNewScore: Math.min(avgScore + 1.5, 10),
+    };
+  }
+
+  /**
+   * Identify temporal issues specific to animations/transitions
+   */
+  private identifyTemporalIssues(
+    animations: AnimationPattern[],
+    transitions: TransitionPattern[]
+  ): Issue[] {
+    const issues: Issue[] = [];
+
+    // Check animation quality
+    animations.forEach((anim) => {
+      if (anim.quality < 5) {
+        issues.push({
+          dimension: 'animation_interaction',
+          severity: 'important',
+          description: `Poor quality ${anim.type} animation`,
+          location: anim.element || `Frames ${anim.startFrame}-${anim.endFrame}`,
+        });
+      }
+
+      if (anim.duration < 0.2) {
+        issues.push({
+          dimension: 'animation_interaction',
+          severity: 'minor',
+          description: `Animation too fast (${(anim.duration * 1000).toFixed(0)}ms)`,
+          location: anim.element || `Frame ${anim.startFrame}`,
+        });
+      }
+
+      if (anim.duration > 1.0) {
+        issues.push({
+          dimension: 'animation_interaction',
+          severity: 'minor',
+          description: `Animation too slow (${anim.duration.toFixed(1)}s)`,
+          location: anim.element || `Frame ${anim.startFrame}`,
+        });
+      }
+    });
+
+    // Check transition quality
+    transitions.forEach((trans) => {
+      if (trans.quality < 5) {
+        issues.push({
+          dimension: 'animation_interaction',
+          severity: 'important',
+          description: `Poor quality ${trans.type} transition`,
+          location: `Frames ${trans.fromFrame}-${trans.toFrame}`,
+        });
+      }
+    });
+
+    return issues;
+  }
+
+  /**
+   * Deduplicate similar issues
+   */
+  private deduplicateIssues(issues: Issue[]): Issue[] {
+    const seen = new Set<string>();
+    return issues.filter((issue) => {
+      const key = `${issue.dimension}:${issue.description}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  /**
+   * Get animation detection prompt
+   */
+  private getAnimationDetectionPrompt(frames: VideoFrame[]): string {
+    return `You are analyzing a sequence of ${frames.length} video frames to identify animation patterns.
+
+**Frame timestamps:**
+${frames.map((f, i) => `Frame ${i + 1}: t=${f.timestamp.toFixed(2)}s`).join('\n')}
+
+**Your task:**
+Identify animation patterns across these frames. For each animation, provide:
+
+1. **Type**: fade, slide, zoom, rotate, morph, parallax, or custom
+2. **Element**: Which UI element is animating (be specific)
+3. **Duration**: How long the animation lasts
+4. **Easing**: The easing function (linear, ease-in, ease-out, ease-in-out, etc.)
+5. **Quality**: Rate the animation quality 1-10 (smoothness, purpose, execution)
+6. **Description**: Brief description of what's happening
+
+**Output Format (JSON):**
+
+\`\`\`json
+{
+  "animations": [
+    {
+      "type": "fade",
+      "element": ".modal-overlay",
+      "startFrame": 1,
+      "endFrame": 3,
+      "duration": 0.3,
+      "easing": "ease-out",
+      "description": "Modal overlay fades in smoothly",
+      "quality": 8
+    }
+  ]
+}
+\`\`\`
+
+Analyze the frames and respond with JSON only.`;
+  }
+
+  /**
+   * Get interaction flow detection prompt
+   */
+  private getInteractionFlowPrompt(frames: VideoFrame[]): string {
+    return `You are analyzing a sequence of ${frames.length} video frames to identify user interaction flows.
+
+**Frame timestamps:**
+${frames.map((f, i) => `Frame ${i + 1}: t=${f.timestamp.toFixed(2)}s`).join('\n')}
+
+**Your task:**
+Identify the user interaction flow shown in this video. Provide:
+
+1. **Sequence**: Array of screen state descriptions
+2. **Description**: Overall flow description
+3. **Usability Score**: Rate the flow's usability 1-10
+
+**Output Format (JSON):**
+
+\`\`\`json
+{
+  "flows": [
+    {
+      "sequence": [
+        "Landing page with login button",
+        "Login form appears",
+        "User enters credentials",
+        "Success message and redirect",
+        "Dashboard view"
+      ],
+      "description": "Standard login flow with clear visual feedback",
+      "usabilityScore": 8
+    }
+  ]
+}
+\`\`\`
+
+Analyze the frames and respond with JSON only.`;
+  }
+
+  /**
+   * Parse animation patterns from Claude response
+   */
+  private parseAnimations(text: string, allFrames: VideoFrame[]): AnimationPattern[] {
+    try {
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return [];
+
+      const jsonStr = jsonMatch[1] || jsonMatch[0];
+      const parsed = JSON.parse(jsonStr);
+
+      return (parsed.animations || []).map((anim: any) => ({
+        type: anim.type || 'custom',
+        element: anim.element,
+        startFrame: anim.startFrame || 0,
+        endFrame: anim.endFrame || allFrames.length - 1,
+        duration: anim.duration || 0.3,
+        easing: anim.easing || 'ease',
+        description: anim.description || '',
+        quality: anim.quality || 7,
+      }));
+    } catch (error) {
+      console.warn('Failed to parse animations:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Parse interaction flows from Claude response
+   */
+  private parseInteractionFlows(text: string, frames: VideoFrame[]): InteractionFlow[] {
+    try {
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return [];
+
+      const jsonStr = jsonMatch[1] || jsonMatch[0];
+      const parsed = JSON.parse(jsonStr);
+
+      return (parsed.flows || []).map((flow: any) => ({
+        sequence: flow.sequence || [],
+        frames: frames.map((f) => f.frameNumber),
+        description: flow.description || '',
+        usabilityScore: flow.usabilityScore || 7,
+      }));
+    } catch (error) {
+      console.warn('Failed to parse interaction flows:', error);
+      return [];
+    }
+  }
+}

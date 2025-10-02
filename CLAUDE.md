@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VIZTRITR is an autonomous UI/UX improvement system that uses AI vision models to analyze, improve, and evaluate web interfaces through iterative cycles. The goal is to automatically improve designs until they reach production-ready quality (8.5+/10 score).
+VIZTRTR is an autonomous UI/UX improvement system that uses AI vision models to analyze, improve, and evaluate web interfaces through iterative cycles. The goal is to automatically improve designs until they reach production-ready quality (8.5+/10 score).
 
 ## Project Structure
 
 ```
-VIZTRITR/
+VIZTRTR/
 ├── src/
 │   ├── core/                 # Core orchestrator, types, exports
 │   ├── plugins/              # Vision, capture, implementation plugins
@@ -156,12 +156,12 @@ The agent workflow:
 6. Returns structured `Changes` object
 
 ### Plugin Architecture
-To add a new plugin, implement the `VIZTRITRPlugin` interface:
+To add a new plugin, implement the `VIZTRTRPlugin` interface:
 - `type`: 'vision' | 'implementation' | 'evaluation' | 'capture'
 - Implement relevant method(s): `analyzeScreenshot`, `implementChanges`, `scoreDesign`, or `captureScreenshot`
 
 ### Configuration
-Main config object (`VIZTRITRConfig` in `src/core/types.ts`) controls:
+Main config object (`VIZTRTRConfig` in `src/core/types.ts`) controls:
 - `projectPath` - Absolute path to frontend project
 - `frontendUrl` - Running dev server URL
 - `targetScore` - Quality threshold (0-10, default: 8.5)
@@ -185,7 +185,7 @@ Main config object (`VIZTRITRConfig` in `src/core/types.ts`) controls:
 
 ### When Adding a New Project
 1. Create `projects/project-name/` directory
-2. Add `config.ts` with `VIZTRITRConfig` object
+2. Add `config.ts` with `VIZTRTRConfig` object
 3. Add `test.ts` with test runner
 4. Add npm script: `"test:project-name": "npm run build && node dist/projects/project-name/test.js"`
 5. Document in project README or guide
@@ -216,7 +216,7 @@ npm run precommit  # Runs lint, format check, typecheck
 
 When writing code that references files:
 - Core types: `import { Type } from '../../src/core/types'`
-- Orchestrator: `import { VIZTRITROrchestrator } from '../../src/core/orchestrator'`
+- Orchestrator: `import { VIZTRTROrchestrator } from '../../src/core/orchestrator'`
 - From agents to types: `import { Type } from '../core/types'`
 - From plugins to types: `import { Type } from '../core/types'`
 

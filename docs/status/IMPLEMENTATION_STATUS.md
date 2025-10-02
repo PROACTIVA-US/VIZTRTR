@@ -1,4 +1,4 @@
-# VIZTRITR Architectural Improvements - Implementation Status
+# VIZTRTR Architectural Improvements - Implementation Status
 
 ## ✅ Phase 1: Memory & Feedback Loops (COMPLETED)
 
@@ -212,21 +212,21 @@ We'll create:
 Once orchestrator is updated:
 
 ```bash
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run build
 
 # Terminal 1: Start Performia
 cd /Users/danielconnolly/Projects/Performia/frontend
 npm run dev
 
-# Terminal 2: Run VIZTRITR
-cd /Users/danielconnolly/Projects/VIZTRITR
+# Terminal 2: Run VIZTRTR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run test:performia
 ```
 
 Expected logs will show:
 ```
-🚀 Starting VIZTRITR iteration cycle...
+🚀 Starting VIZTRTR iteration cycle...
    Loading memory from disk...
    No existing memory found, starting fresh
 

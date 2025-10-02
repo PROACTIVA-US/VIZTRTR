@@ -1,10 +1,10 @@
-# Setting Up a New Project with VIZTRITR
+# Setting Up a New Project with VIZTRTR
 
-This guide walks you through setting up VIZTRITR to test your own frontend application.
+This guide walks you through setting up VIZTRTR to test your own frontend application.
 
 ## Overview
 
-To use VIZTRITR on your project, you'll create:
+To use VIZTRTR on your project, you'll create:
 
 1. A project directory in `projects/your-project/`
 2. A configuration file (`config.ts`)
@@ -26,12 +26,12 @@ Replace `my-project` with your project name (use lowercase with hyphens).
 Create `projects/my-project/config.ts`:
 
 ```typescript
-import { VIZTRITRConfig } from '../../src/core/types';
+import { VIZTRTRConfig } from '../../src/core/types';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-export const myProjectConfig: VIZTRITRConfig = {
+export const myProjectConfig: VIZTRTRConfig = {
   // ============================================================================
   // PROJECT SETTINGS
   // ============================================================================
@@ -103,14 +103,14 @@ export default myProjectConfig;
 Create `projects/my-project/test.ts`:
 
 ```typescript
-import { VIZTRITROrchestrator } from '../../src/core/orchestrator';
+import { VIZTRTROrchestrator } from '../../src/core/orchestrator';
 import myProjectConfig from './config';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 async function main() {
-  console.log('🎨 VIZTRITR - My Project');
+  console.log('🎨 VIZTRTR - My Project');
   console.log('='.repeat(70));
   console.log('\n📋 Configuration:');
   console.log(`   Project: ${myProjectConfig.projectPath}`);
@@ -148,16 +148,16 @@ async function main() {
   }
 
   // ============================================================================
-  // RUN VIZTRITR
+  // RUN VIZTRTR
   // ============================================================================
 
-  console.log('🚀 Starting VIZTRITR iteration cycle...');
+  console.log('🚀 Starting VIZTRTR iteration cycle...');
   console.log(`   Target Score: ${myProjectConfig.targetScore}/10`);
   console.log(`   Max Iterations: ${myProjectConfig.maxIterations}`);
   console.log(`   Output: ${myProjectConfig.outputDir}\n`);
 
   try {
-    const orchestrator = new VIZTRITROrchestrator(myProjectConfig);
+    const orchestrator = new VIZTRTROrchestrator(myProjectConfig);
     const report = await orchestrator.run();
 
     // ============================================================================
@@ -211,7 +211,7 @@ async function main() {
     process.exit(report.targetReached ? 0 : 1);
 
   } catch (error) {
-    console.error('\n❌ Error running VIZTRITR:', error);
+    console.error('\n❌ Error running VIZTRTR:', error);
     process.exit(1);
   }
 }
@@ -240,8 +240,8 @@ Replace `my-project` with your project name.
 cd /path/to/your/frontend
 npm run dev
 
-# In another terminal, run VIZTRITR
-cd /path/to/VIZTRITR
+# In another terminal, run VIZTRTR
+cd /path/to/VIZTRTR
 npm run test:my-project
 ```
 
@@ -254,21 +254,21 @@ npm run test:my-project
 **Required:** Yes
 **Example:** `'/Users/me/projects/my-app'`
 
-The absolute path to your frontend project root directory. This is where VIZTRITR will look for and modify source files.
+The absolute path to your frontend project root directory. This is where VIZTRTR will look for and modify source files.
 
 #### `frontendUrl`
 **Type:** `string` (URL)
 **Required:** Yes
 **Example:** `'http://localhost:3000'`
 
-The URL where your dev server is running. VIZTRITR will screenshot this URL.
+The URL where your dev server is running. VIZTRTR will screenshot this URL.
 
 #### `outputDir`
 **Type:** `string` (absolute path)
 **Required:** Yes
 **Example:** `'/tmp/viztritr-output'`
 
-Where VIZTRITR saves all results. Will be created if it doesn't exist.
+Where VIZTRTR saves all results. Will be created if it doesn't exist.
 
 ### Quality Settings
 
@@ -277,7 +277,7 @@ Where VIZTRITR saves all results. Will be created if it doesn't exist.
 **Default:** `8.5`
 **Recommended:** `8.5` for production, `7.5` for MVP
 
-The quality threshold. VIZTRITR stops when this score is reached.
+The quality threshold. VIZTRTR stops when this score is reached.
 
 | Score | Meaning |
 |-------|---------|
@@ -351,7 +351,7 @@ Code implementation model. Currently only Claude Sonnet 4 with extended thinking
 ### SaaS Dashboard
 
 ```typescript
-export const dashboardConfig: VIZTRITRConfig = {
+export const dashboardConfig: VIZTRTRConfig = {
   projectPath: '/Users/me/saas-app',
   frontendUrl: 'http://localhost:3000/dashboard',
   targetScore: 8.5,
@@ -373,7 +373,7 @@ export const dashboardConfig: VIZTRITRConfig = {
 ### Mobile-First App
 
 ```typescript
-export const mobileConfig: VIZTRITRConfig = {
+export const mobileConfig: VIZTRTRConfig = {
   projectPath: '/Users/me/mobile-app',
   frontendUrl: 'http://localhost:3000',
   targetScore: 8.0,
@@ -395,7 +395,7 @@ export const mobileConfig: VIZTRITRConfig = {
 ### Marketing Landing Page
 
 ```typescript
-export const landingConfig: VIZTRITRConfig = {
+export const landingConfig: VIZTRTRConfig = {
   projectPath: '/Users/me/landing-page',
   frontendUrl: 'http://localhost:3000',
   targetScore: 9.0,  // High bar for marketing
@@ -500,13 +500,13 @@ If it suggests avoiding certain files repeatedly, consider those optimizations c
 
 ### 5. Version Control Integration
 
-Before running VIZTRITR:
+Before running VIZTRTR:
 
 ```bash
 # Create a git branch
 git checkout -b viztritr-improvements
 
-# Run VIZTRITR
+# Run VIZTRTR
 npm run test:my-project
 
 # Review changes
@@ -514,7 +514,7 @@ git diff
 
 # Commit if good
 git add -A
-git commit -m "feat: UI improvements from VIZTRITR"
+git commit -m "feat: UI improvements from VIZTRTR"
 ```
 
 ## Next Steps

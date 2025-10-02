@@ -89,7 +89,7 @@ export class ReflectionAgent {
     const scoreDelta = afterScore - beforeScore;
     const trend = memory.scoreHistory.length > 0 ? this.analyzeTrend(memory) : 'unknown';
 
-    return `You are a REFLECTION AGENT for the VIZTRITR autonomous UI improvement system.
+    return `You are a REFLECTION AGENT for the VIZTRTR autonomous UI improvement system.
 
 Your task is to **think deeply** about what just happened and provide strategic guidance for the next iteration.
 

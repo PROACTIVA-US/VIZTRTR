@@ -13,19 +13,27 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { Recommendation, FileChange } from '../../core/types';
+import { Recommendation, FileChange, ValidationResult } from '../../core/types';
+import { validateFileChanges, formatValidationResult } from '../../core/validation';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 export class ControlPanelAgent {
   private client: Anthropic;
   private model = 'claude-sonnet-4-20250514';
+  private validationStats = {
+    total: 0,
+    passed: 0,
+    failed: 0,
+  };
 
   // Known files this agent is responsible for
   private readonly MANAGED_FILES = [
-    'components/SettingsPanel.tsx',
-    'components/Header.tsx',
-    'components/LibraryView.tsx',
+    'src/components/Header.tsx',
+    'src/components/PromptInput.tsx',
+    'src/components/Footer.tsx',
+    'src/components/AgentCard.tsx',
+    'src/components/AgentOrchestration.tsx',
   ];
 
   constructor(apiKey: string) {
@@ -42,12 +50,18 @@ export class ControlPanelAgent {
     console.log(`   🎛️  ControlPanelAgent processing ${recommendations.length} recommendations...`);
 
     const changes: FileChange[] = [];
+    this.validationStats = { total: 0, passed: 0, failed: 0 };
 
     for (const rec of recommendations) {
       const change = await this.implementRecommendation(rec, projectPath);
       if (change) {
         changes.push(change);
       }
+    }
+
+    // Log validation stats
+    if (this.validationStats.total > 0) {
+      console.log(`   📊 Validation: ${this.validationStats.passed}/${this.validationStats.total} passed`);
     }
 
     return changes;
@@ -90,22 +104,67 @@ export class ControlPanelAgent {
       const jsonText = jsonMatch[1] || jsonMatch[0];
       const implementation = JSON.parse(jsonText);
 
+      // Normalize file path (remove leading slashes, normalize separators)
+      const normalizedPath = implementation.filePath.replace(/^\/+/, '').replace(/\\/g, '/');
+
       // Validate file is in our managed set
-      if (!this.MANAGED_FILES.includes(implementation.filePath)) {
-        console.warn(`   ⚠️  File not managed by ControlPanelAgent: ${implementation.filePath}`);
+      if (!this.MANAGED_FILES.includes(normalizedPath)) {
+        console.warn(`   ⚠️  File not managed by ControlPanelAgent: ${normalizedPath}`);
+        console.warn(`   📋 Managed files: ${this.MANAGED_FILES.join(', ')}`);
         return null;
       }
 
-      const fullPath = path.join(projectPath, implementation.filePath);
+      const fullPath = path.join(projectPath, normalizedPath);
+
+      // Check file exists before attempting to read
+      try {
+        await fs.access(fullPath);
+      } catch (e) {
+        console.error(`   ❌ File not found: ${fullPath}`);
+        console.error(`   💡 Project path: ${projectPath}`);
+        console.error(`   💡 Attempted file: ${normalizedPath}`);
+        return null;
+      }
 
       // Read existing content
       let oldContent = '';
       try {
         oldContent = await fs.readFile(fullPath, 'utf-8');
       } catch (e) {
-        console.error(`   ❌ File not found: ${fullPath}`);
+        console.error(`   ❌ Error reading file: ${fullPath}`, e);
         return null;
       }
+
+      // VALIDATION: Check scope constraints
+      this.validationStats.total++;
+
+      const validationResult = validateFileChanges(
+        oldContent,
+        implementation.newCode,
+        {
+          maxLineDelta: 100,
+          maxGrowthPercent: 0.5,
+          preserveExports: true,
+          preserveImports: true,
+          effortBasedLineLimits: {
+            low: 20,
+            medium: 50,
+            high: 100,
+          },
+        },
+        recommendation.effort
+      );
+
+      console.log('\n' + formatValidationResult(validationResult));
+
+      if (!validationResult.valid) {
+        this.validationStats.failed++;
+        console.warn(`   ❌ Change REJECTED: ${validationResult.reason}`);
+        console.warn(`   💡 Make smaller, more targeted changes`);
+        return null;
+      }
+
+      this.validationStats.passed++;
 
       // Create backup
       const backupPath = `${fullPath}.backup.${Date.now()}`;
@@ -144,29 +203,53 @@ You ONLY modify these files:
 ${this.MANAGED_FILES.map((f) => `- ${f}`).join('\n')}
 
 **DESIGN CRITERIA FOR CONTROL PANELS:**
-- Normal desktop sizing: 32-36px buttons, 0.875-1rem text
-- NOT stage-friendly (that's TeleprompterAgent's job)
+- Normal desktop sizing: 32-48px buttons, 0.875-1.125rem text
+- Modern web UI best practices
 - Optimize for 1-2ft viewing distance (normal desktop use)
-- Information density: Show more data efficiently
+- Information density: Show data efficiently
 - Precise interactions: Mouse and keyboard optimized
+
+**CRITICAL CONSTRAINTS:**
+🚨 MAKE SURGICAL CHANGES ONLY - DO NOT REWRITE FILES!
+
+1. **Make SURGICAL changes only - modify specific lines, not entire files**
+2. **PRESERVE all export statements exactly as they are**
+3. **Maximum ${this.getMaxLinesForEffort(recommendation.effort)} lines changed (effort ${recommendation.effort})**
+4. **Use targeted edits: find specific code blocks and replace them**
+5. **Do NOT rewrite components from scratch**
+6. **Focus on className changes for visual improvements**
+7. **File can grow by max 50% (if 100 lines → max 150 lines)**
+
+Examples of GOOD changes:
+- Change className="text-sm" to className="text-base"
+- Add shadow-md to a button's className
+- Update padding from p-2 to p-4
+- Change bg-gray-100 to bg-gray-50
+
+Examples of BAD changes:
+- Rewriting entire component
+- Changing export statements
+- Adding new components
+- Removing imports
 
 **YOUR TASK:**
 1. **Think** about which of YOUR managed files needs modification
 2. **Read** the existing code structure carefully
-3. **Implement** the change following React/TypeScript/Tailwind best practices
-4. **Return** ONLY the file that needs modification
+3. **Implement** MINIMAL, TARGETED changes (specific classNames, styles)
+4. **Return** ONLY the file that needs modification with surgical edits
 
 **IMPORTANT:**
 - Do NOT create new components or files
-- Do NOT modify TeleprompterView or Blueprint components
 - Stay within YOUR file boundaries
 - Use existing Tailwind utility classes
 - Maintain TypeScript type safety
+- File paths MUST start with "src/components/"
+- Make the SMALLEST possible change to achieve the goal
 
 Return as JSON:
 \`\`\`json
 {
-  "filePath": "components/SettingsPanel.tsx",
+  "filePath": "src/components/Header.tsx",
   "changes": "Brief description of what changed",
   "newCode": "/* Complete file contents with your changes */"
 }
@@ -195,24 +278,47 @@ Think carefully about which file needs modification, then implement the change.`
     return diff;
   }
 
+  private getMaxLinesForEffort(effortScore: number): number {
+    if (effortScore <= 2) return 20;
+    if (effortScore <= 4) return 50;
+    return 100;
+  }
+
   /**
    * Check if this recommendation is relevant to control panel components
    */
   isRelevant(recommendation: Recommendation): boolean {
+    // For a web builder UI, most UI improvements are relevant
     const relevantKeywords = [
-      'settings',
-      'header',
+      'visual',
+      'hierarchy',
+      'typography',
+      'color',
+      'contrast',
+      'spacing',
+      'layout',
+      'component',
+      'accessibility',
       'button',
-      'icon',
+      'form',
+      'input',
+      'header',
+      'footer',
       'navigation',
-      'library',
-      'panel',
-      'control',
-      'upload',
-      'menu',
+      'shadow',
+      'depth',
+      'label',
+      'semantic',
+      'aria',
+      'screen reader',
+      'clickable',
     ];
 
     const text = `${recommendation.title} ${recommendation.description}`.toLowerCase();
-    return relevantKeywords.some((keyword) => text.includes(keyword));
+
+    // Default to true for general web UI improvements
+    // Only exclude if it's clearly not relevant
+    return relevantKeywords.some((keyword) => text.includes(keyword)) ||
+           recommendation.dimension !== 'animation'; // Most things relevant except pure animation
   }
 }

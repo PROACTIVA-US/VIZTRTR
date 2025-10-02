@@ -1,8 +1,8 @@
 /**
- * VIZTRITR Type Definitions
+ * VIZTRTR Type Definitions
  */
 
-export interface VIZTRITRConfig {
+export interface VIZTRTRConfig {
   // Project settings
   projectPath: string;
   frontendUrl: string;
@@ -214,7 +214,7 @@ export interface ScoringRubric {
   };
 }
 
-export interface VIZTRITRPlugin {
+export interface VIZTRTRPlugin {
   name: string;
   version: string;
   type: 'vision' | 'implementation' | 'evaluation' | 'capture';
@@ -230,4 +230,171 @@ export interface VIZTRITRPlugin {
 
   // Capture plugin
   captureScreenshot?(url: string, config: any): Promise<Screenshot>;
+}
+
+// Video Processing Types
+export interface VideoMetadata {
+  duration: number; // seconds
+  fps: number;
+  width: number;
+  height: number;
+  format: string;
+  codec: string;
+  bitrate: number;
+  fileSize: number; // bytes
+}
+
+export interface VideoProcessingOptions {
+  fps?: number; // frames per second to extract (default: 2)
+  keyframesOnly?: boolean; // only extract keyframes (scene changes)
+  startTime?: number; // start time in seconds
+  endTime?: number; // end time in seconds
+  maxFrames?: number; // maximum number of frames to extract
+  resize?: {
+    width: number;
+    height: number;
+  };
+  quality?: number; // 1-100 for PNG compression
+  sceneChangeThreshold?: number; // 0-1, sensitivity for scene detection (default: 0.3)
+  onProgress?: (progress: ProgressInfo) => void;
+}
+
+export interface ProgressInfo {
+  phase: 'metadata' | 'keyframe-detection' | 'extraction' | 'complete';
+  current: number;
+  total: number;
+  percentage: number;
+  currentFile?: string;
+}
+
+export interface SceneChange {
+  timestamp: number; // seconds
+  frameNumber: number;
+  score: number; // 0-1, how different from previous frame
+  description?: string;
+}
+
+export interface VideoFrame {
+  path: string;
+  base64?: string;
+  timestamp: number; // seconds
+  frameNumber: number;
+  width: number;
+  height: number;
+  isKeyframe: boolean;
+}
+
+export interface VideoFrameResult {
+  videoPath: string;
+  metadata: VideoMetadata;
+  frames: VideoFrame[];
+  sceneChanges: SceneChange[];
+  extractionTime: number; // milliseconds
+  outputDirectory: string;
+}
+
+export interface AnimationPattern {
+  type: 'fade' | 'slide' | 'zoom' | 'rotate' | 'morph' | 'parallax' | 'custom';
+  element?: string; // CSS selector or description
+  startFrame: number;
+  endFrame: number;
+  duration: number; // seconds
+  easing?: string;
+  description: string;
+  quality: number; // 1-10 score
+}
+
+export interface TransitionPattern {
+  type: 'cut' | 'fade' | 'dissolve' | 'wipe' | 'slide';
+  fromFrame: number;
+  toFrame: number;
+  duration: number; // seconds
+  quality: number; // 1-10 score
+}
+
+export interface InteractionFlow {
+  sequence: string[]; // array of screen states
+  frames: number[]; // corresponding frame numbers
+  description: string;
+  usabilityScore: number; // 1-10
+}
+
+export interface VideoDesignSpec extends DesignSpec {
+  // Extended for video analysis
+  animations: AnimationPattern[];
+  transitions: TransitionPattern[];
+  interactionFlows: InteractionFlow[];
+  temporalIssues: Issue[]; // issues specific to animations/transitions
+  frameAnalyses: Array<{
+    frameNumber: number;
+    timestamp: number;
+    score: number;
+    issues: Issue[];
+  }>;
+}
+
+// Validation Types for Scope Constraints
+export interface ValidationResult {
+  valid: boolean;
+  reason?: string;
+  originalLines: number;
+  modifiedLines: number;
+  lineDelta: number;
+  lineGrowthPercent: number;
+  exportsChanged: boolean;
+  importsChanged: boolean;
+  violations: string[];
+}
+
+export interface ChangeConstraints {
+  maxLineDelta: number;
+  maxGrowthPercent: number; // 0.5 = 50% max growth
+  preserveExports: boolean;
+  preserveImports: boolean;
+  requireDiffFormat: boolean;
+  effortBasedLineLimits?: {
+    low: number; // effort 1-2: max lines changed
+    medium: number; // effort 3-4: max lines changed
+    high: number; // effort 5+: max lines changed
+  };
+}
+
+// Cross-File Interface Validation Types
+export interface ComponentInterface {
+  exports: ExportSignature[];
+  props?: PropInterface;
+  types: TypeDefinition[];
+  dependencies: string[];
+}
+
+export interface ExportSignature {
+  name: string;
+  type: 'default' | 'named';
+  signature: string;
+}
+
+export interface PropInterface {
+  required: string[];
+  optional: string[];
+  types: Record<string, string>;
+}
+
+export interface TypeDefinition {
+  name: string;
+  definition: string;
+}
+
+export interface BreakingChange {
+  type: 'prop-removed' | 'prop-type-changed' | 'export-changed' | 'type-changed';
+  description: string;
+  before: string;
+  after: string;
+  impact: 'high' | 'medium' | 'low';
+}
+
+export interface CrossFileValidationResult {
+  valid: boolean;
+  breakingChanges: BreakingChange[];
+  affectedFiles: string[];
+  suggestions: string[];
 }

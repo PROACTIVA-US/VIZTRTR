@@ -32,7 +32,7 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 
 ```bash
 # In VIZTRTR directory
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm install
 npm run build
 
@@ -67,7 +67,7 @@ npm run dev
 In a new terminal:
 
 ```bash
-cd /Users/danielconnolly/Projects/VIZTRITR
+cd /Users/danielconnolly/Projects/VIZTRTR
 npm run test:performia
 ```
 

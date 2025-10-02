@@ -5,15 +5,26 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { DesignSpec, Changes, FileChange } from '../core/types';
+import { DesignSpec, Changes, FileChange, ValidationResult, ChangeConstraints, CrossFileValidationResult } from '../core/types';
+import { validateFileChanges, formatValidationResult, getEffortBasedLimit, validateCrossFileInterfaces, formatCrossFileValidationResult } from '../core/validation';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 export class ClaudeSonnetImplementationPlugin {
   private client: Anthropic;
+  private apiKey: string;
+  private validationStats = {
+    total: 0,
+    passed: 0,
+    failed: 0,
+    crossFileChecks: 0,
+    crossFileBlocked: 0,
+    reasons: [] as string[],
+  };
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
+    this.apiKey = apiKey;
   }
 
   async implementChanges(spec: DesignSpec, projectPath: string): Promise<Changes> {
@@ -22,8 +33,11 @@ export class ClaudeSonnetImplementationPlugin {
     const topChanges = spec.prioritizedChanges.slice(0, 3);
     const fileChanges: FileChange[] = [];
 
+    // Reset validation stats for this run
+    this.validationStats = { total: 0, passed: 0, failed: 0, crossFileChecks: 0, crossFileBlocked: 0, reasons: [] };
+
     for (const recommendation of topChanges) {
-      console.log(`   - Implementing: ${recommendation.title}`);
+      console.log(`   - Implementing: ${recommendation.title} (effort: ${recommendation.effort})`);
 
       // Use Claude with extended thinking for complex code generation
       const implementation = await this.generateImplementation(recommendation, projectPath);
@@ -33,9 +47,21 @@ export class ClaudeSonnetImplementationPlugin {
       }
     }
 
+    // Log validation summary
+    console.log('\n   📊 Validation Summary:');
+    console.log(`      Total attempts: ${this.validationStats.total}`);
+    console.log(`      Passed: ${this.validationStats.passed}`);
+    console.log(`      Failed: ${this.validationStats.failed}`);
+    console.log(`      Cross-file checks: ${this.validationStats.crossFileChecks}`);
+    console.log(`      Cross-file blocked: ${this.validationStats.crossFileBlocked}`);
+    if (this.validationStats.failed > 0) {
+      console.log(`      Failure reasons:`);
+      this.validationStats.reasons.forEach(r => console.log(`        - ${r}`));
+    }
+
     return {
       files: fileChanges,
-      summary: `Implemented ${fileChanges.length} design improvements using Claude Sonnet agent`,
+      summary: `Implemented ${fileChanges.length} design improvements using Claude Sonnet agent (${this.validationStats.failed} rejected by scope validation, ${this.validationStats.crossFileBlocked} blocked by cross-file validation)`,
       buildCommand: 'npm run build',
       testCommand: 'npm test',
     };
@@ -56,7 +82,31 @@ Description: ${recommendation.description}
 Impact: ${recommendation.impact}/10
 Effort: ${recommendation.effort}/10
 
-**CRITICAL CONTEXT RULES - RESPECT UI BOUNDARIES:**
+**CRITICAL SCOPE CONSTRAINTS:**
+
+🚨 MAKE SURGICAL CHANGES ONLY - DO NOT REWRITE FILES!
+
+You MUST follow these constraints:
+1. **Maximum Changes Based on Effort:**
+   - Effort 1-2: Change at most 20 lines
+   - Effort 3-4: Change at most 50 lines
+   - Effort 5+: Change at most 100 lines
+
+2. **Preserve Exports:** NEVER modify export statements
+   - Keep exact same export signature
+   - Example: export default MyComponent → MUST STAY EXACTLY THE SAME
+
+3. **Preserve Imports:** Do NOT remove imports unless 100% certain they're unused
+
+4. **File Growth Limit:** New file can be at most 50% larger than original
+   - If original is 100 lines, new file CANNOT exceed 150 lines
+
+5. **Targeted Edits:** Modify specific code blocks, not entire files
+   - Find the specific className, style, or component to change
+   - Replace ONLY that section
+   - Example: Change "text-sm" to "text-base" in one className
+
+**CONTEXT AWARENESS:**
 
 This is a performance teleprompter app with THREE distinct UI contexts:
 
@@ -83,7 +133,8 @@ This is a performance teleprompter app with THREE distinct UI contexts:
 1. Identify which UI CONTEXT this recommendation applies to
 2. Apply CONTEXT-APPROPRIATE sizing and design criteria
 3. ONLY modify files relevant to that context
-4. Follow existing code style and patterns
+4. Make MINIMAL, TARGETED changes (not whole file rewrites)
+5. Follow existing code style and patterns
 
 **Project Path:** ${projectPath}
 
@@ -153,6 +204,80 @@ Return your response as JSON:
         oldContent = await fs.readFile(fullPath, 'utf-8');
       } catch (e) {
         // File doesn't exist yet
+      }
+
+      // VALIDATION: Check scope constraints before applying changes
+      if (oldContent && implementation.newCode) {
+        this.validationStats.total++;
+
+        const validationResult = validateFileChanges(
+          oldContent,
+          implementation.newCode,
+          {
+            maxLineDelta: 100,
+            maxGrowthPercent: 0.5, // 50% max growth
+            preserveExports: true,
+            preserveImports: true,
+            effortBasedLineLimits: {
+              low: 20,
+              medium: 50,
+              high: 100,
+            },
+          },
+          recommendation.effort
+        );
+
+        console.log('\n' + formatValidationResult(validationResult));
+
+        if (!validationResult.valid) {
+          this.validationStats.failed++;
+          this.validationStats.reasons.push(
+            `${implementation.filePath}: ${validationResult.violations[0]}`
+          );
+
+          console.warn(`   ❌ Change REJECTED by validation: ${validationResult.reason}`);
+          console.warn(`   💡 Tip: Make more surgical changes, don't rewrite entire files`);
+          return null;
+        }
+
+        this.validationStats.passed++;
+      }
+
+      // CROSS-FILE VALIDATION: Check for breaking interface changes
+      if (oldContent && implementation.newCode) {
+        console.log('\n   🔍 Checking cross-file interface compatibility...');
+        this.validationStats.crossFileChecks++;
+
+        const startTime = Date.now();
+        const crossFileResult = await validateCrossFileInterfaces(
+          fullPath,
+          oldContent,
+          implementation.newCode,
+          projectPath,
+          this.apiKey
+        );
+        const duration = Date.now() - startTime;
+
+        console.log(formatCrossFileValidationResult(crossFileResult));
+        console.log(`   ⏱️  Cross-file validation took ${duration}ms`);
+
+        if (!crossFileResult.valid) {
+          this.validationStats.crossFileBlocked++;
+          this.validationStats.reasons.push(
+            `${implementation.filePath}: Breaking interface changes detected`
+          );
+
+          console.warn(`   ❌ Change REJECTED by cross-file validation`);
+          console.warn(`   💡 This change would break ${crossFileResult.affectedFiles.length} dependent file(s)`);
+
+          crossFileResult.suggestions.forEach(suggestion => {
+            console.warn(`      • ${suggestion}`);
+          });
+
+          return null;
+        }
+
+        console.log(`   ✅ No breaking changes detected`);
       }
 
       // For safety, we'll create a backup

@@ -6,7 +6,7 @@
  *   2. Run this script: npm run test:performia
  */
 
-import { VIZTRITROrchestrator } from '../../src/core/orchestrator';
+import { VIZTRTROrchestrator } from '../../src/core/orchestrator';
 import performiaConfig from './config';
 import * as dotenv from 'dotenv';
 
@@ -48,7 +48,7 @@ async function main() {
 
   // Run VIZTRTR
   try {
-    const orchestrator = new VIZTRITROrchestrator(performiaConfig);
+    const orchestrator = new VIZTRTROrchestrator(performiaConfig);
     const report = await orchestrator.run();
 
     // Print summary

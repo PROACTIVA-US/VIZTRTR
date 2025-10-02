@@ -5,7 +5,7 @@
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { Screenshot, VIZTRITRPlugin } from '../core/types';
+import { Screenshot, VIZTRTRPlugin } from '../core/types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -18,7 +18,7 @@ export interface CaptureConfig {
   delay?: number; // Additional delay in ms
 }
 
-export class PuppeteerCapturePlugin implements VIZTRITRPlugin {
+export class PuppeteerCapturePlugin implements VIZTRTRPlugin {
   name = 'puppeteer-capture';
   version = '1.0.0';
   type = 'capture' as const;

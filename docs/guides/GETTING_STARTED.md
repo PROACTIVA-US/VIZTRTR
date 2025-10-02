@@ -1,6 +1,6 @@
-# Getting Started with VIZTRITR
+# Getting Started with VIZTRTR
 
-This guide will help you get VIZTRITR up and running on your system.
+This guide will help you get VIZTRTR up and running on your system.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ Before you begin, ensure you have:
 
 ```bash
 git clone <repository-url>
-cd VIZTRITR
+cd VIZTRTR
 ```
 
 ### 2. Install Dependencies
@@ -60,7 +60,7 @@ This compiles TypeScript to JavaScript in the `dist/` directory.
 
 ### Option 1: Run the Demo
 
-The demo script runs VIZTRITR on a generic frontend application.
+The demo script runs VIZTRTR on a generic frontend application.
 
 **Step 1:** Make sure you have a frontend dev server running at `http://localhost:5001`
 
@@ -71,7 +71,7 @@ npm run demo
 ```
 
 **What happens:**
-1. VIZTRITR captures a screenshot of your UI
+1. VIZTRTR captures a screenshot of your UI
 2. Claude Opus analyzes the design
 3. Claude Sonnet implements improvements
 4. The UI is re-evaluated
@@ -91,7 +91,7 @@ You'll find:
 
 ### Option 2: Test with Performia Project
 
-VIZTRITR includes a complete example using the Performia music platform.
+VIZTRTR includes a complete example using the Performia music platform.
 
 **Step 1:** Start Performia services
 
@@ -105,10 +105,10 @@ cd /path/to/Performia/frontend
 npm run dev
 ```
 
-**Step 2:** Run VIZTRITR test
+**Step 2:** Run VIZTRTR test
 
 ```bash
-# Terminal 3: Run VIZTRITR
+# Terminal 3: Run VIZTRTR
 npm run test:performia
 ```
 
@@ -129,7 +129,7 @@ Check `/path/to/Performia/viztritr-output/REPORT.md` for:
 
 ## Understanding the Output
 
-After running VIZTRITR, examine the output directory structure:
+After running VIZTRTR, examine the output directory structure:
 
 ```
 viztritr-output/
@@ -289,7 +289,7 @@ npx puppeteer browsers install chrome
 
 ## Next Steps
 
-Now that you have VIZTRITR running:
+Now that you have VIZTRTR running:
 
 1. **Create Your Own Project** - See [PROJECT_SETUP.md](PROJECT_SETUP.md)
 2. **Understand the Architecture** - Read [docs/architecture/ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
@@ -318,7 +318,7 @@ npm run demo
 
 ## Configuration Overview
 
-Key configuration options in `VIZTRITRConfig`:
+Key configuration options in `VIZTRTRConfig`:
 
 | Option | Description | Example |
 |--------|-------------|---------|
@@ -331,7 +331,7 @@ Key configuration options in `VIZTRITRConfig`:
 | `outputDir` | Where to save results | `/tmp/viztritr-out` |
 | `verbose` | Detailed logging | `true` |
 
-For complete configuration options, see the `VIZTRITRConfig` interface in `src/core/types.ts`.
+For complete configuration options, see the `VIZTRTRConfig` interface in `src/core/types.ts`.
 
 ---
 

@@ -1,0 +1,240 @@
+#!/usr/bin/env node
+/**
+ * Video Analyzer CLI Tool
+ *
+ * Standalone command-line tool for processing videos and analyzing UI/UX
+ */
+
+import { Command } from 'commander';
+import * as path from 'path';
+import * as fs from 'fs';
+import chalk from 'chalk';
+import ora from 'ora';
+import { VideoProcessor } from '../plugins/video-processor';
+import { ClaudeVideoVisionPlugin } from '../plugins/vision-video-claude';
+import { VideoProcessingOptions } from '../core/types';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+const program = new Command();
+
+program
+  .name('viztrtr-video')
+  .description('Extract frames from videos and analyze UI/UX design')
+  .version('1.0.0')
+  .argument('<video-file>', 'Path to video file')
+  .option('-o, --output-dir <dir>', 'Output directory for frames', './video-output')
+  .option('-f, --fps <number>', 'Frames per second to extract', '2')
+  .option('-k, --keyframes-only', 'Extract only keyframes (scene changes)', false)
+  .option('-m, --max-frames <number>', 'Maximum number of frames to extract', '100')
+  .option('-s, --start <seconds>', 'Start time in seconds', '0')
+  .option('-e, --end <seconds>', 'End time in seconds (0 = end of video)', '0')
+  .option('-t, --threshold <number>', 'Scene change threshold (0-1)', '0.3')
+  .option('-a, --analyze', 'Analyze frames with AI vision (requires ANTHROPIC_API_KEY)', false)
+  .option('--no-cleanup', 'Keep extracted frames after analysis', false)
+  .option('-v, --verbose', 'Verbose output', false)
+  .action(async (videoFile: string, options) => {
+    console.log(chalk.bold.blue('\nVIZTRTR Video Analyzer\n'));
+
+    // Validate video file
+    const videoPath = path.resolve(videoFile);
+    if (!fs.existsSync(videoPath)) {
+      console.error(chalk.red(`Error: Video file not found: ${videoPath}`));
+      process.exit(1);
+    }
+
+    const processor = new VideoProcessor();
+
+    // Validate video format
+    if (!processor.isSupportedFormat(videoPath)) {
+      console.error(
+        chalk.red(`Error: Unsupported video format. Supported formats: ${processor.getSupportedFormats().join(', ')}`)
+      );
+      process.exit(1);
+    }
+
+    // Prepare output directory
+    const outputDir = path.resolve(options.outputDir);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    console.log(chalk.gray(`Video: ${videoPath}`));
+    console.log(chalk.gray(`Output: ${outputDir}\n`));
+
+    // Build processing options
+    const processingOptions: VideoProcessingOptions = {
+      fps: parseFloat(options.fps),
+      keyframesOnly: options.keyframesOnly,
+      maxFrames: parseInt(options.maxFrames, 10),
+      startTime: parseFloat(options.start),
+      endTime: parseFloat(options.end),
+      sceneChangeThreshold: parseFloat(options.threshold),
+      onProgress: (progress) => {
+        if (options.verbose) {
+          console.log(
+            chalk.gray(
+              `[${progress.phase}] ${progress.current}/${progress.total} (${progress.percentage}%)`
+            )
+          );
+        }
+      },
+    };
+
+    try {
+      // Extract frames
+      const spinner = ora('Processing video...').start();
+
+      const result = await processor.processVideo(
+        videoPath,
+        outputDir,
+        processingOptions
+      );
+
+      spinner.succeed(chalk.green('Video processing complete!'));
+
+      // Display results
+      console.log(chalk.bold('\nVideo Metadata:'));
+      console.log(`  Duration: ${result.metadata.duration.toFixed(2)}s`);
+      console.log(`  Resolution: ${result.metadata.width}x${result.metadata.height}`);
+      console.log(`  FPS: ${result.metadata.fps.toFixed(2)}`);
+      console.log(`  Format: ${result.metadata.format}`);
+      console.log(`  Codec: ${result.metadata.codec}`);
+      console.log(`  File size: ${(result.metadata.fileSize / 1024 / 1024).toFixed(2)} MB`);
+
+      console.log(chalk.bold('\nExtraction Results:'));
+      console.log(`  Frames extracted: ${result.frames.length}`);
+      console.log(`  Scene changes detected: ${result.sceneChanges.length}`);
+      console.log(`  Processing time: ${(result.extractionTime / 1000).toFixed(2)}s`);
+
+      if (result.sceneChanges.length > 0) {
+        console.log(chalk.bold('\nScene Changes:'));
+        result.sceneChanges.slice(0, 10).forEach((sc, i) => {
+          console.log(
+            `  ${i + 1}. t=${sc.timestamp.toFixed(2)}s (frame ${sc.frameNumber}, score: ${sc.score.toFixed(3)})`
+          );
+        });
+        if (result.sceneChanges.length > 10) {
+          console.log(`  ... and ${result.sceneChanges.length - 10} more`);
+        }
+      }
+
+      console.log(chalk.bold('\nExtracted Frames:'));
+      result.frames.slice(0, 10).forEach((frame, i) => {
+        const marker = frame.isKeyframe ? chalk.yellow('*') : ' ';
+        console.log(
+          `  ${marker} ${i + 1}. ${path.basename(frame.path)} (t=${frame.timestamp.toFixed(2)}s)`
+        );
+      });
+      if (result.frames.length > 10) {
+        console.log(`  ... and ${result.frames.length - 10} more frames`);
+      }
+
+      // AI Analysis (optional)
+      if (options.analyze) {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
+          console.error(
+            chalk.yellow('\nWarning: ANTHROPIC_API_KEY not found in environment.')
+          );
+          console.error(chalk.gray('Skipping AI analysis. Set ANTHROPIC_API_KEY to enable.'));
+        } else {
+          console.log(chalk.bold.cyan('\nStarting AI Vision Analysis...\n'));
+
+          const visionSpinner = ora('Analyzing frames with Claude Vision...').start();
+
+          const visionPlugin = new ClaudeVideoVisionPlugin(apiKey);
+          const designSpec = await visionPlugin.analyzeFrameSequence(result.frames);
+
+          visionSpinner.succeed(chalk.green('AI analysis complete!'));
+
+          // Display analysis results
+          console.log(chalk.bold('\nDesign Analysis:'));
+          console.log(`  Overall Score: ${chalk.bold(designSpec.currentScore.toFixed(1))}/10`);
+          console.log(`  Estimated New Score: ${chalk.bold(designSpec.estimatedNewScore.toFixed(1))}/10`);
+
+          if (designSpec.animations.length > 0) {
+            console.log(chalk.bold('\nAnimations Detected:'));
+            designSpec.animations.forEach((anim, i) => {
+              console.log(`  ${i + 1}. ${anim.type} animation on ${anim.element || 'element'}`);
+              console.log(`     Duration: ${anim.duration.toFixed(2)}s, Quality: ${anim.quality}/10`);
+              console.log(`     ${anim.description}`);
+            });
+          }
+
+          if (designSpec.transitions.length > 0) {
+            console.log(chalk.bold('\nTransitions Detected:'));
+            designSpec.transitions.slice(0, 5).forEach((trans, i) => {
+              console.log(
+                `  ${i + 1}. ${trans.type} (frames ${trans.fromFrame}-${trans.toFrame}, ${trans.duration.toFixed(2)}s)`
+              );
+            });
+            if (designSpec.transitions.length > 5) {
+              console.log(`  ... and ${designSpec.transitions.length - 5} more`);
+            }
+          }
+
+          if (designSpec.interactionFlows.length > 0) {
+            console.log(chalk.bold('\nInteraction Flows:'));
+            designSpec.interactionFlows.forEach((flow, i) => {
+              console.log(`  ${i + 1}. ${flow.description}`);
+              console.log(`     Usability Score: ${flow.usabilityScore}/10`);
+              console.log(`     Steps: ${flow.sequence.length}`);
+            });
+          }
+
+          if (designSpec.currentIssues.length > 0) {
+            console.log(chalk.bold('\nTop Issues:'));
+            designSpec.currentIssues.slice(0, 5).forEach((issue, i) => {
+              const severityColor =
+                issue.severity === 'critical'
+                  ? chalk.red
+                  : issue.severity === 'important'
+                  ? chalk.yellow
+                  : chalk.gray;
+              console.log(
+                `  ${i + 1}. [${severityColor(issue.severity.toUpperCase())}] ${issue.description}`
+              );
+              if (issue.location) {
+                console.log(chalk.gray(`     Location: ${issue.location}`));
+              }
+            });
+            if (designSpec.currentIssues.length > 5) {
+              console.log(`  ... and ${designSpec.currentIssues.length - 5} more issues`);
+            }
+          }
+
+          if (designSpec.recommendations.length > 0) {
+            console.log(chalk.bold('\nTop Recommendations:'));
+            designSpec.recommendations.slice(0, 5).forEach((rec, i) => {
+              console.log(`  ${i + 1}. ${rec.title} (impact: ${rec.impact}/10, effort: ${rec.effort}/10)`);
+              console.log(chalk.gray(`     ${rec.description}`));
+            });
+            if (designSpec.recommendations.length > 5) {
+              console.log(`  ... and ${designSpec.recommendations.length - 5} more recommendations`);
+            }
+          }
+
+          // Save analysis to file
+          const analysisPath = path.join(outputDir, 'analysis.json');
+          fs.writeFileSync(analysisPath, JSON.stringify(designSpec, null, 2));
+          console.log(chalk.gray(`\nAnalysis saved to: ${analysisPath}`));
+        }
+      }
+
+      // Cleanup frames if requested
+      if (options.cleanup && !options.analyze) {
+        console.log(chalk.gray('\nCleaning up extracted frames...'));
+        await processor.cleanupFrames(outputDir);
+      }
+
+      console.log(chalk.bold.green('\nDone!\n'));
+    } catch (error) {
+      console.error(chalk.red('\nError:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+program.parse(process.argv);
