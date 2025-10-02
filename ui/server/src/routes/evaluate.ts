@@ -136,9 +136,9 @@ export function createEvaluateRouter(anthropicApiKey: string): Router {
         ? `Analyze this Product Requirements Document (PRD) and determine the agent configuration:\n\n${prompt}`
         : `Analyze this user prompt and determine the agent configuration:\n\n"${prompt}"`;
 
-      // Call Claude API with Sonnet 4
+      // Call Claude API with Sonnet 4.5
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 4096,
         temperature: 0.3, // Lower temperature for more consistent structured output
         system: EVALUATION_SYSTEM_PROMPT,

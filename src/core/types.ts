@@ -53,14 +53,39 @@ export interface VIZTRTRConfig {
 
   // Layer 4: Human-in-the-loop
   humanLoop?: HumanLoopConfig;
+
+  // Chrome DevTools MCP config
+  useChromeDevTools?: boolean; // Enable hybrid scoring with real metrics
+  chromeDevToolsConfig?: {
+    headless?: boolean;
+    viewport?: { width: number; height: number };
+    isolated?: boolean;
+    channel?: 'stable' | 'canary' | 'beta' | 'dev';
+  };
+
+  // Scoring weights for hybrid mode
+  scoringWeights?: {
+    vision: number; // Default: 0.6 (60%)
+    metrics: number; // Default: 0.4 (40%)
+  };
 }
 
 export interface Screenshot {
-  path: string;
-  base64: string;
+  data: string; // base64 encoded image data
   width: number;
   height: number;
-  timestamp: Date;
+  format: 'png' | 'jpeg' | 'webp';
+  path?: string; // Optional file path
+  timestamp?: Date;
+}
+
+export interface ScreenshotConfig {
+  width?: number;
+  height?: number;
+  fullPage?: boolean;
+  selector?: string;
+  format?: 'png' | 'jpeg' | 'webp';
+  quality?: number;
 }
 
 export interface Issue {
@@ -271,7 +296,7 @@ export interface VIZTRTRPlugin {
   scoreDesign?(screenshot: Screenshot): Promise<EvaluationResult>;
 
   // Capture plugin
-  captureScreenshot?(url: string, config: any): Promise<Screenshot>;
+  captureScreenshot?(config: ScreenshotConfig): Promise<Screenshot>;
 }
 
 // Video Processing Types

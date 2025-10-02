@@ -111,7 +111,7 @@ Be precise about:
 - Default exports vs named exports`;
 
     const response = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 3000,
       thinking: {
         type: 'enabled',
@@ -258,7 +258,7 @@ ${JSON.stringify(modified, null, 2)}
 Return ONLY breaking changes. If there are none, return empty array: []`;
 
     const response = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 2000,
       thinking: {
         type: 'enabled',

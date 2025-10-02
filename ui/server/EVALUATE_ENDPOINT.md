@@ -242,7 +242,7 @@ The test script includes three test cases:
 ## Implementation Details
 
 ### Model Configuration
-- **Model:** `claude-sonnet-4-20250514`
+- **Model:** `claude-sonnet-4-5`
 - **Temperature:** 0.3 (for consistent structured output)
 - **Max Tokens:** 4096
 - **System Prompt:** Comprehensive instructions for agent selection

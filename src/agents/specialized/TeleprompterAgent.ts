@@ -21,7 +21,7 @@ import * as path from 'path';
 
 export class TeleprompterAgent {
   private client: Anthropic;
-  private model = 'claude-sonnet-4-20250514';
+  private model = 'claude-sonnet-4-5';
 
   // Known files this agent is responsible for
   // Note: This project doesn't have a teleprompter view - it's a VIZTRTR UI builder

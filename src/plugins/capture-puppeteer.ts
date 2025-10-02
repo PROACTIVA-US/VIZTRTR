@@ -112,10 +112,11 @@ export class PuppeteerCapturePlugin implements VIZTRTRPlugin {
       console.log(`✅ Screenshot saved: ${tempPath}`);
 
       return {
-        path: tempPath,
-        base64,
+        data: base64,
         width: config.width,
         height: config.height,
+        format: 'png' as const,
+        path: tempPath,
         timestamp: new Date(),
       };
     } finally {

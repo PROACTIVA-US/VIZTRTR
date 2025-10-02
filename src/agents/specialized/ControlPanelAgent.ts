@@ -20,7 +20,7 @@ import * as path from 'path';
 
 export class ControlPanelAgent {
   private client: Anthropic;
-  private model = 'claude-sonnet-4-20250514';
+  private model = 'claude-sonnet-4-5';
   private validationStats = {
     total: 0,
     passed: 0,

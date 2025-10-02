@@ -47,7 +47,7 @@ export class ClaudeOpusVisionPlugin implements VIZTRTRPlugin {
               source: {
                 type: 'base64',
                 media_type: 'image/png',
-                data: screenshot.base64,
+                data: screenshot.data,
               },
             },
             {

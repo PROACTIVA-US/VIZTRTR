@@ -151,7 +151,7 @@ Return your response as JSON:
 }`;
 
       const response = await this.client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 4096,
         thinking: {
           type: 'enabled',
