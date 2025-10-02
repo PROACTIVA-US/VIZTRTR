@@ -5,7 +5,14 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { Screenshot, DesignSpec, Issue, Recommendation, VIZTRTRPlugin } from '../core/types';
+import {
+  Screenshot,
+  DesignSpec,
+  Issue,
+  Recommendation,
+  VIZTRTRPlugin,
+  ProjectContext,
+} from '../core/types';
 import * as fs from 'fs';
 
 export class ClaudeOpusVisionPlugin implements VIZTRTRPlugin {
@@ -20,7 +27,12 @@ export class ClaudeOpusVisionPlugin implements VIZTRTRPlugin {
     this.client = new Anthropic({ apiKey });
   }
 
-  async analyzeScreenshot(screenshot: Screenshot, memoryContext?: string): Promise<DesignSpec> {
+  async analyzeScreenshot(
+    screenshot: Screenshot,
+    memoryContext?: string,
+    projectContext?: ProjectContext,
+    avoidedComponents?: string[]
+  ): Promise<DesignSpec> {
     console.log(`🔍 Analyzing screenshot with ${this.model}...`);
 
     const response = await this.client.messages.create({
@@ -40,7 +52,7 @@ export class ClaudeOpusVisionPlugin implements VIZTRTRPlugin {
             },
             {
               type: 'text',
-              text: this.getAnalysisPrompt(memoryContext),
+              text: this.getAnalysisPrompt(memoryContext, projectContext, avoidedComponents),
             },
           ],
         },
@@ -52,9 +64,61 @@ export class ClaudeOpusVisionPlugin implements VIZTRTRPlugin {
     return this.parseAnalysis(analysisText);
   }
 
-  private getAnalysisPrompt(memoryContext?: string): string {
-    const contextSection = memoryContext ? `
+  private getAnalysisPrompt(
+    memoryContext?: string,
+    projectContext?: ProjectContext,
+    avoidedComponents?: string[]
+  ): string {
+    // Layer 1.1: Project Context Injection
+    const projectSection = projectContext
+      ? `
+**PROJECT CONTEXT:**
+You are analyzing: ${projectContext.name}
+Project Type: ${projectContext.type}
+Description: ${projectContext.description}
 
+FOCUS YOUR ANALYSIS ON:
+${projectContext.focusAreas.map(area => `- ${area}`).join('\n')}
+
+DO NOT GENERATE RECOMMENDATIONS FOR:
+${projectContext.avoidAreas.map(area => `- ${area}`).join('\n')}
+
+**IMPORTANT:** This is ${projectContext.type === 'web-builder' ? 'a web development tool interface' : projectContext.type === 'teleprompter' ? 'a stage performance display' : 'a desktop application'}.
+Tailor your recommendations accordingly.
+
+---
+`
+      : `
+**CRITICAL: Context Detection First**
+Before analyzing, identify the UI context from the screenshot:
+- **WEB BUILDER/TOOL:** Development interface with forms, buttons, status displays (1-2 ft viewing)
+- **TELEPROMPTER:** Large text display for stage performance (3-10 ft viewing distance)
+- **SETTINGS PANEL:** Desktop control panel with buttons, sliders, tabs (1-2 ft viewing distance)
+- **BLUEPRINT VIEW:** Song structure editing interface (1-2 ft viewing distance)
+
+`;
+
+    // Layer 1.2: Component Exclusion
+    const exclusionSection =
+      avoidedComponents && avoidedComponents.length > 0
+        ? `
+🚫 **COMPONENTS TO AVOID - DO NOT GENERATE RECOMMENDATIONS FOR:**
+${avoidedComponents.map(comp => `- ${comp}`).join('\n')}
+
+**CRITICAL:** These components have failed ${avoidedComponents.length >= 5 ? 'multiple times' : 'previously'}.
+Focus on OTHER UI elements instead. Look for:
+- Alternative components not in the above list
+- Different UI regions (Header, Navigation, Cards, Forms, etc.)
+- Untouched areas of the interface
+
+If you cannot find other components to improve, state this explicitly.
+
+---
+`
+        : '';
+
+    const contextSection = memoryContext
+      ? `
 **ITERATION MEMORY:**
 ${memoryContext}
 
@@ -62,21 +126,11 @@ ${memoryContext}
 Focus on NEW approaches or DIFFERENT UI contexts than what has been tried before.
 
 ---
-` : '';
+`
+      : '';
 
     return `You are a world-class UI/UX designer and accessibility expert analyzing this user interface.
-${contextSection}
-**CRITICAL: Context Detection First**
-Before analyzing, identify the UI context from the screenshot:
-- **TELEPROMPTER MODE:** Large text display for stage performance (3-10 ft viewing distance)
-- **SETTINGS PANEL:** Desktop control panel with buttons, sliders, tabs (1-2 ft viewing distance)
-- **BLUEPRINT VIEW:** Song structure editing interface (1-2 ft viewing distance)
-- **HEADER/FOOTER:** Navigation and controls (should be normal desktop sizing)
-
-Apply context-specific criteria:
-- Teleprompter: Optimize for distance readability (large text 3-4.5rem, very high contrast 7:1)
-- Settings/Controls: Optimize for desktop precision (normal text 0.875-1rem, standard contrast 4.5:1, 32-36px buttons)
-- Blueprint: Optimize for information architecture (normal to large text, clear sections)
+${projectSection}${exclusionSection}${contextSection}
 
 **Your Task:**
 Identify the UI context, then analyze across 8 critical dimensions with context-appropriate criteria.

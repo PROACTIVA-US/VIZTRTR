@@ -19,6 +19,8 @@ import { IterationMemoryManager } from '../memory/IterationMemoryManager';
 import { VerificationAgent } from '../agents/VerificationAgent';
 import { ReflectionAgent } from '../agents/ReflectionAgent';
 import { OrchestratorAgent } from '../agents/OrchestratorAgent';
+import { RecommendationFilterAgent } from '../agents/RecommendationFilterAgent';
+import { HumanLoopAgent } from '../agents/HumanLoopAgent';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -30,6 +32,8 @@ export class VIZTRTROrchestrator {
   private memory: IterationMemoryManager;
   private verificationAgent: VerificationAgent;
   private reflectionAgent: ReflectionAgent;
+  private filterAgent: RecommendationFilterAgent;
+  private humanLoopAgent: HumanLoopAgent;
   private iterations: IterationResult[] = [];
   private startTime: Date | null = null;
 
@@ -45,6 +49,8 @@ export class VIZTRTROrchestrator {
     this.memory = new IterationMemoryManager(config.outputDir);
     this.verificationAgent = new VerificationAgent(config.projectPath);
     this.reflectionAgent = new ReflectionAgent(config.anthropicApiKey!);
+    this.filterAgent = new RecommendationFilterAgent();
+    this.humanLoopAgent = new HumanLoopAgent(config.humanLoop);
 
     // Ensure output directory exists
     this.ensureOutputDir();
@@ -137,12 +143,18 @@ export class VIZTRTROrchestrator {
     await fs.copyFile(beforeScreenshot.path, beforePath);
     beforeScreenshot.path = beforePath;
 
-    // Step 2: Analyze with vision model + memory context
+    // Step 2: Analyze with vision model + memory context (Layer 1)
     console.log('🔍 Step 2: Analyzing UI with memory context...');
     const memoryContext = this.memory.getContextSummary();
     console.log('\n' + memoryContext);
 
-    const designSpec = await this.visionPlugin.analyzeScreenshot(beforeScreenshot, memoryContext);
+    const avoidedComponents = this.memory.getAvoidedComponents();
+    const designSpec = await this.visionPlugin.analyzeScreenshot(
+      beforeScreenshot,
+      memoryContext,
+      this.config.projectContext,
+      avoidedComponents
+    );
     designSpec.iteration = iterationNum;
 
     // Save design spec
@@ -152,6 +164,35 @@ export class VIZTRTROrchestrator {
     console.log(`   Current Score: ${designSpec.currentScore}/10`);
     console.log(`   Issues Found: ${designSpec.currentIssues.length}`);
     console.log(`   Recommendations: ${designSpec.recommendations.length}`);
+
+    // Step 2.5: Filter recommendations (Layer 2)
+    const filtered = this.filterAgent.filterRecommendations(
+      designSpec.recommendations,
+      this.memory
+    );
+    this.filterAgent.logResults(filtered);
+
+    if (filtered.approved.length === 0) {
+      throw new Error('All recommendations were filtered out. Cannot proceed with iteration.');
+    }
+
+    // Update design spec with approved recommendations only
+    designSpec.recommendations = filtered.approved;
+    designSpec.prioritizedChanges = filtered.approved;
+
+    // Step 2.6: Human approval gate (Layer 4)
+    const risk = this.humanLoopAgent.assessRisk(filtered.approved);
+    const estimatedCost = this.humanLoopAgent.estimateCost(filtered.approved);
+
+    const approval = await this.humanLoopAgent.requestApproval(filtered.approved, {
+      iteration: iterationNum,
+      risk,
+      estimatedCost,
+    });
+
+    if (!approval.approved) {
+      throw new Error(`Human approval denied: ${approval.reason || 'No reason provided'}`);
+    }
 
     // Step 3: Implement changes
     console.log('🔧 Step 3: Implementing changes...');

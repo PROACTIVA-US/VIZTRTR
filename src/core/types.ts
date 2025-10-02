@@ -2,6 +2,23 @@
  * VIZTRTR Type Definitions
  */
 
+export interface ProjectContext {
+  name: string;
+  type: 'web-builder' | 'teleprompter' | 'control-panel' | 'general';
+  description: string;
+  focusAreas: string[];
+  avoidAreas: string[];
+}
+
+export interface HumanLoopConfig {
+  enabled: boolean;
+  approvalRequired: 'always' | 'high-risk' | 'first-iteration' | 'never';
+  costThreshold: number; // cents
+  riskThreshold: 'low' | 'medium' | 'high';
+  enablePromptRefinement?: boolean;
+  enableMemoryAnnotation?: boolean;
+}
+
 export interface VIZTRTRConfig {
   // Project settings
   projectPath: string;
@@ -30,6 +47,12 @@ export interface VIZTRTRConfig {
   // Output config
   outputDir: string;
   verbose?: boolean;
+
+  // Layer 1: Project context
+  projectContext?: ProjectContext;
+
+  // Layer 4: Human-in-the-loop
+  humanLoop?: HumanLoopConfig;
 }
 
 export interface Screenshot {
@@ -214,13 +237,32 @@ export interface ScoringRubric {
   };
 }
 
+export interface FilteredRecommendations {
+  approved: Recommendation[];
+  rejected: Array<{
+    recommendation: Recommendation;
+    reason: string;
+  }>;
+}
+
+export interface ApprovalResponse {
+  approved: boolean;
+  reason?: string;
+  modifications?: Recommendation[];
+}
+
 export interface VIZTRTRPlugin {
   name: string;
   version: string;
   type: 'vision' | 'implementation' | 'evaluation' | 'capture';
 
   // Vision plugin
-  analyzeScreenshot?(screenshot: Screenshot): Promise<DesignSpec>;
+  analyzeScreenshot?(
+    screenshot: Screenshot,
+    memoryContext?: string,
+    projectContext?: ProjectContext,
+    avoidedComponents?: string[]
+  ): Promise<DesignSpec>;
 
   // Implementation plugin
   implementChanges?(spec: DesignSpec, projectPath: string): Promise<Changes>;
