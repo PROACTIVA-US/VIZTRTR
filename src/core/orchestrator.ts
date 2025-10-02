@@ -140,8 +140,10 @@ export class VIZTRTROrchestrator {
 
     // Save to iteration dir
     const beforePath = path.join(iterationDir, 'before.png');
-    await fs.copyFile(beforeScreenshot.path, beforePath);
-    beforeScreenshot.path = beforePath;
+    if (beforeScreenshot.path) {
+      await fs.copyFile(beforeScreenshot.path, beforePath);
+      beforeScreenshot.path = beforePath;
+    }
 
     // Step 2: Analyze with vision model + memory context (Layer 1)
     console.log('🔍 Step 2: Analyzing UI with memory context...');
@@ -245,8 +247,10 @@ export class VIZTRTROrchestrator {
     );
 
     const afterPath = path.join(iterationDir, 'after.png');
-    await fs.copyFile(afterScreenshot.path, afterPath);
-    afterScreenshot.path = afterPath;
+    if (afterScreenshot.path) {
+      await fs.copyFile(afterScreenshot.path, afterPath);
+      afterScreenshot.path = afterPath;
+    }
 
     // Step 7: Evaluate
     console.log('📊 Step 7: Evaluating result...');

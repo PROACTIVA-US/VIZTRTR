@@ -162,8 +162,11 @@ export class ChromeDevToolsPlugin implements VIZTRTRPlugin {
   /**
    * Capture screenshot using Chrome DevTools MCP
    */
-  async captureScreenshot(screenshotConfig: ScreenshotConfig): Promise<Screenshot> {
+  async captureScreenshot(url: string, screenshotConfig: ScreenshotConfig): Promise<Screenshot> {
     const client = await this.getClient();
+
+    // Navigate to URL first
+    await client.navigateTo(url);
 
     const base64Data = await client.takeScreenshot({
       fullPage: screenshotConfig.fullPage ?? true,

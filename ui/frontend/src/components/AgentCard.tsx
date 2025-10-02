@@ -1,176 +1,89 @@
-import { motion } from 'framer-motion';
-import { useState } from 'react';
-import type { Agent } from '../store/buildStore';
+import React from 'react';
+import { Agent } from '../types/Agent';
 
 interface AgentCardProps {
   agent: Agent;
-  onEdit?: (updates: Partial<Agent>) => void;
+  onSelect?: (agent: Agent) => void;
+  isSelected?: boolean;
 }
 
-const statusColors = {
-  idle: '#6b7280',
-  active: '#10b981',
-  completed: '#22c55e',
-  error: '#ef4444',
+const getStatusConfig = (status: string) => {
+  switch (status) {
+    case 'success':
+      return {
+        bgColor: 'bg-green-100',
+        textColor: 'text-green-800',
+        borderColor: 'border-green-200',
+        icon: '✓',
+        label: 'Success'
+      };
+    case 'error':
+      return {
+        bgColor: 'bg-red-100',
+        textColor: 'text-red-800',
+        borderColor: 'border-red-200',
+        icon: '✗',
+        label: 'Error'
+      };
+    case 'running':
+      return {
+        bgColor: 'bg-blue-100',
+        textColor: 'text-blue-800',
+        borderColor: 'border-blue-200',
+        icon: '⟳',
+        label: 'Running'
+      };
+    case 'pending':
+      return {
+        bgColor: 'bg-yellow-100',
+        textColor: 'text-yellow-800',
+        borderColor: 'border-yellow-200',
+        icon: '⏳',
+        label: 'Pending'
+      };
+    default:
+      return {
+        bgColor: 'bg-gray-100',
+        textColor: 'text-gray-800',
+        borderColor: 'border-gray-200',
+        icon: '◯',
+        label: 'Unknown'
+      };
+  }
 };
 
-export function AgentCard({ agent }: AgentCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const color = agent.color;
-  const icon = agent.icon;
-  const statusColor = statusColors[agent.status];
-
+export const AgentCard: React.FC<AgentCardProps> = ({ agent, onSelect, isSelected = false }) => {
+  const statusConfig = getStatusConfig(agent.status || 'unknown');
+  
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      whileHover={{ y: -4 }}
-      className="relative bg-slate-800 rounded-lg overflow-hidden cursor-pointer"
-      style={{
-        boxShadow:
-          agent.status === 'active'
-            ? `0 0 20px ${color}40, 0 4px 6px -1px rgb(0 0 0 / 0.1)`
-            : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-      }}
-      onClick={() => setIsExpanded(!isExpanded)}
+    <div
+      className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+        isSelected
+          ? 'border-blue-500 bg-blue-50 shadow-md'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+      }`}
+      onClick={() => onSelect?.(agent)}
     >
-      {/* Colored top border */}
-      <div
-        className="h-1 w-full"
-        style={{ backgroundColor: color }}
-      />
-
-      {/* Card content */}
-      <div className="p-4">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            {/* Icon with pulse animation when active */}
-            <motion.div
-              className="text-3xl"
-              animate={
-                agent.status === 'active'
-                  ? {
-                      scale: [1, 1.1, 1],
-                    }
-                  : {}
-              }
-              transition={{
-                duration: 2,
-                repeat: agent.status === 'active' ? Infinity : 0,
-              }}
-            >
-              {icon}
-            </motion.div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-slate-100">
-                {agent.name}
-              </h3>
-              <p className="text-xs text-slate-400">
-                {agent.role}
-              </p>
-            </div>
-          </div>
-
-          {/* Status indicator */}
-          <motion.div
-            className="flex items-center gap-2"
-            animate={
-              agent.status === 'active'
-                ? {
-                    opacity: [1, 0.5, 1],
-                  }
-                : {}
-            }
-            transition={{
-              duration: 1.5,
-              repeat: agent.status === 'active' ? Infinity : 0,
-            }}
-          >
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: statusColor }}
-            />
-            <span className="text-xs text-slate-400 capitalize">
-              {agent.status}
-            </span>
-          </motion.div>
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="text-base font-medium text-gray-900">{agent.name}</h3>
+        <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
+          statusConfig.bgColor
+        } ${
+          statusConfig.textColor
+        } ${
+          statusConfig.borderColor
+        }`}>
+          <span className="mr-1" aria-hidden="true">{statusConfig.icon}</span>
+          <span>{statusConfig.label}</span>
         </div>
-
-        {/* Responsibilities */}
-        <div className="space-y-1.5">
-          {agent.responsibilities.slice(0, isExpanded ? undefined : 3).map((task, idx) => (
-            <div
-              key={idx}
-              className="flex items-start gap-2 text-sm text-slate-400"
-            >
-              <span
-                className="mt-1"
-                style={{ color }}
-              >
-                •
-              </span>
-              <span>{task}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Expand/collapse indicator */}
-        {agent.responsibilities.length > 3 && (
-          <motion.div
-            className="mt-3 text-center text-xs text-slate-500"
-            animate={{ opacity: isExpanded ? 0.5 : 1 }}
-          >
-            {isExpanded ? '▲ Click to collapse' : `▼ ${agent.responsibilities.length - 3} more...`}
-          </motion.div>
-        )}
-
-
-        {/* Completed checkmark */}
-        {agent.status === 'completed' && (
-          <motion.div
-            className="mt-3 flex items-center justify-center gap-2 text-green-400 text-sm font-medium"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <span>Completed</span>
-          </motion.div>
-        )}
       </div>
-
-      {/* Active glow effect */}
-      {agent.status === 'active' && (
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at center, ${color}10, transparent 70%)`,
-          }}
-          animate={{
-            opacity: [0.3, 0.6, 0.3],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-          }}
-        />
-      )}
-    </motion.div>
+      
+      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{agent.description}</p>
+      
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span>Version: {agent.version || '1.0.0'}</span>
+        <span>Updated: {agent.lastUpdated || 'Unknown'}</span>
+      </div>
+    </div>
   );
-}
+};

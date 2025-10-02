@@ -5,7 +5,7 @@ interface PromptInputProps {
   disabled?: boolean;
 }
 
-export const PromptInput: React.FC<PromptInputProps> = ({ onSubmit, disabled = false }) => {
+const PromptInput: React.FC<PromptInputProps> = ({ onSubmit, disabled = false }) => {
   const [prompt, setPrompt] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -37,3 +37,4 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onSubmit, disabled = f
   );
 };
 
+export default PromptInput;

@@ -21,11 +21,13 @@ export class VIZTRTRDatabase {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         projectPath TEXT NOT NULL,
+        workspacePath TEXT NOT NULL,
         frontendUrl TEXT NOT NULL,
         targetScore REAL DEFAULT 8.5,
         maxIterations INTEGER DEFAULT 5,
         createdAt TEXT NOT NULL,
-        updatedAt TEXT NOT NULL
+        updatedAt TEXT NOT NULL,
+        hasProductSpec INTEGER DEFAULT 0
       )
     `);
 
@@ -41,7 +43,26 @@ export class VIZTRTRDatabase {
         completedAt TEXT,
         error TEXT,
         resultJson TEXT,
+        workspacePath TEXT,
         FOREIGN KEY(projectId) REFERENCES projects(id)
+      )
+    `);
+
+    // Create iterations table for approval tracking
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS iterations (
+        id TEXT PRIMARY KEY,
+        runId TEXT NOT NULL,
+        iterationNum INTEGER NOT NULL,
+        status TEXT CHECK(status IN ('pending', 'approved', 'rejected', 'archived')) DEFAULT 'pending',
+        approvedAt TEXT,
+        rejectedAt TEXT,
+        rejectionReason TEXT,
+        filesModified TEXT,
+        screenshotBefore TEXT,
+        screenshotAfter TEXT,
+        evaluationJson TEXT,
+        FOREIGN KEY(runId) REFERENCES runs(id)
       )
     `);
 
@@ -49,6 +70,8 @@ export class VIZTRTRDatabase {
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_runs_projectId ON runs(projectId);
       CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
+      CREATE INDEX IF NOT EXISTS idx_iterations_runId ON iterations(runId);
+      CREATE INDEX IF NOT EXISTS idx_iterations_status ON iterations(status);
     `);
   }
 
@@ -57,15 +80,19 @@ export class VIZTRTRDatabase {
     const id = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const now = new Date().toISOString();
 
+    // Create workspace path
+    const workspacePath = path.join(process.cwd(), 'viztrtr-workspaces', id);
+
     const stmt = this.db.prepare(`
-      INSERT INTO projects (id, name, projectPath, frontendUrl, targetScore, maxIterations, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO projects (id, name, projectPath, workspacePath, frontendUrl, targetScore, maxIterations, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
       id,
       project.name,
       project.projectPath,
+      workspacePath,
       project.frontendUrl,
       project.targetScore || 8.5,
       project.maxIterations || 5,
@@ -76,6 +103,7 @@ export class VIZTRTRDatabase {
     return {
       id,
       ...project,
+      workspacePath,
       targetScore: project.targetScore || 8.5,
       maxIterations: project.maxIterations || 5,
       createdAt: now,

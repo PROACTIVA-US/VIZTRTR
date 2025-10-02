@@ -296,7 +296,7 @@ export interface VIZTRTRPlugin {
   scoreDesign?(screenshot: Screenshot): Promise<EvaluationResult>;
 
   // Capture plugin
-  captureScreenshot?(config: ScreenshotConfig): Promise<Screenshot>;
+  captureScreenshot?(url: string, config: ScreenshotConfig): Promise<Screenshot>;
 }
 
 // Video Processing Types

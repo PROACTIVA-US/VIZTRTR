@@ -12,6 +12,12 @@ function Header() {
 
           <nav className="flex items-center space-x-6">
             <Link
+              to="/"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Builder
+            </Link>
+            <Link
               to="/projects"
               className="text-slate-300 hover:text-white transition-colors"
             >

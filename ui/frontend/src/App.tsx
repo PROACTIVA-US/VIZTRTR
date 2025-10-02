@@ -1,6 +1,6 @@
-import { Routes, Route } from 'react-router-dom';
-import BuilderPage from './pages/BuilderPage';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ProjectsPage from './pages/ProjectsPage';
+import RunPage from './pages/RunPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -10,8 +10,9 @@ function App() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={<BuilderPage />} />
+          <Route path="/" element={<Navigate to="/projects" replace />} />
           <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/runs/:runId" element={<RunPage />} />
         </Routes>
       </main>
       <Footer />
