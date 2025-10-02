@@ -8,7 +8,7 @@ function Footer() {
           </div>
           <div className="flex items-center space-x-4">
             <a
-              href="https://github.com"
+              href="https://github.com/PROACTIVA-US/VIZTRTR"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white transition-colors"
@@ -16,7 +16,7 @@ function Footer() {
               GitHub
             </a>
             <a
-              href="https://docs.example.com"
+              href="https://github.com/PROACTIVA-US/VIZTRTR#readme"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white transition-colors"
