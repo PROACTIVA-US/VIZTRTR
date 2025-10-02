@@ -38,9 +38,9 @@ const DEFAULT_CONSTRAINTS: ChangeConstraints = {
   preserveImports: true,
   requireDiffFormat: false,
   effortBasedLineLimits: {
-    low: 20,
-    medium: 50,
-    high: 100,
+    low: 40,      // effort 1-2: simple CSS/style changes
+    medium: 80,   // effort 3-4: component refactors
+    high: 150,    // effort 5+: complex features
   },
 };
 
@@ -100,16 +100,30 @@ export function validateFileChanges(
   // Check export preservation
   let exportsChanged = false;
   if (config.preserveExports) {
-    const originalExports = extractExports(original);
-    const modifiedExports = extractExports(modified);
-    exportsChanged = !arraysEqual(originalExports, modifiedExports);
+    const originalExportInfo = analyzeExports(original);
+    const modifiedExportInfo = analyzeExports(modified);
 
-    if (exportsChanged) {
+    // Check if default export type changed (breaking change)
+    if (originalExportInfo.hasDefault !== modifiedExportInfo.hasDefault) {
       violations.push(
-        `Export statements changed. Original exports: [${originalExports.join(', ')}], ` +
-        `Modified exports: [${modifiedExports.join(', ')}]. Export signatures must be preserved.`
+        `Export type changed: ${originalExportInfo.hasDefault ? 'had default export' : 'had no default export'} → ` +
+        `${modifiedExportInfo.hasDefault ? 'now has default export' : 'now has no default export'}. ` +
+        `Changing default export status breaks imports.`
       );
+      exportsChanged = true;
     }
+
+    // Check if named exports were removed (breaking change)
+    const removedExports = originalExportInfo.named.filter(exp => !modifiedExportInfo.named.includes(exp));
+    if (removedExports.length > 0) {
+      violations.push(
+        `Named exports removed: [${removedExports.join(', ')}]. ` +
+        `Removing exports is a breaking change.`
+      );
+      exportsChanged = true;
+    }
+
+    // Adding new exports is OK, only removing is a violation
   }
 
   // Check import preservation
@@ -121,11 +135,21 @@ export function validateFileChanges(
     // Check if imports were removed
     const removedImports = originalImports.filter(imp => !modifiedImports.includes(imp));
     if (removedImports.length > 0) {
-      violations.push(
-        `Import statements removed: ${removedImports.join(', ')}. ` +
-        `Verify these imports are no longer used before removing.`
-      );
-      importsChanged = true;
+      // Only flag as violation if the import is still used in the modified code
+      const stillUsed = removedImports.filter(imp => {
+        // Check if import name appears in modified code (simple heuristic)
+        const importName = imp.split('/').pop()?.replace(/['"]/g, '') || imp;
+        return modified.includes(importName);
+      });
+
+      if (stillUsed.length > 0) {
+        violations.push(
+          `Import statements removed but still referenced: ${stillUsed.join(', ')}. ` +
+          `Cannot remove imports that are still in use.`
+        );
+        importsChanged = true;
+      }
+      // If imports are removed and not used, that's OK (cleanup)
     }
   }
 
@@ -161,36 +185,60 @@ export function checkLineDelta(original: string, modified: string, maxDelta: num
 }
 
 /**
- * Extract export statements from code
+ * Analyze export statements with default vs named distinction
  */
-export function extractExports(code: string): string[] {
-  const exports: string[] = [];
+export function analyzeExports(code: string): { hasDefault: boolean; named: string[] } {
+  let hasDefault = false;
+  const named: string[] = [];
 
-  // Match different export patterns
-  const patterns = [
-    /export\s+default\s+(?:class|function|const|let|var)\s+(\w+)/g,
-    /export\s+default\s+(\w+)/g,
+  // Check for default exports
+  const defaultPatterns = [
+    /export\s+default\s+(?:class|function|const|let|var)\s+(\w+)/,
+    /export\s+default\s+(\w+)/,
+    /export\s+default\s+/,
+  ];
+
+  for (const pattern of defaultPatterns) {
+    if (pattern.test(code)) {
+      hasDefault = true;
+      break;
+    }
+  }
+
+  // Extract named exports
+  const namedPatterns = [
     /export\s+\{([^}]+)\}/g,
     /export\s+(?:const|let|var|function|class)\s+(\w+)/g,
   ];
 
-  for (const pattern of patterns) {
+  for (const pattern of namedPatterns) {
     const matches = code.matchAll(pattern);
     for (const match of matches) {
       if (match[1]) {
         // Handle export { a, b, c } syntax
         if (match[0].includes('{')) {
           const exportList = match[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
-          exports.push(...exportList);
+          named.push(...exportList);
         } else {
-          exports.push(match[1].trim());
+          named.push(match[1].trim());
         }
       }
     }
   }
 
-  // Deduplicate and sort
-  return [...new Set(exports)].sort();
+  return { hasDefault, named: [...new Set(named)].sort() };
+}
+
+/**
+ * Extract export statements from code (legacy - use analyzeExports for new code)
+ */
+export function extractExports(code: string): string[] {
+  const info = analyzeExports(code);
+  const exports: string[] = [...info.named];
+  if (info.hasDefault) {
+    exports.push('default');
+  }
+  return exports.sort();
 }
 
 /**

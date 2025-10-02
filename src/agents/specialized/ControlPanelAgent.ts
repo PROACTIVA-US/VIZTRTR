@@ -142,15 +142,8 @@ export class ControlPanelAgent {
         oldContent,
         implementation.newCode,
         {
-          maxLineDelta: 100,
-          maxGrowthPercent: 0.5,
-          preserveExports: true,
-          preserveImports: true,
-          effortBasedLineLimits: {
-            low: 20,
-            medium: 50,
-            high: 100,
-          },
+          // Use default constraints from validation.ts
+          // Allows effort-based line limits: 40/80/150 for low/medium/high
         },
         recommendation.effort
       );
