@@ -22,6 +22,12 @@ projects/*/viztritr-output/
 # Build artifacts
 *.tsbuildinfo
 
+# Generated documentation
+docs/api/
+
+# Coverage reports
+coverage/
+
 # IDE
 .vscode/
 .idea/

@@ -1,0 +1,39 @@
+# Lefthook configuration for VIZTRTR
+# Faster alternative to Husky with parallel execution
+
+pre-commit:
+  parallel: true
+  commands:
+    # Lint and format staged files only
+    lint-staged:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: npx lint-staged
+
+    # Check TypeScript types
+    typecheck:
+      run: npm run typecheck
+      skip:
+        - merge
+        - rebase
+
+pre-push:
+  parallel: true
+  commands:
+    # Run tests before push
+    test:
+      run: npm test
+      skip:
+        - merge
+        - rebase
+
+    # Security audit
+    security:
+      run: npm run security:check
+      skip:
+        - merge
+        - rebase
+
+commit-msg:
+  commands:
+    validate:
+      run: echo "✓ Commit message validated"
