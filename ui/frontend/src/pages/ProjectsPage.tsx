@@ -116,16 +116,16 @@ function ProjectsPage() {
 
               <div className="flex gap-3">
                 <button
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                  className="bg-slate-700 text-white px-4 py-2 rounded hover:bg-slate-600 transition-all"
+                >
+                  View Details
+                </button>
+                <button
                   onClick={() => handleStartRun(project.id)}
                   className="btn-primary flex-1"
                 >
                   Start Run
-                </button>
-                <button
-                  onClick={() => navigate(`/projects/${project.id}/runs`)}
-                  className="btn-secondary"
-                >
-                  View History
                 </button>
               </div>
             </div>

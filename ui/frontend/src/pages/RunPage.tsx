@@ -7,6 +7,9 @@ export default function RunPage() {
   const [run, setRun] = useState<Run | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retrying, setRetrying] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [results, setResults] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -89,6 +92,41 @@ export default function RunPage() {
 
   const progress = (run.currentIteration / run.maxIterations) * 100;
 
+  const handleRetry = async () => {
+    if (!runId) return;
+    setRetrying(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/projects/runs/${runId}/retry`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to retry run');
+      }
+      const newRun = await res.json();
+      // Navigate to the new run
+      navigate(`/runs/${newRun.id}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to retry run');
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  const handleViewResults = async () => {
+    if (!runId) return;
+    try {
+      const res = await fetch(`http://localhost:3001/api/runs/${runId}/result`);
+      if (!res.ok) {
+        throw new Error('Failed to load results');
+      }
+      const data = await res.json();
+      setResults(data);
+      setShowResults(true);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to load results');
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
@@ -100,57 +138,87 @@ export default function RunPage() {
         </button>
       </div>
 
-      {/* Status Header */}
-      <div className="card mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="text-4xl">{getStatusIcon(run.status)}</div>
-            <div>
-              <h1 className="text-2xl font-bold capitalize">{run.status}</h1>
-              <p className="text-sm text-slate-400">Run ID: {run.id}</p>
+      {/* Status Header - Compact for Failed */}
+      {run.status === 'failed' ? (
+        <div className="card bg-red-500/10 border-red-500 mb-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">❌</div>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold mb-1">Run Failed</h1>
+                <p className="text-sm text-slate-400 mb-3">Run ID: {run.id}</p>
+                {run.error && (
+                  <div className="p-3 bg-slate-900/50 rounded text-sm text-slate-300 mb-4">
+                    <span className="font-semibold text-red-400">Error: </span>
+                    {run.error}
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleRetry}
+                    disabled={retrying}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    {retrying ? 'Retrying...' : '🔄 Retry Run'}
+                  </button>
+                  <button
+                    onClick={() => navigate('/projects')}
+                    className="bg-slate-700 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-slate-600 transition-all text-sm"
+                  >
+                    Back to Projects
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-          <div className={`px-4 py-2 rounded-full ${getStatusColor(run.status)} bg-opacity-20`}>
-            <span className="font-semibold capitalize">{run.status}</span>
+          <div className="text-xs text-slate-500 pt-3 border-t border-slate-700">
+            Started: {new Date(run.startedAt).toLocaleString()} • Failed: {run.completedAt && new Date(run.completedAt).toLocaleString()}
           </div>
         </div>
-
-        {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="flex justify-between text-sm mb-2">
-            <span>Iteration {run.currentIteration} of {run.maxIterations}</span>
-            <span>{progress.toFixed(0)}%</span>
-          </div>
-          <div className="w-full bg-slate-700 rounded-full h-3">
-            <div
-              className={`h-3 rounded-full ${getStatusColor(run.status)} transition-all duration-500`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Timestamps */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-slate-400">Started:</span>{' '}
-            <span>{new Date(run.startedAt).toLocaleString()}</span>
-          </div>
-          {run.completedAt && (
-            <div>
-              <span className="text-slate-400">Completed:</span>{' '}
-              <span>{new Date(run.completedAt).toLocaleString()}</span>
+      ) : (
+        <div className="card mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="text-4xl">{getStatusIcon(run.status)}</div>
+              <div>
+                <h1 className="text-2xl font-bold capitalize">{run.status}</h1>
+                <p className="text-sm text-slate-400">Run ID: {run.id}</p>
+              </div>
             </div>
-          )}
-        </div>
-
-        {/* Error */}
-        {run.error && (
-          <div className="mt-4 p-4 bg-red-500/10 border border-red-500 rounded-lg">
-            <p className="text-sm font-semibold mb-1">Error:</p>
-            <p className="text-sm text-slate-300">{run.error}</p>
+            <div className={`px-4 py-2 rounded-full ${getStatusColor(run.status)} bg-opacity-20`}>
+              <span className="font-semibold capitalize">{run.status}</span>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span>Iteration {run.currentIteration} of {run.maxIterations}</span>
+              <span>{progress.toFixed(0)}%</span>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-3">
+              <div
+                className={`h-3 rounded-full ${getStatusColor(run.status)} transition-all duration-500`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Timestamps */}
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-slate-400">Started:</span>{' '}
+              <span>{new Date(run.startedAt).toLocaleString()}</span>
+            </div>
+            {run.completedAt && (
+              <div>
+                <span className="text-slate-400">Completed:</span>{' '}
+                <span>{new Date(run.completedAt).toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Live Updates */}
       {run.status === 'running' && (
@@ -168,7 +236,7 @@ export default function RunPage() {
       )}
 
       {/* Completion Message */}
-      {run.status === 'completed' && (
+      {run.status === 'completed' && !showResults && (
         <div className="card bg-green-500/10 border-green-500">
           <div className="text-center py-6">
             <div className="text-4xl mb-3">🎉</div>
@@ -176,9 +244,102 @@ export default function RunPage() {
             <p className="text-slate-400 mb-6">
               Your UI improvements are ready to review.
             </p>
-            <button className="btn-primary">
+            <button onClick={handleViewResults} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all">
               View Results
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Results Display */}
+      {showResults && results && (
+        <div className="space-y-4">
+          <div className="card bg-green-500/10 border-green-500">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">📊 Run Results</h2>
+                <p className="text-sm text-slate-400">
+                  Final score: <span className="text-green-400 font-bold text-lg">{results.finalScore?.toFixed(1) || 'N/A'}/10</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowResults(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            {results.iterations && results.iterations.length > 0 && (
+              <div className="space-y-6">
+                <h3 className="font-semibold text-slate-300">Iterations ({results.iterations.length})</h3>
+                {results.iterations.map((iter: any, idx: number) => (
+                  <div key={idx} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="font-semibold text-lg">Iteration {idx + 1}</span>
+                      <span className="text-sm px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full">
+                        Score: {iter.evaluation?.compositeScore?.toFixed(1) || 'N/A'}
+                      </span>
+                    </div>
+
+                    {iter.designSpec?.recommendation && (
+                      <div className="mb-3 p-3 bg-slate-900/50 rounded">
+                        <p className="text-sm font-semibold text-slate-300 mb-1">Recommendation:</p>
+                        <p className="text-sm text-slate-400">{iter.designSpec.recommendation}</p>
+                      </div>
+                    )}
+
+                    {/* Before/After Screenshots */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-slate-400 mb-2 font-semibold">Before</p>
+                        <img
+                          src={`http://localhost:3001/outputs/${runId}/iteration_${idx}/before.png`}
+                          alt={`Iteration ${idx} - Before`}
+                          className="w-full rounded border border-slate-600 hover:scale-105 transition-transform cursor-pointer"
+                          onClick={(e) => window.open((e.target as HTMLImageElement).src, '_blank')}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400 mb-2 font-semibold">After</p>
+                        <img
+                          src={`http://localhost:3001/outputs/${runId}/iteration_${idx}/after.png`}
+                          alt={`Iteration ${idx} - After`}
+                          className="w-full rounded border border-slate-600 hover:scale-105 transition-transform cursor-pointer"
+                          onClick={(e) => window.open((e.target as HTMLImageElement).src, '_blank')}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Score Breakdown */}
+                    {iter.evaluation?.scores && (
+                      <details className="mt-3">
+                        <summary className="text-xs cursor-pointer text-slate-400 hover:text-white">
+                          View Score Breakdown
+                        </summary>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                          {Object.entries(iter.evaluation.scores).map(([key, value]: [string, any]) => (
+                            <div key={key} className="flex justify-between bg-slate-900/30 p-2 rounded">
+                              <span className="text-slate-400">{key}:</span>
+                              <span className="text-slate-200 font-semibold">{value.toFixed(1)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <details className="text-sm mt-6 pt-4 border-t border-slate-700">
+              <summary className="cursor-pointer text-slate-400 hover:text-white">
+                View Full JSON
+              </summary>
+              <pre className="mt-2 p-3 bg-slate-900 rounded text-xs overflow-auto max-h-96">
+                {JSON.stringify(results, null, 2)}
+              </pre>
+            </details>
           </div>
         </div>
       )}
