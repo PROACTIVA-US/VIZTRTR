@@ -1,106 +1,95 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import ProjectWizard from '../components/ProjectWizard';
+import type { Project } from '../types';
 
 function HomePage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showWizard, setShowWizard] = useState(false);
+  const navigate = useNavigate();
+
+  const loadProjects = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/projects');
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data);
+      }
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const handleWizardComplete = () => {
+    setShowWizard(false);
+    loadProjects();
+  };
+
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Hero Section */}
-      <div className="text-center mb-16">
-        <h1 className="text-5xl font-bold mb-4">
-          <span className="text-gradient">VIZTRTR</span>
+    <div className="max-w-4xl mx-auto">
+      {/* Simple Hero */}
+      <div className="text-center mb-12">
+        <h1 className="text-6xl font-bold mb-6">
+          <span className="text-gradient">Start Analyzing UI</span>
         </h1>
-        <p className="text-2xl text-slate-300 mb-2">
-          AI-Powered UI/UX Improvement System
-        </p>
-        <p className="text-lg text-slate-400 max-w-3xl mx-auto">
-          Autonomous design iteration using advanced AI vision models. Analyze, improve,
-          and evaluate web interfaces until they reach design excellence.
+        <p className="text-xl text-slate-400 mb-12">
+          Create a new project or continue working on existing ones
         </p>
       </div>
 
-      {/* Key Features */}
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-          <div className="text-4xl mb-4">🔍</div>
-          <h3 className="text-xl font-bold mb-2 text-white">AI Vision Analysis</h3>
-          <p className="text-slate-400">
-            Claude Opus 4, GPT-4o, and Gemini analyze your UI with expert-level design critique
+      {/* Action Cards */}
+      <div className="grid md:grid-cols-2 gap-6 mb-12">
+        {/* New Project Card */}
+        <button
+          onClick={() => setShowWizard(true)}
+          className="bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-2 border-purple-600/50 rounded-xl p-8 hover:border-purple-500 hover:from-purple-900/60 hover:to-blue-900/60 transition-all transform hover:scale-105 text-left"
+        >
+          <div className="text-5xl mb-4">✨</div>
+          <h2 className="text-2xl font-bold mb-2 text-white">Create New Project</h2>
+          <p className="text-slate-300">
+            Start analyzing a new UI with AI-powered design improvements
           </p>
-        </div>
+        </button>
 
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-          <div className="text-4xl mb-4">🔄</div>
-          <h3 className="text-xl font-bold mb-2 text-white">Iterative Improvement</h3>
-          <p className="text-slate-400">
-            Automatically applies changes, re-evaluates, and learns from each iteration
-          </p>
-        </div>
-
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-          <div className="text-4xl mb-4">📊</div>
-          <h3 className="text-xl font-bold mb-2 text-white">Hybrid Scoring</h3>
-          <p className="text-slate-400">
-            Combines AI vision (60%) with real browser metrics (40%) for 95% accuracy
-          </p>
-        </div>
-
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-          <div className="text-4xl mb-4">🧠</div>
-          <h3 className="text-xl font-bold mb-2 text-white">Memory System</h3>
-          <p className="text-slate-400">
-            Learns from past iterations to avoid repeating failed approaches
-          </p>
-        </div>
-
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-          <div className="text-4xl mb-4">🎯</div>
-          <h3 className="text-xl font-bold mb-2 text-white">8-Dimension Scoring</h3>
-          <p className="text-slate-400">
-            Evaluates visual hierarchy, typography, accessibility, and more
-          </p>
-        </div>
-
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-          <div className="text-4xl mb-4">🔌</div>
-          <h3 className="text-xl font-bold mb-2 text-white">Multi-Provider</h3>
-          <p className="text-slate-400">
-            Switch between Anthropic, OpenAI, Google, and Z.AI models instantly
-          </p>
-        </div>
-      </div>
-
-      {/* CTA */}
-      <div className="text-center bg-gradient-to-r from-purple-900/20 to-blue-900/20 p-12 rounded-lg border border-purple-800/30">
-        <h2 className="text-3xl font-bold mb-4 text-white">Ready to improve your UI?</h2>
-        <p className="text-slate-300 mb-8 text-lg">
-          Start analyzing your projects with AI-powered design iteration
-        </p>
+        {/* Open Projects Card */}
         <Link
           to="/projects"
-          className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg"
+          className="bg-slate-800/60 border-2 border-slate-700 rounded-xl p-8 hover:border-blue-500 hover:bg-slate-800 transition-all transform hover:scale-105 text-left block"
         >
-          View Your Projects
+          <div className="text-5xl mb-4">📁</div>
+          <h2 className="text-2xl font-bold mb-2 text-white">Open Projects</h2>
+          <p className="text-slate-300">
+            Continue working on your existing projects
+            {!loading && projects.length > 0 && (
+              <span className="block mt-2 text-sm text-blue-400">
+                {projects.length} project{projects.length !== 1 ? 's' : ''} available
+              </span>
+            )}
+          </p>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid md:grid-cols-4 gap-8 mt-16">
-        <div className="text-center">
-          <div className="text-4xl font-bold text-gradient mb-2">95%</div>
-          <div className="text-slate-400">Accuracy with Hybrid Mode</div>
-        </div>
-        <div className="text-center">
-          <div className="text-4xl font-bold text-gradient mb-2">8</div>
-          <div className="text-slate-400">Design Dimensions</div>
-        </div>
-        <div className="text-center">
-          <div className="text-4xl font-bold text-gradient mb-2">4</div>
-          <div className="text-slate-400">AI Providers Supported</div>
-        </div>
-        <div className="text-center">
-          <div className="text-4xl font-bold text-gradient mb-2">8.5+</div>
-          <div className="text-slate-400">Target Quality Score</div>
-        </div>
+      {/* Quick Links */}
+      <div className="text-center text-sm text-slate-500">
+        <Link to="/features" className="hover:text-slate-300 transition-colors">
+          Learn about features →
+        </Link>
       </div>
+
+      {/* Project Wizard Modal */}
+      {showWizard && (
+        <ProjectWizard
+          onClose={() => setShowWizard(false)}
+          onComplete={handleWizardComplete}
+        />
+      )}
     </div>
   );
 }

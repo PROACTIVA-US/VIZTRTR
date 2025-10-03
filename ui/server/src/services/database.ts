@@ -27,9 +27,35 @@ export class VIZTRTRDatabase {
         maxIterations INTEGER DEFAULT 5,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL,
-        hasProductSpec INTEGER DEFAULT 0
+        hasProductSpec INTEGER DEFAULT 0,
+        synthesizedPRD TEXT,
+        projectType TEXT,
+        analysisConfidence REAL,
+        status TEXT DEFAULT 'created'
       )
     `);
+
+    // Migrate existing tables (add columns if they don't exist)
+    try {
+      this.db.exec(`ALTER TABLE projects ADD COLUMN synthesizedPRD TEXT`);
+    } catch (e) {
+      // Column already exists
+    }
+    try {
+      this.db.exec(`ALTER TABLE projects ADD COLUMN projectType TEXT`);
+    } catch (e) {
+      // Column already exists
+    }
+    try {
+      this.db.exec(`ALTER TABLE projects ADD COLUMN analysisConfidence REAL`);
+    } catch (e) {
+      // Column already exists
+    }
+    try {
+      this.db.exec(`ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'created'`);
+    } catch (e) {
+      // Column already exists
+    }
 
     // Create runs table
     this.db.exec(`

@@ -13,6 +13,10 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   hasProductSpec?: boolean;
+  synthesizedPRD?: string;
+  projectType?: string;
+  analysisConfidence?: number;
+  status?: 'created' | 'analyzing' | 'analyzed' | 'ready';
 }
 
 export interface Run {
