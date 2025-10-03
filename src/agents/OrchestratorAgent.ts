@@ -34,6 +34,7 @@ export class OrchestratorAgent {
   private controlPanelAgent: ControlPanelAgent;
   private teleprompterAgent: TeleprompterAgent;
   private discoveredFiles: DiscoveredFile[] = [];
+  private fileCache = new Map<string, DiscoveredFile[]>();
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
@@ -47,12 +48,35 @@ export class OrchestratorAgent {
   async implementChanges(spec: DesignSpec, projectPath: string): Promise<Changes> {
     console.log('   🎯 OrchestratorAgent analyzing recommendations...');
 
-    // Step 1: Discover files in the project
-    this.discoveredFiles = await discoverComponentFiles(projectPath, {
-      maxFileSize: 50 * 1024,
-      includeContent: false,
-    });
-    console.log(`   🔍 Discovered ${this.discoveredFiles.length} component files in project`);
+    // Step 1: Discover files in the project (with caching)
+    try {
+      if (this.fileCache.has(projectPath)) {
+        this.discoveredFiles = this.fileCache.get(projectPath)!;
+        console.log(`   📦 Using cached discovery: ${this.discoveredFiles.length} component files`);
+      } else {
+        this.discoveredFiles = await discoverComponentFiles(projectPath, {
+          maxFileSize: 50 * 1024,
+          includeContent: false,
+        });
+        this.fileCache.set(projectPath, this.discoveredFiles);
+        console.log(`   🔍 Discovered ${this.discoveredFiles.length} component files in project`);
+      }
+
+      if (this.discoveredFiles.length === 0) {
+        console.warn('   ⚠️  No component files discovered in project');
+        return {
+          files: [],
+          summary: 'No component files found in project for modification',
+          buildCommand: 'npm run build',
+          testCommand: 'npm test',
+        };
+      }
+    } catch (error) {
+      console.error('   ❌ File discovery failed:', error);
+      throw new Error(
+        `Failed to discover project files: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
 
     // Step 2: Create routing plan using extended thinking
     const routingPlan = await this.createRoutingPlan(spec);
