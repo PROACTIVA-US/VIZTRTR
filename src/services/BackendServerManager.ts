@@ -15,6 +15,12 @@ export interface BackendConfig {
 // Security: Whitelist of allowed commands
 const ALLOWED_COMMANDS = ['npm', 'yarn', 'pnpm', 'node', 'deno', 'bun', 'pnpx', 'npx'];
 
+// Security: Shell metacharacters that indicate command injection attempts
+const SHELL_METACHARACTERS = /[;&|`$()<>\\]/;
+
+// Security: Allowed path prefixes
+const ALLOWED_PATH_PREFIXES = ['/Users/', '/home/', '/var/'];
+
 // Security: Whitelist of allowed environment variables
 const ALLOWED_ENV_VARS = [
   'NODE_ENV',
@@ -30,6 +36,7 @@ export class BackendServerManager {
   private process: ChildProcess | null = null;
   private isRunning = false;
   private verbose: boolean;
+  private killTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     private config: BackendConfig,
@@ -66,10 +73,20 @@ export class BackendServerManager {
       );
     }
 
-    // Security: Validate path is within reasonable bounds
-    if (!resolvedPath.includes('/Users/') && !resolvedPath.includes('/home/') && !resolvedPath.includes('/var/')) {
+    // Security: Validate path is within allowed prefixes
+    const isAllowedPath = ALLOWED_PATH_PREFIXES.some(prefix =>
+      resolvedPath.startsWith(prefix)
+    );
+    if (!isAllowedPath) {
       throw new Error(
-        `Suspicious working directory: ${resolvedPath}. Must be in a standard user or project directory.`
+        `Suspicious working directory: ${resolvedPath}. Must start with one of: ${ALLOWED_PATH_PREFIXES.join(', ')}`
+      );
+    }
+
+    // Security: Check for shell metacharacters in entire command
+    if (SHELL_METACHARACTERS.test(this.config.devCommand)) {
+      throw new Error(
+        `Command contains dangerous shell metacharacters: ${this.config.devCommand}`
       );
     }
 
@@ -84,7 +101,7 @@ export class BackendServerManager {
     }
 
     // Security: Filter environment variables
-    const safeEnv = this.filterEnvVars(this.config.env || {});
+    const safeEnv = this.filterEnvVars(this.config.env ?? {});
 
     // Spawn process
     this.process = spawn(cmd, args, {
@@ -117,6 +134,11 @@ export class BackendServerManager {
       this.log(`Backend server exited with code ${code}`);
       this.isRunning = false;
       this.process = null;
+      // Clear kill timeout if it exists
+      if (this.killTimeout) {
+        clearTimeout(this.killTimeout);
+        this.killTimeout = null;
+      }
     });
 
     // Wait for server to be ready
@@ -205,6 +227,11 @@ export class BackendServerManager {
       this.process.once('exit', () => {
         this.isRunning = false;
         this.process = null;
+        // Clear kill timeout if it exists
+        if (this.killTimeout) {
+          clearTimeout(this.killTimeout);
+          this.killTimeout = null;
+        }
         this.log('✅ Backend server stopped');
         resolve();
       });
@@ -214,11 +241,12 @@ export class BackendServerManager {
 
       // Force kill after configured timeout
       const timeout = this.config.gracefulShutdownTimeout ?? 5000;
-      setTimeout(() => {
+      this.killTimeout = setTimeout(() => {
         if (this.process) {
           this.log('Force killing backend server (timeout)');
           this.process.kill('SIGKILL');
         }
+        this.killTimeout = null;
       }, timeout);
     });
   }

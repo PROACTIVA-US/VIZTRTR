@@ -88,7 +88,16 @@ export class VIZTRTROrchestrator {
     // Start backend server if configured
     if (projectConfig?.backend?.enabled) {
       console.log('🔧 Backend server enabled, starting...');
-      this.backendManager = new BackendServerManager(projectConfig.backend as BackendConfig, { verbose: this.config.verbose });
+
+      // Validate required BackendConfig fields
+      const backend = projectConfig.backend;
+      if (!backend.url || !backend.devCommand || !backend.workingDirectory || !backend.healthCheckPath) {
+        throw new Error(
+          'Backend config missing required fields. Required: url, devCommand, workingDirectory, healthCheckPath'
+        );
+      }
+
+      this.backendManager = new BackendServerManager(backend as BackendConfig, { verbose: this.config.verbose });
 
       try {
         await this.backendManager.start();
