@@ -63,6 +63,63 @@ export const AVAILABLE_MODELS = {
   ]
 } as const;
 
+// Project configuration from viztrtr-config.json
+export interface ProjectConfig {
+  projectId?: string;
+  projectName?: string;
+  frontend?: {
+    url: string;
+    devCommand: string;
+    workingDirectory: string;
+    healthCheckPath?: string;
+    readyTimeout?: number;
+  };
+  backend?: {
+    enabled?: boolean;
+    url?: string;
+    devCommand?: string;
+    workingDirectory?: string;
+    healthCheckPath?: string;
+    readyTimeout?: number;
+    gracefulShutdownTimeout?: number;
+    env?: Record<string, string>;
+  };
+  database?: {
+    type: 'sqlite' | 'postgres' | 'mysql' | 'none';
+    setupCommand?: string;
+    teardownCommand?: string;
+    testData?: string;
+  };
+  models?: {
+    vision?: ModelConfig;
+    implementation?: ModelConfig;
+    evaluation?: ModelConfig;
+  };
+  testing?: {
+    routes?: Array<{
+      path: string;
+      label: string;
+      priority?: 'high' | 'medium' | 'low';
+      setupActions?: any[];
+      testInteractions?: any[];
+    }>;
+  };
+  viztrtr?: {
+    targetScore?: number;
+    maxIterations?: number;
+    hybridScoring?: {
+      enabled: boolean;
+      aiWeight: number;
+      metricsWeight: number;
+    };
+    cache?: {
+      enabled: boolean;
+      ttl: number;
+    };
+    humanLoop?: HumanLoopConfig;
+  };
+}
+
 export interface VIZTRTRConfig {
   // Project settings
   projectPath: string;

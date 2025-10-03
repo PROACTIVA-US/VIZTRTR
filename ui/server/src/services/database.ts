@@ -76,7 +76,7 @@ export class VIZTRTRDatabase {
   }
 
   // Projects
-  createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Project {
+  createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'workspacePath'>): Project {
     const id = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const now = new Date().toISOString();
 

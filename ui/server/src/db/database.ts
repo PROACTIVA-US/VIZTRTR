@@ -12,7 +12,7 @@ if (!fs.existsSync(dataDir)) {
 }
 
 // Initialize database
-export const db = new Database(DB_PATH);
+export const db: Database.Database = new Database(DB_PATH);
 
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
@@ -67,7 +67,17 @@ export interface Run {
   error?: string;
 }
 
-export const projectQueries = {
+interface ProjectQueries {
+  create: Database.Statement;
+  findAll: Database.Statement;
+  findById: Database.Statement;
+  update: Database.Statement;
+  updateStatus: Database.Statement;
+  updateLastRun: Database.Statement;
+  delete: Database.Statement;
+}
+
+export const projectQueries: ProjectQueries = {
   create: db.prepare(`
     INSERT INTO projects (id, name, description, projectPath, frontendUrl, projectType,
                           targetScore, maxIterations, status, createdAt, updatedAt, config, focusAreas, avoidAreas)
@@ -92,7 +102,16 @@ export const projectQueries = {
   delete: db.prepare('DELETE FROM projects WHERE id = ?'),
 };
 
-export const runQueries = {
+interface RunQueries {
+  create: Database.Statement;
+  findByProject: Database.Statement;
+  findById: Database.Statement;
+  updateStatus: Database.Statement;
+  updateProgress: Database.Statement;
+  complete: Database.Statement;
+}
+
+export const runQueries: RunQueries = {
   create: db.prepare(`
     INSERT INTO runs (id, projectId, status, targetScore, currentIteration, maxIterations, targetReached, startedAt, outputDir)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)

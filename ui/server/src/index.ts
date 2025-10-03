@@ -42,6 +42,12 @@ if (!anthropicApiKey) {
 
 const runManager = new RunManager(db, anthropicApiKey);
 
+// Serve static files (screenshots) - check both locations
+const outputDirServer = path.join(__dirname, '../viztrtr-output');
+const outputDirRoot = path.join(__dirname, '../../../viztrtr-output');
+app.use('/outputs', express.static(outputDirServer));
+app.use('/outputs-root', express.static(outputDirRoot));
+
 // Routes
 app.use('/api/projects', createProjectsRouter(db));
 app.use('/api/runs', createRunsRouter(db, runManager));

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Agent } from '../types/Agent';
+import type { Agent } from '../store/buildStore';
 
 interface AgentCardProps {
   agent: Agent;
@@ -78,11 +78,13 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onSelect, isSelecte
         </div>
       </div>
       
-      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{agent.description}</p>
-      
+      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+        {agent.responsibilities?.join(', ') || 'No responsibilities defined'}
+      </p>
+
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>Version: {agent.version || '1.0.0'}</span>
-        <span>Updated: {agent.lastUpdated || 'Unknown'}</span>
+        <span>Role: {agent.role || 'Unknown'}</span>
+        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agent.color || '#888' }}></span>
       </div>
     </div>
   );

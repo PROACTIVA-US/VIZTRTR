@@ -6,7 +6,6 @@ import { AgentCard } from './AgentCard';
 export function AgentOrchestration() {
   const {
     agents,
-    modifyAgent,
     startBuild,
     buildState,
   } = useBuildStore();
@@ -46,7 +45,6 @@ export function AgentOrchestration() {
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                onEdit={(updates) => modifyAgent(agent.id, updates)}
               />
             ))}
         </AnimatePresence>

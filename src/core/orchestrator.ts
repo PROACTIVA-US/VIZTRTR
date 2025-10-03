@@ -22,6 +22,7 @@ import { ReflectionAgent } from '../agents/ReflectionAgent';
 import { OrchestratorAgent } from '../agents/OrchestratorAgent';
 import { RecommendationFilterAgent } from '../agents/RecommendationFilterAgent';
 import { HumanLoopAgent } from '../agents/HumanLoopAgent';
+import { BackendServerManager, BackendConfig } from '../services/BackendServerManager';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -36,6 +37,7 @@ export class VIZTRTROrchestrator {
   private filterAgent: RecommendationFilterAgent;
   private humanLoopAgent: HumanLoopAgent;
   private hybridScoringAgent: HybridScoringAgent | null = null;
+  private backendManager: BackendServerManager | null = null;
   private iterations: IterationResult[] = [];
   private startTime: Date | null = null;
 
@@ -79,6 +81,31 @@ export class VIZTRTROrchestrator {
     console.log(`   Target Score: ${this.config.targetScore}/10`);
     console.log(`   Max Iterations: ${this.config.maxIterations}`);
     console.log(`   Output: ${this.config.outputDir}\n`);
+
+    // Load project config (including backend configuration)
+    const projectConfig = await this.loadProjectConfig();
+
+    // Start backend server if configured
+    if (projectConfig?.backend?.enabled) {
+      console.log('🔧 Backend server enabled, starting...');
+
+      // Validate required BackendConfig fields
+      const backend = projectConfig.backend;
+      if (!backend.url || !backend.devCommand || !backend.workingDirectory || !backend.healthCheckPath) {
+        throw new Error(
+          'Backend config missing required fields. Required: url, devCommand, workingDirectory, healthCheckPath'
+        );
+      }
+
+      this.backendManager = new BackendServerManager(backend as BackendConfig, { verbose: this.config.verbose });
+
+      try {
+        await this.backendManager.start();
+      } catch (error) {
+        console.error('❌ Failed to start backend server:', error);
+        throw new Error(`Backend server failed to start: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
 
     // Load existing memory
     console.log('📚 Loading iteration memory...');
@@ -136,8 +163,45 @@ export class VIZTRTROrchestrator {
 
       return report;
     } finally {
+      // Stop backend server if running
+      if (this.backendManager) {
+        await this.backendManager.stop();
+      }
       await this.cleanup();
     }
+  }
+
+  /**
+   * Load project configuration from workspace
+   */
+  private async loadProjectConfig(): Promise<import('./types').ProjectConfig> {
+    // Try to find viztrtr-config.json in project directory or parent
+    const possiblePaths = [
+      path.join(this.config.projectPath, 'viztrtr-config.json'),
+      path.join(this.config.projectPath, '..', 'viztrtr-config.json'),
+      path.join(this.config.outputDir, 'viztrtr-config.json'),
+    ];
+
+    for (const configPath of possiblePaths) {
+      try {
+        const exists = await fs.access(configPath).then(() => true).catch(() => false);
+        if (exists) {
+          const content = await fs.readFile(configPath, 'utf-8');
+          const config = JSON.parse(content);
+          console.log(`📋 Loaded project config from: ${configPath}`);
+          return config;
+        }
+      } catch (error) {
+        if (this.config.verbose) {
+          console.log(`Config not found at ${configPath}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        // Continue to next path
+      }
+    }
+
+    // No config found, return empty config
+    console.log('📋 No project config found, continuing without backend server');
+    return { backend: { enabled: false } };
   }
 
   private async runIteration(iterationNum: number): Promise<IterationResult> {

@@ -5,6 +5,16 @@ viztritr-output/
 *.log
 .DS_Store
 
+# Database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# UI server outputs
+ui/server/*.db
+ui/server/viztrtr-output/
+
 # Project-specific outputs
 projects/*/output/
 projects/*/viztritr-output/
