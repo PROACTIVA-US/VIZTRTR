@@ -15,6 +15,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Recommendation, FileChange, ValidationResult } from '../../core/types';
 import { validateFileChanges, formatValidationResult } from '../../core/validation';
+import { discoverComponentFiles, DiscoveredFile, summarizeDiscovery } from '../../utils/file-discovery';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -27,14 +28,8 @@ export class ControlPanelAgent {
     failed: 0,
   };
 
-  // Known files this agent is responsible for
-  private readonly MANAGED_FILES = [
-    'src/components/Header.tsx',
-    'src/components/PromptInput.tsx',
-    'src/components/Footer.tsx',
-    'src/components/AgentCard.tsx',
-    'src/components/AgentOrchestration.tsx',
-  ];
+  // Discovered files (populated dynamically)
+  private discoveredFiles: DiscoveredFile[] = [];
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
@@ -48,6 +43,20 @@ export class ControlPanelAgent {
     projectPath: string
   ): Promise<FileChange[]> {
     console.log(`   🎛️  ControlPanelAgent processing ${recommendations.length} recommendations...`);
+
+    // Discover component files in the project
+    console.log(`   🔍 Discovering component files in: ${projectPath}`);
+    this.discoveredFiles = await discoverComponentFiles(projectPath, {
+      maxFileSize: 50 * 1024, // 50KB max
+      includeContent: false,
+    });
+
+    console.log(summarizeDiscovery(this.discoveredFiles));
+
+    if (this.discoveredFiles.length === 0) {
+      console.warn(`   ⚠️  No component files found in ${projectPath}`);
+      return [];
+    }
 
     const changes: FileChange[] = [];
     this.validationStats = { total: 0, passed: 0, failed: 0 };
@@ -107,14 +116,15 @@ export class ControlPanelAgent {
       // Normalize file path (remove leading slashes, normalize separators)
       const normalizedPath = implementation.filePath.replace(/^\/+/, '').replace(/\\/g, '/');
 
-      // Validate file is in our managed set
-      if (!this.MANAGED_FILES.includes(normalizedPath)) {
-        console.warn(`   ⚠️  File not managed by ControlPanelAgent: ${normalizedPath}`);
-        console.warn(`   📋 Managed files: ${this.MANAGED_FILES.join(', ')}`);
+      // Validate file is in our discovered set
+      const discoveredFile = this.discoveredFiles.find(f => f.path === normalizedPath);
+      if (!discoveredFile) {
+        console.warn(`   ⚠️  File not found in discovered files: ${normalizedPath}`);
+        console.warn(`   💡 Available files: ${this.discoveredFiles.slice(0, 5).map(f => f.path).join(', ')}...`);
         return null;
       }
 
-      const fullPath = path.join(projectPath, normalizedPath);
+      const fullPath = discoveredFile.absolutePath;
 
       // Check file exists before attempting to read
       try {
@@ -182,6 +192,22 @@ export class ControlPanelAgent {
   }
 
   private buildImplementationPrompt(recommendation: Recommendation, projectPath: string): string {
+    // Group files by directory for better organization
+    const filesByDir = this.discoveredFiles.reduce((acc, file) => {
+      const dir = path.dirname(file.path);
+      if (!acc[dir]) acc[dir] = [];
+      acc[dir].push(file.name);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    const fileList = Object.entries(filesByDir)
+      .map(([dir, files]) => {
+        const fileStr = files.slice(0, 10).join(', '); // Show first 10 files per dir
+        const more = files.length > 10 ? ` (+${files.length - 10} more)` : '';
+        return `- ${dir}/ → ${fileStr}${more}`;
+      })
+      .join('\n');
+
     return `You are a specialist CONTROL PANEL AGENT for desktop UI components.
 
 **DESIGN RECOMMENDATION:**
@@ -191,9 +217,13 @@ export class ControlPanelAgent {
 - Impact: ${recommendation.impact}/10
 - Effort: ${recommendation.effort}/10
 
+**AVAILABLE FILES IN PROJECT:**
+${fileList}
+
 **YOUR RESPONSIBILITIES:**
-You ONLY modify these files:
-${this.MANAGED_FILES.map((f) => `- ${f}`).join('\n')}
+- Analyze the recommendation and determine which file(s) need modification
+- You can ONLY modify files from the list above
+- Choose the most relevant file for this specific change
 
 **DESIGN CRITERIA FOR CONTROL PANELS:**
 - Normal desktop sizing: 32-48px buttons, 0.875-1.125rem text
@@ -233,10 +263,10 @@ Examples of BAD changes:
 
 **IMPORTANT:**
 - Do NOT create new components or files
-- Stay within YOUR file boundaries
-- Use existing Tailwind utility classes
+- Choose a file from the AVAILABLE FILES list above
+- Use existing utility classes (Tailwind, Material-UI, etc.)
 - Maintain TypeScript type safety
-- File paths MUST start with "src/components/"
+- File paths must match EXACTLY what's in the available files list
 - Make the SMALLEST possible change to achieve the goal
 
 Return as JSON:

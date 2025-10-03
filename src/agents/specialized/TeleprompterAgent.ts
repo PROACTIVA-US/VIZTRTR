@@ -16,6 +16,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Recommendation, FileChange } from '../../core/types';
+import { discoverComponentFiles, DiscoveredFile, summarizeDiscovery } from '../../utils/file-discovery';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -23,10 +24,8 @@ export class TeleprompterAgent {
   private client: Anthropic;
   private model = 'claude-sonnet-4-5';
 
-  // Known files this agent is responsible for
-  // Note: This project doesn't have a teleprompter view - it's a VIZTRTR UI builder
-  // This agent should skip recommendations unless they're truly performance-critical
-  private readonly MANAGED_FILES: string[] = [];
+  // Discovered files (populated dynamically)
+  private discoveredFiles: DiscoveredFile[] = [];
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
@@ -42,6 +41,20 @@ export class TeleprompterAgent {
     console.log(
       `   🎤 TeleprompterAgent processing ${recommendations.length} recommendations...`
     );
+
+    // Discover component files in the project
+    console.log(`   🔍 Discovering component files for teleprompter views...`);
+    this.discoveredFiles = await discoverComponentFiles(projectPath, {
+      maxFileSize: 50 * 1024, // 50KB max
+      includeContent: false,
+    });
+
+    console.log(summarizeDiscovery(this.discoveredFiles));
+
+    if (this.discoveredFiles.length === 0) {
+      console.warn(`   ⚠️  No component files found for teleprompter`);
+      return [];
+    }
 
     const changes: FileChange[] = [];
 
@@ -96,22 +109,15 @@ export class TeleprompterAgent {
       // Normalize file path (remove leading slashes, normalize separators)
       const normalizedPath = implementation.filePath.replace(/^\/+/, '').replace(/\\/g, '/');
 
-      // Skip if no managed files (this project may not have teleprompter components)
-      if (this.MANAGED_FILES.length === 0) {
-        console.warn(`   ⚠️  TeleprompterAgent has no managed files for this project`);
+      // Validate file is in our discovered set
+      const discoveredFile = this.discoveredFiles.find(f => f.path === normalizedPath);
+      if (!discoveredFile) {
+        console.warn(`   ⚠️  File not found in discovered files: ${normalizedPath}`);
+        console.warn(`   💡 Available files: ${this.discoveredFiles.slice(0, 5).map(f => f.path).join(', ')}...`);
         return null;
       }
 
-      // Validate file is in our managed set
-      if (!this.MANAGED_FILES.includes(normalizedPath)) {
-        console.warn(
-          `   ⚠️  File not managed by TeleprompterAgent: ${normalizedPath}`
-        );
-        console.warn(`   📋 Managed files: ${this.MANAGED_FILES.join(', ')}`);
-        return null;
-      }
-
-      const fullPath = path.join(projectPath, normalizedPath);
+      const fullPath = discoveredFile.absolutePath;
 
       // Check file exists before attempting to read
       try {
@@ -158,6 +164,22 @@ export class TeleprompterAgent {
     recommendation: Recommendation,
     projectPath: string
   ): string {
+    // Group files by directory for better organization
+    const filesByDir = this.discoveredFiles.reduce((acc, file) => {
+      const dir = path.dirname(file.path);
+      if (!acc[dir]) acc[dir] = [];
+      acc[dir].push(file.name);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    const fileList = Object.entries(filesByDir)
+      .map(([dir, files]) => {
+        const fileStr = files.slice(0, 10).join(', '); // Show first 10 files per dir
+        const more = files.length > 10 ? ` (+${files.length - 10} more)` : '';
+        return `- ${dir}/ → ${fileStr}${more}`;
+      })
+      .join('\n');
+
     return `You are a specialist TELEPROMPTER AGENT for stage performance UI.
 
 **DESIGN RECOMMENDATION:**
@@ -167,9 +189,13 @@ export class TeleprompterAgent {
 - Impact: ${recommendation.impact}/10
 - Effort: ${recommendation.effort}/10
 
+**AVAILABLE FILES IN PROJECT:**
+${fileList}
+
 **YOUR RESPONSIBILITIES:**
-You ONLY modify these files:
-${this.MANAGED_FILES.map((f) => `- ${f}`).join('\n')}
+- Analyze the recommendation and determine which file(s) need modification
+- You can ONLY modify files from the list above
+- Choose the most relevant file for this specific change
 
 **DESIGN CRITERIA FOR STAGE PERFORMANCE:**
 - LARGE typography: 3-4.5rem base text (NOT normal web sizing!)
