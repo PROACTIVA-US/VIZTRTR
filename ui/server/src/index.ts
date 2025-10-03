@@ -13,6 +13,7 @@ import { RunManager } from './services/runManager.js';
 import { createProjectsRouter } from './routes/projects.js';
 import { createRunsRouter } from './routes/runs.js';
 import { createEvaluateRouter } from './routes/evaluate.js';
+import analyzeRouter from './routes/analyze.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
@@ -52,6 +53,7 @@ app.use('/outputs-root', express.static(outputDirRoot));
 app.use('/api/projects', createProjectsRouter(db));
 app.use('/api/runs', createRunsRouter(db, runManager));
 app.use('/api', createEvaluateRouter(anthropicApiKey));
+app.use('/api', analyzeRouter);
 
 // Health check
 app.get('/health', (req, res) => {

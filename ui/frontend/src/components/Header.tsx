@@ -18,6 +18,12 @@ function Header() {
               Projects
             </Link>
             <Link
+              to="/features"
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Features
+            </Link>
+            <Link
               to="/settings"
               className="text-slate-300 hover:text-white transition-colors"
             >

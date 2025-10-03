@@ -27,9 +27,33 @@ export class VIZTRTRDatabase {
         maxIterations INTEGER DEFAULT 5,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL,
-        hasProductSpec INTEGER DEFAULT 0
+        hasProductSpec INTEGER DEFAULT 0,
+        synthesizedPRD TEXT,
+        projectType TEXT,
+        analysisConfidence REAL,
+        status TEXT DEFAULT 'created'
       )
     `);
+
+    // Migrate existing tables (add columns if they don't exist)
+    const migrations = [
+      { column: 'synthesizedPRD', type: 'TEXT' },
+      { column: 'projectType', type: 'TEXT' },
+      { column: 'analysisConfidence', type: 'REAL' },
+      { column: 'status', type: 'TEXT', default: "'created'" },
+    ];
+
+    for (const migration of migrations) {
+      try {
+        const sql = migration.default
+          ? `ALTER TABLE projects ADD COLUMN ${migration.column} ${migration.type} DEFAULT ${migration.default}`
+          : `ALTER TABLE projects ADD COLUMN ${migration.column} ${migration.type}`;
+        this.db.exec(sql);
+        console.log(`✓ Migration: Added ${migration.column} column to projects table`);
+      } catch (e) {
+        // Column already exists (safe to ignore)
+      }
+    }
 
     // Create runs table
     this.db.exec(`
