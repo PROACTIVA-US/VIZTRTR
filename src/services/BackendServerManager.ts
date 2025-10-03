@@ -8,13 +8,35 @@ export interface BackendConfig {
   workingDirectory: string;
   healthCheckPath: string;
   readyTimeout: number;
+  gracefulShutdownTimeout?: number; // milliseconds, default 5000
   env?: Record<string, string>;
 }
+
+// Security: Whitelist of allowed commands
+const ALLOWED_COMMANDS = ['npm', 'yarn', 'pnpm', 'node', 'deno', 'bun', 'pnpx', 'npx'];
+
+// Security: Shell metacharacters that indicate command injection attempts
+const SHELL_METACHARACTERS = /[;&|`$()<>\\]/;
+
+// Security: Allowed path prefixes
+const ALLOWED_PATH_PREFIXES = ['/Users/', '/home/', '/var/'];
+
+// Security: Whitelist of allowed environment variables
+const ALLOWED_ENV_VARS = [
+  'NODE_ENV',
+  'DATABASE_URL',
+  'LOG_LEVEL',
+  'PORT',
+  'HOST',
+  'API_KEY',
+  'DEBUG',
+];
 
 export class BackendServerManager {
   private process: ChildProcess | null = null;
   private isRunning = false;
   private verbose: boolean;
+  private killTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     private config: BackendConfig,
@@ -27,6 +49,12 @@ export class BackendServerManager {
    * Start the backend server
    */
   async start(): Promise<void> {
+    // Clean up existing process first
+    if (this.process) {
+      this.log('Existing process found, stopping it first...');
+      await this.stop();
+    }
+
     if (!this.config.enabled) {
       this.log('Backend server disabled, skipping...');
       return;
@@ -37,21 +65,50 @@ export class BackendServerManager {
 
     // Validate working directory exists
     const fs = await import('fs');
-    if (!fs.existsSync(this.config.workingDirectory)) {
+    const resolvedPath = path.resolve(this.config.workingDirectory);
+
+    if (!fs.existsSync(resolvedPath)) {
       throw new Error(
         `Backend working directory does not exist: ${this.config.workingDirectory}`
       );
     }
 
-    // Parse command (e.g., "npm run dev:server" -> ["npm", "run", "dev:server"])
+    // Security: Validate path is within allowed prefixes
+    const isAllowedPath = ALLOWED_PATH_PREFIXES.some(prefix =>
+      resolvedPath.startsWith(prefix)
+    );
+    if (!isAllowedPath) {
+      throw new Error(
+        `Suspicious working directory: ${resolvedPath}. Must start with one of: ${ALLOWED_PATH_PREFIXES.join(', ')}`
+      );
+    }
+
+    // Security: Check for shell metacharacters in entire command
+    if (SHELL_METACHARACTERS.test(this.config.devCommand)) {
+      throw new Error(
+        `Command contains dangerous shell metacharacters: ${this.config.devCommand}`
+      );
+    }
+
+    // Parse and validate command
     const [cmd, ...args] = this.config.devCommand.split(' ');
+
+    // Security: Validate command is in whitelist
+    if (!ALLOWED_COMMANDS.includes(cmd)) {
+      throw new Error(
+        `Unsafe command: ${cmd}. Only ${ALLOWED_COMMANDS.join(', ')} are allowed.`
+      );
+    }
+
+    // Security: Filter environment variables
+    const safeEnv = this.filterEnvVars(this.config.env ?? {});
 
     // Spawn process
     this.process = spawn(cmd, args, {
-      cwd: path.resolve(this.config.workingDirectory),
+      cwd: resolvedPath,
       env: {
         ...process.env,
-        ...this.config.env,
+        ...safeEnv,
       },
       stdio: 'pipe',
     });
@@ -67,14 +124,21 @@ export class BackendServerManager {
       });
     }
 
-    this.process.on('error', (error) => {
+    // Use 'once' to prevent memory leaks
+    this.process.once('error', (error) => {
       console.error(`[Backend Process Error] ${error.message}`);
       this.isRunning = false;
     });
 
-    this.process.on('exit', (code) => {
+    this.process.once('exit', (code) => {
       this.log(`Backend server exited with code ${code}`);
       this.isRunning = false;
+      this.process = null;
+      // Clear kill timeout if it exists
+      if (this.killTimeout) {
+        clearTimeout(this.killTimeout);
+        this.killTimeout = null;
+      }
     });
 
     // Wait for server to be ready
@@ -84,20 +148,41 @@ export class BackendServerManager {
   }
 
   /**
-   * Wait for backend to be healthy
+   * Filter environment variables to whitelist
+   */
+  private filterEnvVars(env: Record<string, string>): Record<string, string> {
+    const filtered: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(env)) {
+      if (ALLOWED_ENV_VARS.includes(key)) {
+        filtered[key] = value;
+      } else if (this.verbose) {
+        console.warn(`[BackendServerManager] Filtered disallowed env var: ${key}`);
+      }
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Wait for backend to be healthy with exponential backoff
    */
   private async waitUntilReady(): Promise<void> {
     const startTime = Date.now();
     const healthUrl = `${this.config.url}${this.config.healthCheckPath}`;
     let lastError: Error | null = null;
+    let attempt = 0;
 
     this.log(`Waiting for backend at ${healthUrl}...`);
 
     while (Date.now() - startTime < this.config.readyTimeout) {
       try {
-        const res = await fetch(healthUrl, {
-          timeout: 2000,
-        } as any);
+        // Use AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+        const res = await fetch(healthUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
           this.log(`Backend health check passed (${res.status})`);
@@ -110,7 +195,10 @@ export class BackendServerManager {
         // Not ready yet, continue polling
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Exponential backoff: 500ms, 1s, 2s, 4s, 8s (max)
+      const delay = Math.min(500 * Math.pow(2, attempt), 8000);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      attempt++;
     }
 
     const elapsed = Date.now() - startTime;
@@ -136,9 +224,14 @@ export class BackendServerManager {
         return;
       }
 
-      this.process.on('exit', () => {
+      this.process.once('exit', () => {
         this.isRunning = false;
         this.process = null;
+        // Clear kill timeout if it exists
+        if (this.killTimeout) {
+          clearTimeout(this.killTimeout);
+          this.killTimeout = null;
+        }
         this.log('✅ Backend server stopped');
         resolve();
       });
@@ -146,13 +239,15 @@ export class BackendServerManager {
       // Send SIGTERM for graceful shutdown
       this.process.kill('SIGTERM');
 
-      // Force kill after 5 seconds
-      setTimeout(() => {
+      // Force kill after configured timeout
+      const timeout = this.config.gracefulShutdownTimeout ?? 5000;
+      this.killTimeout = setTimeout(() => {
         if (this.process) {
           this.log('Force killing backend server (timeout)');
           this.process.kill('SIGKILL');
         }
-      }, 5000);
+        this.killTimeout = null;
+      }, timeout);
     });
   }
 
@@ -166,7 +261,12 @@ export class BackendServerManager {
 
     try {
       const healthUrl = `${this.config.url}${this.config.healthCheckPath}`;
-      const res = await fetch(healthUrl, { timeout: 2000 } as any);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+      const res = await fetch(healthUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
       return res.ok;
     } catch (error) {
       return false;
