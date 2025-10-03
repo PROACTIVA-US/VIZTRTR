@@ -5,25 +5,45 @@
 import Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs';
 import * as path from 'path';
-
-export interface ProjectAnalysis {
-  projectType: string; // e.g., "Music Performance Platform", not just "teleprompter"
-  components: Array<{
-    name: string;
-    purpose: string;
-    uiContext: 'teleprompter' | 'control-panel' | 'library' | 'player' | 'general';
-  }>;
-  suggestedAgents: string[];
-  synthesizedPRD: string; // AI-generated understanding of the project
-  confidence: number;
-  analysisMethod: 'full' | 'structure-only' | 'fallback';
-}
+import type { ProjectAnalysis } from '../types.js';
 
 export class AIProjectAnalyzer {
   private client: Anthropic;
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
+  }
+
+  /**
+   * Validate project path is safe and accessible
+   */
+  private validateProjectPath(projectPath: string): void {
+    // Resolve to absolute path
+    const absolutePath = path.resolve(projectPath);
+
+    // Check for directory traversal attempts
+    if (absolutePath.includes('..')) {
+      throw new Error('Invalid project path: directory traversal not allowed');
+    }
+
+    // Check path exists
+    if (!fs.existsSync(absolutePath)) {
+      throw new Error(`Project path does not exist: ${absolutePath}`);
+    }
+
+    // Check it's a directory
+    const stat = fs.statSync(absolutePath);
+    if (!stat.isDirectory()) {
+      throw new Error(`Project path is not a directory: ${absolutePath}`);
+    }
+
+    // Prevent access to sensitive directories
+    const sensitivePatterns = ['/etc', '/System', '/usr/bin', '/bin', '/.ssh', '/private'];
+    for (const pattern of sensitivePatterns) {
+      if (absolutePath.startsWith(pattern)) {
+        throw new Error(`Access to sensitive directory not allowed: ${absolutePath}`);
+      }
+    }
   }
 
   /**
@@ -34,6 +54,9 @@ export class AIProjectAnalyzer {
     userProvidedPRD?: string
   ): Promise<ProjectAnalysis> {
     console.log(`🧠 AI analyzing project: ${projectPath}`);
+
+    // Validate path security
+    this.validateProjectPath(projectPath);
 
     // Gather project information
     const projectInfo = await this.gatherProjectInfo(projectPath);
@@ -219,7 +242,16 @@ Be thorough and accurate. The synthesized PRD will be saved and used to guide al
   /**
    * Recursively scan directory for components
    */
-  private scanDirectory(dir: string, components: string[]): void {
+  private scanDirectory(
+    dir: string,
+    components: string[],
+    depth: number = 0,
+    maxDepth: number = 5
+  ): void {
+    if (depth > maxDepth) {
+      return; // Prevent excessive recursion on large projects
+    }
+
     try {
       const files = fs.readdirSync(dir);
 
@@ -228,7 +260,7 @@ Be thorough and accurate. The synthesized PRD will be saved and used to guide al
         const stat = fs.statSync(fullPath);
 
         if (stat.isDirectory() && !file.startsWith('.') && file !== 'node_modules') {
-          this.scanDirectory(fullPath, components);
+          this.scanDirectory(fullPath, components, depth + 1, maxDepth);
         } else if (file.endsWith('.tsx') || file.endsWith('.jsx')) {
           components.push(file);
         }

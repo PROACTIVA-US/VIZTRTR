@@ -17,6 +17,36 @@ if (process.env.ANTHROPIC_API_KEY) {
   console.warn('⚠️  ANTHROPIC_API_KEY not set - AI analysis will be unavailable');
 }
 
+// Rate limiting for expensive AI analysis
+const rateLimitMap = new Map<string, number>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 5;
+
+function checkRateLimit(projectId: string): boolean {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW_MS;
+
+  // Clean up old entries
+  for (const [key, timestamp] of rateLimitMap.entries()) {
+    if (timestamp < windowStart) {
+      rateLimitMap.delete(key);
+    }
+  }
+
+  // Count requests in current window
+  const recentRequests = Array.from(rateLimitMap.entries())
+    .filter(([key, timestamp]) => key.startsWith(projectId) && timestamp >= windowStart)
+    .length;
+
+  if (recentRequests >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+
+  // Record this request
+  rateLimitMap.set(`${projectId}_${now}`, now);
+  return true;
+}
+
 /**
  * POST /api/projects/analyze
  * Run AI analysis on a project
@@ -25,8 +55,31 @@ router.post('/projects/analyze', async (req, res) => {
   try {
     const { projectId, projectPath, userProvidedPRD } = req.body;
 
+    // Input validation
     if (!projectId || !projectPath) {
       return res.status(400).json({ error: 'projectId and projectPath required' });
+    }
+
+    if (typeof projectId !== 'string' || typeof projectPath !== 'string') {
+      return res.status(400).json({ error: 'projectId and projectPath must be strings' });
+    }
+
+    if (userProvidedPRD && typeof userProvidedPRD !== 'string') {
+      return res.status(400).json({ error: 'userProvidedPRD must be a string' });
+    }
+
+    // Validate PRD length (max 10,000 characters)
+    if (userProvidedPRD && userProvidedPRD.length > 10000) {
+      return res.status(400).json({
+        error: 'PRD exceeds maximum length of 10,000 characters'
+      });
+    }
+
+    // Check rate limit
+    if (!checkRateLimit(projectId)) {
+      return res.status(429).json({
+        error: `Rate limit exceeded. Maximum ${MAX_REQUESTS_PER_WINDOW} requests per minute.`
+      });
     }
 
     if (!aiAnalyzer) {

@@ -119,3 +119,17 @@ export interface EvaluatePromptRequest {
   prompt: string;
   type: 'prompt' | 'prd';
 }
+
+// AI Project Analysis types
+export interface ProjectAnalysis {
+  projectType: string;
+  components: Array<{
+    name: string;
+    purpose: string;
+    uiContext: 'teleprompter' | 'control-panel' | 'library' | 'player' | 'general';
+  }>;
+  suggestedAgents: string[];
+  synthesizedPRD: string;
+  confidence: number;
+  analysisMethod: 'full' | 'structure-only' | 'fallback';
+}
