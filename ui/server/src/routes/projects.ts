@@ -89,7 +89,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
         let doclingData;
         if (prdFilePath && typeof prdFilePath === 'string' && prdFilePath.trim()) {
           const filePath = path.resolve(prdFilePath.trim());
-          const docling = await import('./services/doclingService.js');
+          const docling = await import('../services/doclingService.js');
           const service = new docling.DoclingService();
           const parsed = await service.parsePRD(filePath);
           doclingData = {
@@ -271,6 +271,145 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
     }
   });
 
+  // Project chat - AI assistant for project questions
+  router.post('/:id/chat', async (req: Request, res: Response) => {
+    try {
+      const project = db.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const { message, context } = req.body;
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+      }
+
+      // Load product spec for context
+      const productSpec = await loadProductSpec(project.workspacePath);
+
+      // Use Claude to answer questions
+      const Anthropic = (await import('@anthropic-ai/sdk')).default;
+      const anthropic = new Anthropic({ apiKey });
+
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: `You are an AI assistant helping with a VIZTRTR project.
+
+Project: ${project.name}
+Frontend URL: ${project.frontendUrl}
+Project Path: ${project.projectPath}
+
+${productSpec ? `Product Specification:\n${JSON.stringify(productSpec, null, 2)}\n\n` : ''}
+
+User Question: ${message}
+
+Provide a helpful, concise answer about the project.`
+        }]
+      });
+
+      const assistantMessage = response.content[0].type === 'text'
+        ? response.content[0].text
+        : 'Sorry, I could not generate a response.';
+
+      res.json({ response: assistantMessage });
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to process chat'
+      });
+    }
+  });
+
+  // Upload documents to project
+  router.post('/:id/documents', async (req: Request, res: Response) => {
+    try {
+      const project = db.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      // TODO: Implement multipart file upload with multer
+      // For now, return placeholder
+      res.status(501).json({
+        error: 'Document upload not yet implemented',
+        message: 'This endpoint will support PRD, screenshot, and video uploads'
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to upload document'
+      });
+    }
+  });
+
+  // Get project configuration (including backend server config)
+  router.get('/:id/config', (req: Request, res: Response) => {
+    try {
+      const project = db.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      // Load config from workspace if it exists
+      const configPath = path.join(project.workspacePath, 'viztrtr-config.json');
+      let projectConfig = {};
+
+      if (fs.existsSync(configPath)) {
+        projectConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      }
+
+      res.json({
+        ...projectConfig,
+        projectPath: project.projectPath,
+        frontendUrl: project.frontendUrl,
+        targetScore: project.targetScore,
+        maxIterations: project.maxIterations
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to load config'
+      });
+    }
+  });
+
+  // Update project configuration
+  router.put('/:id/config', async (req: Request, res: Response) => {
+    try {
+      const project = db.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const config = req.body;
+
+      // Save to workspace
+      const configPath = path.join(project.workspacePath, 'viztrtr-config.json');
+      await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+
+      // Update database fields
+      const dbUpdates: any = {};
+      if (config.targetScore !== undefined) dbUpdates.targetScore = config.targetScore;
+      if (config.maxIterations !== undefined) dbUpdates.maxIterations = config.maxIterations;
+      if (config.frontendUrl !== undefined) dbUpdates.frontendUrl = config.frontendUrl;
+
+      if (Object.keys(dbUpdates).length > 0) {
+        db.updateProject(req.params.id, dbUpdates);
+      }
+
+      res.json({ message: 'Configuration updated', config });
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to update config'
+      });
+    }
+  });
+
   // Start a new run for a project
   router.post('/:id/runs', async (req: Request, res: Response) => {
     try {
@@ -300,6 +439,40 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
     }
   });
 
+  // Retry a failed run
+  router.post('/runs/:runId/retry', async (req: Request, res: Response) => {
+    try {
+      const run = db.getRun(req.params.runId);
+      if (!run) {
+        return res.status(404).json({ error: 'Run not found' });
+      }
+
+      const project = db.getProject(run.projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      // Create a new run (don't reuse failed run ID)
+      const newRun = db.createRun(project.id, project.maxIterations);
+
+      // Start execution in background
+      executeRun(newRun.id, project, db).catch(error => {
+        console.error(`Run ${newRun.id} failed:`, error);
+        db.updateRun(newRun.id, {
+          status: 'failed',
+          completedAt: new Date().toISOString(),
+          error: error instanceof Error ? error.message : String(error)
+        });
+      });
+
+      res.status(201).json(newRun);
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to retry run'
+      });
+    }
+  });
+
   return router;
 }
 
@@ -307,7 +480,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
  * Execute a VIZTRTR run in the background
  */
 async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
-  const { VIZTRTROrchestrator } = await import('../../../dist/core/orchestrator.js');
+  const { VIZTRTROrchestrator } = await import('../../../../dist/core/orchestrator.js');
 
   // Update status to running
   db.updateRun(runId, { status: 'running' });
@@ -319,6 +492,11 @@ async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
     maxIterations: project.maxIterations,
     anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
     outputDir: path.join(process.cwd(), 'viztrtr-output', runId),
+    screenshotConfig: {
+      width: 1280,
+      height: 720,
+      fullPage: false
+    },
     verbose: true,
   };
 
