@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_ENDPOINTS, apiUrl } from '../config/api';
 
 interface ProjectWizardProps {
   onClose: () => void;
@@ -45,7 +46,7 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
     setError('');
 
     try {
-      const res = await fetch('http://localhost:3001/api/projects', {
+      const res = await fetch(API_ENDPOINTS.projects, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,48 +85,66 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
 
     try {
       // Update project status
-      await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+      await fetch(apiUrl(`/api/projects/${projectId}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'analyzing' }),
       });
 
-      // Run AI analysis
-      const res = await fetch('http://localhost:3001/api/projects/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          projectPath,
-          userProvidedPRD: userPRD.trim() || undefined,
-        }),
-      });
+      // Run AI analysis with timeout (2 minutes max)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Analysis failed');
+      try {
+        const res = await fetch(API_ENDPOINTS.analyze, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            projectPath,
+            userProvidedPRD: userPRD.trim() || undefined,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Analysis failed');
+        }
+
+        const analysis = await res.json();
+
+        // Update state
+        setSynthesizedPRD(analysis.synthesizedPRD);
+        setProjectType(analysis.projectType);
+        setConfidence(analysis.confidence);
+        setComponents(analysis.components || []);
+        setSuggestedAgents(analysis.suggestedAgents || []);
+
+        console.log('✅ Analysis complete:', analysis.projectType);
+        setStep('review');
+      } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+          throw new Error('Analysis timed out after 2 minutes. Please try again.');
+        }
+        throw fetchErr;
       }
-
-      const analysis = await res.json();
-
-      // Update state
-      setSynthesizedPRD(analysis.synthesizedPRD);
-      setProjectType(analysis.projectType);
-      setConfidence(analysis.confidence);
-      setComponents(analysis.components || []);
-      setSuggestedAgents(analysis.suggestedAgents || []);
-
-      console.log('✅ Analysis complete:', analysis.projectType);
-      setStep('review');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
 
-      // Revert status on error
-      await fetch(`http://localhost:3001/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'created' }),
-      });
+      // Revert status on error to prevent stuck "analyzing" state
+      try {
+        await fetch(apiUrl(`/api/projects/${projectId}`), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'created' }),
+        });
+      } catch (revertErr) {
+        console.error('Failed to revert status:', revertErr);
+      }
     } finally {
       setLoading(false);
     }
@@ -140,7 +159,7 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
 
     try {
       // Save PRD and mark as analyzed
-      const res = await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+      const res = await fetch(apiUrl(`/api/projects/${projectId}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -171,7 +190,7 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
    */
   const handleSkipAnalysis = async () => {
     try {
-      await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+      await fetch(apiUrl(`/api/projects/${projectId}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ready' }),

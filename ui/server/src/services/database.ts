@@ -36,25 +36,23 @@ export class VIZTRTRDatabase {
     `);
 
     // Migrate existing tables (add columns if they don't exist)
-    try {
-      this.db.exec(`ALTER TABLE projects ADD COLUMN synthesizedPRD TEXT`);
-    } catch (e) {
-      // Column already exists
-    }
-    try {
-      this.db.exec(`ALTER TABLE projects ADD COLUMN projectType TEXT`);
-    } catch (e) {
-      // Column already exists
-    }
-    try {
-      this.db.exec(`ALTER TABLE projects ADD COLUMN analysisConfidence REAL`);
-    } catch (e) {
-      // Column already exists
-    }
-    try {
-      this.db.exec(`ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'created'`);
-    } catch (e) {
-      // Column already exists
+    const migrations = [
+      { column: 'synthesizedPRD', type: 'TEXT' },
+      { column: 'projectType', type: 'TEXT' },
+      { column: 'analysisConfidence', type: 'REAL' },
+      { column: 'status', type: 'TEXT', default: "'created'" },
+    ];
+
+    for (const migration of migrations) {
+      try {
+        const sql = migration.default
+          ? `ALTER TABLE projects ADD COLUMN ${migration.column} ${migration.type} DEFAULT ${migration.default}`
+          : `ALTER TABLE projects ADD COLUMN ${migration.column} ${migration.type}`;
+        this.db.exec(sql);
+        console.log(`✓ Migration: Added ${migration.column} column to projects table`);
+      } catch (e) {
+        // Column already exists (safe to ignore)
+      }
     }
 
     // Create runs table
