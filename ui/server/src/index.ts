@@ -15,8 +15,10 @@ import { createRunsRouter } from './routes/runs.js';
 import { createEvaluateRouter } from './routes/evaluate.js';
 import analyzeRouter from './routes/analyze.js';
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../../../.env') });
+// Load environment variables - try multiple locations
+dotenv.config({ path: path.join(__dirname, '../../../.env') }); // From dist/
+dotenv.config({ path: path.join(process.cwd(), '../../.env') }); // From ui/server/
+dotenv.config(); // From current directory
 
 const app = express();
 const PORT = process.env.PORT || 3001;
