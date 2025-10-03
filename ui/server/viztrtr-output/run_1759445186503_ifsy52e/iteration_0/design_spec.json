@@ -1,0 +1,122 @@
+{
+  "iteration": 0,
+  "timestamp": "2025-10-02T22:46:50.577Z",
+  "currentScore": 5.2,
+  "currentIssues": [
+    {
+      "dimension": "accessibility",
+      "severity": "critical",
+      "description": "Chord labels (Fmaj7, Em7, etc.) have extremely poor contrast ratio (~1.5:1) against dark background",
+      "location": "Orange chord labels above lyrics"
+    },
+    {
+      "dimension": "visual hierarchy",
+      "severity": "high",
+      "description": "Lyrics text lacks sufficient size and weight for teleprompter use at 3-10ft viewing distance",
+      "location": "Gray lyrics text in center"
+    },
+    {
+      "dimension": "typography",
+      "severity": "high",
+      "description": "Font size too small for teleprompter context - appears to be ~24-32px when 48-72px minimum needed",
+      "location": "All lyric text"
+    },
+    {
+      "dimension": "color & contrast",
+      "severity": "critical",
+      "description": "Lyrics have insufficient contrast (~2.8:1) for stage visibility",
+      "location": "Gray lyrics text (#6B7280 on black)"
+    },
+    {
+      "dimension": "spacing & layout",
+      "severity": "medium",
+      "description": "Inadequate vertical spacing between lyric lines for quick reading during performance",
+      "location": "Between lyric lines"
+    }
+  ],
+  "recommendations": [
+    {
+      "dimension": "color & contrast",
+      "title": "Increase chord label contrast",
+      "description": "Change orange chord labels to bright yellow or white for WCAG AA compliance and stage visibility",
+      "impact": 9,
+      "effort": 1,
+      "code": "className='text-yellow-400' // or text-white for maximum contrast"
+    },
+    {
+      "dimension": "color & contrast",
+      "title": "Brighten lyrics text",
+      "description": "Change lyrics from gray-500 to gray-100 or white for stage visibility",
+      "impact": 9,
+      "effort": 1,
+      "code": "className='text-gray-100' // #F3F4F6 for softer white"
+    },
+    {
+      "dimension": "spacing & layout",
+      "title": "Increase line height for readability",
+      "description": "Add generous line spacing for quick scanning during performance",
+      "impact": 7,
+      "effort": 1,
+      "code": "className='leading-relaxed lg:leading-loose' // 1.625-2.0 line height"
+    },
+    {
+      "dimension": "typography",
+      "title": "Increase font size for teleprompter use",
+      "description": "Scale up lyrics to 60-72px and chords to 48px for comfortable reading at performance distance",
+      "impact": 10,
+      "effort": 2,
+      "code": "className='text-6xl lg:text-7xl font-medium' // for lyrics\nclassName='text-4xl lg:text-5xl font-bold' // for chords"
+    },
+    {
+      "dimension": "accessibility",
+      "title": "Add high contrast mode toggle",
+      "description": "Implement a toggle for maximum contrast white-on-black mode for varying stage lighting",
+      "impact": 8,
+      "effort": 3,
+      "code": "data-contrast='high' ? 'text-white bg-black' : 'text-gray-100 bg-gray-900'"
+    }
+  ],
+  "prioritizedChanges": [
+    {
+      "dimension": "color & contrast",
+      "title": "Increase chord label contrast",
+      "description": "Change orange chord labels to bright yellow or white for WCAG AA compliance and stage visibility",
+      "impact": 9,
+      "effort": 1,
+      "code": "className='text-yellow-400' // or text-white for maximum contrast"
+    },
+    {
+      "dimension": "color & contrast",
+      "title": "Brighten lyrics text",
+      "description": "Change lyrics from gray-500 to gray-100 or white for stage visibility",
+      "impact": 9,
+      "effort": 1,
+      "code": "className='text-gray-100' // #F3F4F6 for softer white"
+    },
+    {
+      "dimension": "spacing & layout",
+      "title": "Increase line height for readability",
+      "description": "Add generous line spacing for quick scanning during performance",
+      "impact": 7,
+      "effort": 1,
+      "code": "className='leading-relaxed lg:leading-loose' // 1.625-2.0 line height"
+    },
+    {
+      "dimension": "typography",
+      "title": "Increase font size for teleprompter use",
+      "description": "Scale up lyrics to 60-72px and chords to 48px for comfortable reading at performance distance",
+      "impact": 10,
+      "effort": 2,
+      "code": "className='text-6xl lg:text-7xl font-medium' // for lyrics\nclassName='text-4xl lg:text-5xl font-bold' // for chords"
+    },
+    {
+      "dimension": "accessibility",
+      "title": "Add high contrast mode toggle",
+      "description": "Implement a toggle for maximum contrast white-on-black mode for varying stage lighting",
+      "impact": 8,
+      "effort": 3,
+      "code": "data-contrast='high' ? 'text-white bg-black' : 'text-gray-100 bg-gray-900'"
+    }
+  ],
+  "estimatedNewScore": 7.8
+}

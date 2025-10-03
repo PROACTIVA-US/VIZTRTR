@@ -1,0 +1,122 @@
+{
+  "iteration": 2,
+  "timestamp": "2025-10-02T22:50:56.547Z",
+  "currentScore": 6.8,
+  "currentIssues": [
+    {
+      "dimension": "accessibility",
+      "severity": "critical",
+      "description": "Text contrast on gray lyrics (5D5D5D) fails WCAG AAA standards against black background",
+      "location": "Lyrics text 'my troubles seemed so far a way'"
+    },
+    {
+      "dimension": "visual hierarchy",
+      "severity": "high",
+      "description": "Chord labels (Fmaj7, Em7, etc.) blend into lyrics without clear visual separation",
+      "location": "Chord symbols above lyrics"
+    },
+    {
+      "dimension": "typography",
+      "severity": "medium",
+      "description": "Inconsistent text sizing between UI controls and performance text",
+      "location": "Header buttons vs main lyrics display"
+    },
+    {
+      "dimension": "component design",
+      "severity": "medium",
+      "description": "Upload Song and Demo buttons lack visual states and proper styling",
+      "location": "Top navigation buttons"
+    },
+    {
+      "dimension": "spacing",
+      "severity": "medium",
+      "description": "Insufficient vertical spacing between chord progressions and lyrics",
+      "location": "Between chord symbols and lyric lines"
+    }
+  ],
+  "recommendations": [
+    {
+      "dimension": "accessibility",
+      "title": "Improve lyrics text contrast to WCAG AAA",
+      "description": "Change gray lyrics (#5D5D5D) to lighter gray (#B0B0B0) for 7:1 contrast ratio suitable for stage viewing",
+      "impact": 9,
+      "effort": 2,
+      "code": "className='text-gray-400' // #B0B0B0 instead of #5D5D5D"
+    },
+    {
+      "dimension": "spacing",
+      "title": "Add rhythm-based vertical spacing",
+      "description": "Increase space between chord/lyric pairs to match musical phrasing and improve readability at distance",
+      "impact": 7,
+      "effort": 2,
+      "code": "className='mb-16 space-y-8' // Between verse sections"
+    },
+    {
+      "dimension": "visual hierarchy",
+      "title": "Create distinct chord highlight system",
+      "description": "Add semi-transparent colored backgrounds behind chord symbols for instant recognition during performance",
+      "impact": 8,
+      "effort": 3,
+      "code": "className='inline-block px-3 py-1 bg-amber-500/20 text-amber-400 rounded-md font-bold text-4xl'"
+    },
+    {
+      "dimension": "typography",
+      "title": "Implement responsive text scaling for teleprompter mode",
+      "description": "Use viewport units (vw) for automatic text scaling based on screen size and viewing distance",
+      "impact": 8,
+      "effort": 4,
+      "code": "className='text-[4vw] leading-[1.6] tracking-wide' // Scales with viewport"
+    },
+    {
+      "dimension": "component design",
+      "title": "Add visual feedback to header controls",
+      "description": "Style Upload/Demo buttons with proper hover states and active indicators for touch/click feedback",
+      "impact": 6,
+      "effort": 3,
+      "code": "className='px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors rounded-lg'"
+    }
+  ],
+  "prioritizedChanges": [
+    {
+      "dimension": "accessibility",
+      "title": "Improve lyrics text contrast to WCAG AAA",
+      "description": "Change gray lyrics (#5D5D5D) to lighter gray (#B0B0B0) for 7:1 contrast ratio suitable for stage viewing",
+      "impact": 9,
+      "effort": 2,
+      "code": "className='text-gray-400' // #B0B0B0 instead of #5D5D5D"
+    },
+    {
+      "dimension": "spacing",
+      "title": "Add rhythm-based vertical spacing",
+      "description": "Increase space between chord/lyric pairs to match musical phrasing and improve readability at distance",
+      "impact": 7,
+      "effort": 2,
+      "code": "className='mb-16 space-y-8' // Between verse sections"
+    },
+    {
+      "dimension": "visual hierarchy",
+      "title": "Create distinct chord highlight system",
+      "description": "Add semi-transparent colored backgrounds behind chord symbols for instant recognition during performance",
+      "impact": 8,
+      "effort": 3,
+      "code": "className='inline-block px-3 py-1 bg-amber-500/20 text-amber-400 rounded-md font-bold text-4xl'"
+    },
+    {
+      "dimension": "typography",
+      "title": "Implement responsive text scaling for teleprompter mode",
+      "description": "Use viewport units (vw) for automatic text scaling based on screen size and viewing distance",
+      "impact": 8,
+      "effort": 4,
+      "code": "className='text-[4vw] leading-[1.6] tracking-wide' // Scales with viewport"
+    },
+    {
+      "dimension": "component design",
+      "title": "Add visual feedback to header controls",
+      "description": "Style Upload/Demo buttons with proper hover states and active indicators for touch/click feedback",
+      "impact": 6,
+      "effort": 3,
+      "code": "className='px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors rounded-lg'"
+    }
+  ],
+  "estimatedNewScore": 8.5
+}

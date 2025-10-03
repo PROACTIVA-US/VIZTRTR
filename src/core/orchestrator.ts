@@ -88,7 +88,7 @@ export class VIZTRTROrchestrator {
     // Start backend server if configured
     if (projectConfig?.backend?.enabled) {
       console.log('🔧 Backend server enabled, starting...');
-      this.backendManager = new BackendServerManager(projectConfig.backend, { verbose: this.config.verbose });
+      this.backendManager = new BackendServerManager(projectConfig.backend as BackendConfig, { verbose: this.config.verbose });
 
       try {
         await this.backendManager.start();
@@ -165,7 +165,7 @@ export class VIZTRTROrchestrator {
   /**
    * Load project configuration from workspace
    */
-  private async loadProjectConfig(): Promise<any> {
+  private async loadProjectConfig(): Promise<import('./types').ProjectConfig> {
     // Try to find viztrtr-config.json in project directory or parent
     const possiblePaths = [
       path.join(this.config.projectPath, 'viztrtr-config.json'),
@@ -183,6 +183,9 @@ export class VIZTRTROrchestrator {
           return config;
         }
       } catch (error) {
+        if (this.config.verbose) {
+          console.log(`Config not found at ${configPath}: ${error instanceof Error ? error.message : String(error)}`);
+        }
         // Continue to next path
       }
     }

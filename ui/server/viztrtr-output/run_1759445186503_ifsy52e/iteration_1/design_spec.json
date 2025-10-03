@@ -1,0 +1,122 @@
+{
+  "iteration": 1,
+  "timestamp": "2025-10-02T22:49:06.415Z",
+  "currentScore": 5.8,
+  "currentIssues": [
+    {
+      "dimension": "accessibility",
+      "severity": "critical",
+      "description": "Text contrast is too low - gray lyrics (#6b7280) on black background only achieves 4.74:1 ratio, barely meeting AA for normal text",
+      "location": "Main lyrics text"
+    },
+    {
+      "dimension": "accessibility",
+      "severity": "critical",
+      "description": "Touch targets (settings and upload buttons) are too small for a teleprompter interface where users may be standing 3-10 feet away",
+      "location": "Top left control buttons"
+    },
+    {
+      "dimension": "visual_hierarchy",
+      "severity": "high",
+      "description": "Chord labels blend into background with orange on black, creating poor readability at distance",
+      "location": "Chord symbols (Fmaj7, Em7, etc.)"
+    },
+    {
+      "dimension": "typography",
+      "severity": "high",
+      "description": "Font size is too small for teleprompter use - lyrics should be 48-72px for 3-10ft viewing distance",
+      "location": "All text content"
+    },
+    {
+      "dimension": "spacing_layout",
+      "severity": "medium",
+      "description": "Line height is too tight for performance reading, should be 1.8-2.0x for teleprompter use",
+      "location": "Lyrics lines"
+    }
+  ],
+  "recommendations": [
+    {
+      "dimension": "accessibility",
+      "title": "Improve text contrast to WCAG AAA",
+      "description": "Change lyrics color from gray-500 to gray-200 or white for better contrast on black background",
+      "impact": 8,
+      "effort": 2,
+      "code": "className='text-gray-200' // or 'text-white' for maximum contrast"
+    },
+    {
+      "dimension": "typography",
+      "title": "Scale up all text for teleprompter viewing",
+      "description": "Increase base font size to 48-72px for lyrics, 36-48px for chord labels to ensure readability at 3-10ft distance",
+      "impact": 9,
+      "effort": 3,
+      "code": "lyrics: 'text-6xl lg:text-7xl', chords: 'text-4xl lg:text-5xl font-bold'"
+    },
+    {
+      "dimension": "spacing_layout",
+      "title": "Increase line height for performance reading",
+      "description": "Set line height to 2.0x for optimal readability during performance",
+      "impact": 6,
+      "effort": 2,
+      "code": "className='leading-loose' // or style={{lineHeight: 2}}"
+    },
+    {
+      "dimension": "visual_hierarchy",
+      "title": "Enhance chord visibility with background highlights",
+      "description": "Add semi-transparent background boxes behind chord labels for better separation from black background",
+      "impact": 7,
+      "effort": 3,
+      "code": "className='bg-gray-800/50 px-3 py-1 rounded-md text-yellow-300 font-bold'"
+    },
+    {
+      "dimension": "accessibility",
+      "title": "Add performance control panel",
+      "description": "Create a separate large-button control panel optimized for touch/gesture control during performance",
+      "impact": 8,
+      "effort": 5,
+      "code": "buttonSize='min-h-24 min-w-24 text-2xl' // Large touch targets for performance use"
+    }
+  ],
+  "prioritizedChanges": [
+    {
+      "dimension": "accessibility",
+      "title": "Improve text contrast to WCAG AAA",
+      "description": "Change lyrics color from gray-500 to gray-200 or white for better contrast on black background",
+      "impact": 8,
+      "effort": 2,
+      "code": "className='text-gray-200' // or 'text-white' for maximum contrast"
+    },
+    {
+      "dimension": "typography",
+      "title": "Scale up all text for teleprompter viewing",
+      "description": "Increase base font size to 48-72px for lyrics, 36-48px for chord labels to ensure readability at 3-10ft distance",
+      "impact": 9,
+      "effort": 3,
+      "code": "lyrics: 'text-6xl lg:text-7xl', chords: 'text-4xl lg:text-5xl font-bold'"
+    },
+    {
+      "dimension": "spacing_layout",
+      "title": "Increase line height for performance reading",
+      "description": "Set line height to 2.0x for optimal readability during performance",
+      "impact": 6,
+      "effort": 2,
+      "code": "className='leading-loose' // or style={{lineHeight: 2}}"
+    },
+    {
+      "dimension": "visual_hierarchy",
+      "title": "Enhance chord visibility with background highlights",
+      "description": "Add semi-transparent background boxes behind chord labels for better separation from black background",
+      "impact": 7,
+      "effort": 3,
+      "code": "className='bg-gray-800/50 px-3 py-1 rounded-md text-yellow-300 font-bold'"
+    },
+    {
+      "dimension": "accessibility",
+      "title": "Add performance control panel",
+      "description": "Create a separate large-button control panel optimized for touch/gesture control during performance",
+      "impact": 8,
+      "effort": 5,
+      "code": "buttonSize='min-h-24 min-w-24 text-2xl' // Large touch targets for performance use"
+    }
+  ],
+  "estimatedNewScore": 7.4
+}
