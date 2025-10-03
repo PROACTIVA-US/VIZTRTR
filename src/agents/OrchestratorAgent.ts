@@ -12,6 +12,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { DesignSpec, Recommendation, Changes, FileChange } from '../core/types';
 import { ControlPanelAgent } from './specialized/ControlPanelAgent';
 import { TeleprompterAgent } from './specialized/TeleprompterAgent';
+import { discoverComponentFiles, summarizeDiscovery, DiscoveredFile } from '../utils/file-discovery';
 
 interface RoutingDecision {
   agent: 'ControlPanelAgent' | 'TeleprompterAgent' | 'skip';
@@ -32,6 +33,7 @@ export class OrchestratorAgent {
 
   private controlPanelAgent: ControlPanelAgent;
   private teleprompterAgent: TeleprompterAgent;
+  private discoveredFiles: DiscoveredFile[] = [];
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
@@ -45,7 +47,14 @@ export class OrchestratorAgent {
   async implementChanges(spec: DesignSpec, projectPath: string): Promise<Changes> {
     console.log('   🎯 OrchestratorAgent analyzing recommendations...');
 
-    // Step 1: Create routing plan using extended thinking
+    // Step 1: Discover files in the project
+    this.discoveredFiles = await discoverComponentFiles(projectPath, {
+      maxFileSize: 50 * 1024,
+      includeContent: false,
+    });
+    console.log(`   🔍 Discovered ${this.discoveredFiles.length} component files in project`);
+
+    // Step 2: Create routing plan using extended thinking
     const routingPlan = await this.createRoutingPlan(spec);
 
     console.log(`   📋 Routing Plan:`);
@@ -138,27 +147,39 @@ export class OrchestratorAgent {
   }
 
   private buildRoutingPrompt(spec: DesignSpec): string {
+    // Group files by directory for better readability
+    const filesByDir = new Map<string, string[]>();
+    this.discoveredFiles.forEach(file => {
+      const dir = file.path.substring(0, file.path.lastIndexOf('/')) || 'root';
+      if (!filesByDir.has(dir)) {
+        filesByDir.set(dir, []);
+      }
+      filesByDir.get(dir)!.push(file.name);
+    });
+
+    const fileList = Array.from(filesByDir.entries())
+      .map(([dir, files]) => `   ${dir}/: ${files.slice(0, 5).join(', ')}${files.length > 5 ? ` (+ ${files.length - 5} more)` : ''}`)
+      .join('\n');
+
     return `You are the ORCHESTRATOR AGENT for VIZTRTR's multi-agent UI improvement system.
 
 **YOUR ROLE:**
 Analyze design recommendations and route them to the appropriate specialist agent.
 
+**DISCOVERED PROJECT FILES (${this.discoveredFiles.length} components):**
+${fileList}
+
 **AVAILABLE SPECIALIST AGENTS:**
 
 1. **ControlPanelAgent**
-   - Manages: All standard web UI components
-   - Files: Header.tsx, PromptInput.tsx, Footer.tsx, AgentCard.tsx, AgentOrchestration.tsx
+   - Manages: All web UI components discovered above
    - Expertise: Modern web UI (buttons, forms, layouts, navigation)
-   - Design: Standard web sizing (32-48px buttons, 0.875-1.125rem text)
-   - Viewing Distance: 1-2 feet (normal desktop/laptop use)
+   - Will dynamically discover and modify relevant files in the project
 
 2. **TeleprompterAgent**
    - Manages: Stage performance teleprompter views (if present)
-   - Files: None in this project
-   - Expertise: Large-scale performance UI
-   - Design: Extra-large text (3-4.5rem), very high contrast
-   - Viewing Distance: 3-10 feet (stage use)
-   - **NOTE:** This project appears to be a web builder UI, not a teleprompter app
+   - Expertise: Large-scale performance UI with extra-large text
+   - Will dynamically discover and modify relevant files in the project
 
 **CURRENT DESIGN SPEC:**
 - UI Context Detected: ${spec.detectedContext || 'Modern web application builder UI'}
@@ -179,9 +200,10 @@ ${idx + 1}. **${rec.title}** (${rec.dimension})
 
 **YOUR TASK:**
 Think strategically about:
-1. This appears to be a web builder UI - most changes should go to ControlPanelAgent
-2. Which recommendations can be implemented vs should be skipped?
-3. What's the priority order?
+1. Analyze the DISCOVERED PROJECT FILES above to understand the project type
+2. Route recommendations to the agent best suited for the discovered files
+3. Which recommendations can be implemented vs should be skipped?
+4. What's the priority order?
 
 Return a routing plan as JSON:
 
@@ -189,24 +211,24 @@ Return a routing plan as JSON:
 {
   "decisions": [
     {
-      "agent": "ControlPanelAgent",
+      "agent": "ControlPanelAgent" | "TeleprompterAgent",
       "recommendations": [
-        /* Include recommendations that improve the web UI */
+        /* Include recommendations that match this agent's expertise */
       ],
-      "reasoning": "Why these belong to this agent",
+      "reasoning": "Why these belong to this agent based on discovered files",
       "priority": "high"
     }
   ],
-  "strategy": "Overall strategy explanation",
+  "strategy": "Overall strategy explanation based on discovered files",
   "expectedImpact": "What improvements we expect"
 }
 \`\`\`
 
 **IMPORTANT:**
-- Most recommendations should go to ControlPanelAgent for this project
+- Route based on the ACTUAL files discovered, not assumptions
 - Skip recommendations that require new files or major refactoring
 - Focus on actionable improvements to existing components
-- TeleprompterAgent will likely have no work (wrong project type)
+- Both agents will dynamically find and modify the right files
 
 Think carefully about which changes are feasible, then provide your routing plan.`;
   }

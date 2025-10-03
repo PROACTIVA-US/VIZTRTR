@@ -6,11 +6,13 @@ export interface Project {
   id: string;
   name: string;
   projectPath: string;
+  workspacePath: string;
   frontendUrl: string;
   targetScore: number;
   maxIterations: number;
   createdAt: string;
   updatedAt: string;
+  hasProductSpec?: boolean;
 }
 
 export interface Run {

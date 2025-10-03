@@ -9,7 +9,7 @@ import {
 import { useBuildStore } from '../store/buildStore';
 
 export default function BuilderPage() {
-  const { buildState, evaluation } = useBuildStore();
+  const { buildState, evaluation, setPrompt, evaluatePrompt } = useBuildStore();
 
   // Determine which components to show based on build state
   const showPromptInput = !buildState || buildState === 'error';
@@ -103,7 +103,10 @@ export default function BuilderPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <PromptInput />
+              <PromptInput onSubmit={(prompt) => {
+                setPrompt(prompt);
+                evaluatePrompt();
+              }} />
             </motion.div>
           )}
 

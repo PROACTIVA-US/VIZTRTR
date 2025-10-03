@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { AVAILABLE_MODELS } from '../../../src/core/types';
 
 type ModelProvider = 'anthropic' | 'openai' | 'google' | 'zai';
 
