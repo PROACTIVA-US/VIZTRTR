@@ -4,6 +4,7 @@ interface FileBrowserProps {
   onSelect: (path: string) => void;
   onClose: () => void;
   fileFilter?: string; // e.g., 'pdf,docx,md,txt'
+  initialPath?: string; // Initial directory to start browsing
 }
 
 interface FileEntry {
@@ -18,7 +19,12 @@ interface BrowseFilesResponse {
   files: FileEntry[];
 }
 
-export default function FileBrowser({ onSelect, onClose, fileFilter }: FileBrowserProps) {
+export default function FileBrowser({
+  onSelect,
+  onClose,
+  fileFilter,
+  initialPath,
+}: FileBrowserProps) {
   const [currentPath, setCurrentPath] = useState('');
   const [parent, setParent] = useState<string | null>(null);
   const [directories, setDirectories] = useState<FileEntry[]>([]);
@@ -62,8 +68,8 @@ export default function FileBrowser({ onSelect, onClose, fileFilter }: FileBrows
   );
 
   useEffect(() => {
-    browsePath();
-  }, [browsePath]);
+    browsePath(initialPath);
+  }, [browsePath, initialPath]);
 
   const handleFileClick = (filePath: string) => {
     onSelect(filePath);

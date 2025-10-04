@@ -17,6 +17,7 @@ interface ProjectOnboardingProps {
 type Step =
   | 'prd-upload'
   | 'analyzing'
+  | 'analyzing-error'
   | 'spec-review'
   | 'spec-edit'
   | 'frontend-verify'
@@ -73,6 +74,7 @@ export default function ProjectOnboarding({
   const [showFileBrowser, setShowFileBrowser] = useState(false);
   const [prdFilePath, setPrdFilePath] = useState('');
   const [prdFileName, setPrdFileName] = useState('');
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   const handleFileButtonClick = () => {
     setShowFileBrowser(true);
@@ -91,7 +93,7 @@ export default function ProjectOnboarding({
     setError('');
 
     try {
-      // Call backend to analyze PRD and generate spec
+      // Validate inputs
       const body =
         prdMethod === 'text' && prdText
           ? { prd: prdText }
@@ -102,44 +104,109 @@ export default function ProjectOnboarding({
       if (!body) {
         setError('Please provide a PRD');
         setStep('prd-upload');
+        setAnalyzing(false);
         return;
       }
 
-      const res = await fetch(`http://localhost:3001/api/projects/${projectId}/analyze-prd`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      // Check server health before starting analysis
+      try {
+        const healthCheck = await fetch('http://localhost:3001/health', {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000),
+        });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to analyze PRD');
+        if (!healthCheck.ok) {
+          throw new Error('Server is not healthy');
+        }
+      } catch (healthError) {
+        throw new Error(
+          'Unable to connect to the backend server on port 3001. Please ensure it is running and try again.'
+        );
       }
 
-      const spec = await res.json();
-      setProductSpec(spec);
-      setSpecJson(JSON.stringify(spec, null, 2));
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      setAbortController(controller);
+      const timeoutId = setTimeout(() => controller.abort(), 240000); // 4 minute timeout for AI processing
 
-      // Detect frontend URL
-      const urlRes = await fetch('http://localhost:3001/api/projects/detect-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectPath }),
-      });
+      try {
+        console.log('[PRD Analysis] Starting analysis request...');
+        const res = await fetch(`http://localhost:3001/api/projects/${projectId}/analyze-prd`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
 
-      if (urlRes.ok) {
-        const urlData = await urlRes.json();
-        setFrontendUrl(urlData.url || 'http://localhost:3000');
+        console.log('[PRD Analysis] Response received, status:', res.status);
+        clearTimeout(timeoutId);
+        setAbortController(null);
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          const errorMessage = errorData.error || 'Failed to analyze PRD';
+          throw new Error(errorMessage);
+        }
+
+        console.log('[PRD Analysis] Parsing response JSON...');
+        const spec = await res.json();
+        console.log(
+          '[PRD Analysis] Spec parsed successfully, components:',
+          Object.keys(spec.components || {}).length
+        );
+        setProductSpec(spec);
+        setSpecJson(JSON.stringify(spec, null, 2));
+
+        // Detect frontend URL
+        const urlRes = await fetch('http://localhost:3001/api/projects/detect-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectPath }),
+        });
+
+        if (urlRes.ok) {
+          const urlData = await urlRes.json();
+          setFrontendUrl(urlData.url || 'http://localhost:3000');
+        }
+
+        setStep('spec-review');
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        setAbortController(null);
+
+        // Handle timeout
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          throw new Error(
+            'Analysis timed out after 4 minutes. The server may be unresponsive. Please try again.'
+          );
+        }
+
+        // Handle network errors
+        if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
+          throw new Error(
+            'Unable to connect to the server. Please ensure the backend is running on port 3001.'
+          );
+        }
+
+        throw fetchError;
       }
-
-      setStep('spec-review');
     } catch (error) {
       console.error('PRD analysis failed:', error);
       setError(error instanceof Error ? error.message : 'Failed to analyze PRD. Please try again.');
-      setStep('prd-upload');
+      setStep('analyzing-error');
     } finally {
       setAnalyzing(false);
     }
+  };
+
+  const handleStopAnalysis = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+    setAnalyzing(false);
+    setStep('prd-upload');
+    setError('');
   };
 
   const handleSpecEdit = () => {
@@ -225,7 +292,7 @@ export default function ProjectOnboarding({
           <h1 className="text-3xl font-bold mb-2">Setup: {projectName}</h1>
           <div className="flex items-center gap-2 text-sm">
             <span className={step === 'prd-upload' ? 'text-blue-400' : 'text-slate-500'}>
-              1. Upload PRD
+              1. Analyze PRD
             </span>
             <span className="text-slate-600">→</span>
             <span
@@ -305,10 +372,18 @@ export default function ProjectOnboarding({
             )}
 
             <div className="flex gap-3">
-              <button onClick={() => navigate('/projects')} className="btn-secondary">
+              <button
+                type="button"
+                onClick={() => {
+                  console.log('Cancel clicked, navigating to /projects');
+                  navigate('/projects');
+                }}
+                className="btn-secondary"
+              >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleUploadPRD}
                 disabled={
                   !prdMethod ||
@@ -326,15 +401,191 @@ export default function ProjectOnboarding({
         {/* Step: Analyzing */}
         {step === 'analyzing' && (
           <div className="bg-slate-800 rounded-lg p-12 text-center">
-            <div className="text-6xl mb-4 animate-pulse">🧠</div>
+            {/* Animated Circular Wave Pattern */}
+            <div className="flex justify-center mb-6">
+              <svg width="200" height="200" viewBox="0 0 200 200" className="analyzing-spinner">
+                <defs>
+                  <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.3" />
+                  </linearGradient>
+                  <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.3" />
+                  </linearGradient>
+                  <linearGradient id="waveGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.3" />
+                  </linearGradient>
+                </defs>
+
+                {/* Rotating wave rings */}
+                <g className="wave-ring-1">
+                  <path
+                    d="M 100,30 Q 130,30 150,50 Q 170,70 170,100 Q 170,130 150,150 Q 130,170 100,170 Q 70,170 50,150 Q 30,130 30,100 Q 30,70 50,50 Q 70,30 100,30"
+                    fill="none"
+                    stroke="url(#waveGradient1)"
+                    strokeWidth="1.5"
+                    opacity="0.6"
+                  />
+                </g>
+
+                <g className="wave-ring-2">
+                  <path
+                    d="M 100,40 Q 125,40 142,57 Q 160,75 160,100 Q 160,125 142,142 Q 125,160 100,160 Q 75,160 57,142 Q 40,125 40,100 Q 40,75 57,57 Q 75,40 100,40"
+                    fill="none"
+                    stroke="url(#waveGradient2)"
+                    strokeWidth="1.5"
+                    opacity="0.6"
+                  />
+                </g>
+
+                <g className="wave-ring-3">
+                  <path
+                    d="M 100,50 Q 120,50 135,65 Q 150,80 150,100 Q 150,120 135,135 Q 120,150 100,150 Q 80,150 65,135 Q 50,120 50,100 Q 50,80 65,65 Q 80,50 100,50"
+                    fill="none"
+                    stroke="url(#waveGradient3)"
+                    strokeWidth="1.5"
+                    opacity="0.6"
+                  />
+                </g>
+
+                {/* Flowing particles */}
+                <circle r="3" fill="#8b5cf6" opacity="0.8">
+                  <animateMotion dur="4s" repeatCount="indefinite">
+                    <mpath href="#orbit1" />
+                  </animateMotion>
+                </circle>
+                <circle r="3" fill="#3b82f6" opacity="0.8">
+                  <animateMotion dur="3.5s" repeatCount="indefinite">
+                    <mpath href="#orbit2" />
+                  </animateMotion>
+                </circle>
+                <circle r="3" fill="#06b6d4" opacity="0.8">
+                  <animateMotion dur="4.5s" repeatCount="indefinite">
+                    <mpath href="#orbit3" />
+                  </animateMotion>
+                </circle>
+
+                {/* Hidden orbit paths */}
+                <path
+                  id="orbit1"
+                  d="M 100,30 Q 130,30 150,50 Q 170,70 170,100 Q 170,130 150,150 Q 130,170 100,170 Q 70,170 50,150 Q 30,130 30,100 Q 30,70 50,50 Q 70,30 100,30"
+                  fill="none"
+                  opacity="0"
+                />
+                <path
+                  id="orbit2"
+                  d="M 100,40 Q 125,40 142,57 Q 160,75 160,100 Q 160,125 142,142 Q 125,160 100,160 Q 75,160 57,142 Q 40,125 40,100 Q 40,75 57,57 Q 75,40 100,40"
+                  fill="none"
+                  opacity="0"
+                />
+                <path
+                  id="orbit3"
+                  d="M 100,50 Q 120,50 135,65 Q 150,80 150,100 Q 150,120 135,135 Q 120,150 100,150 Q 80,150 65,135 Q 50,120 50,100 Q 50,80 65,65 Q 80,50 100,50"
+                  fill="none"
+                  opacity="0"
+                />
+              </svg>
+            </div>
+
             <h2 className="text-2xl font-bold mb-2">Analyzing Your PRD...</h2>
             <p className="text-slate-400 mb-6">
               VIZTRTR is reading your requirements and generating a technical specification
             </p>
-            <div className="flex justify-center">
+            <div className="flex justify-center mb-6">
               <div className="w-64 h-2 bg-slate-700 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 animate-pulse"></div>
+                <div
+                  className="h-full bg-gradient-to-r from-purple-600 to-blue-600 animate-[shimmer_2s_ease-in-out_infinite] bg-[length:200%_100%]"
+                  style={{
+                    animation: 'shimmer 2s ease-in-out infinite',
+                    backgroundSize: '200% 100%',
+                  }}
+                ></div>
               </div>
+            </div>
+            <button type="button" onClick={handleStopAnalysis} className="btn-secondary">
+              Stop Analysis
+            </button>
+            <style>{`
+              @keyframes shimmer {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+              }
+
+              @keyframes rotate-ring-1 {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+
+              @keyframes rotate-ring-2 {
+                from { transform: rotate(360deg); }
+                to { transform: rotate(0deg); }
+              }
+
+              @keyframes rotate-ring-3 {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+
+              .analyzing-spinner {
+                filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.4));
+              }
+
+              .wave-ring-1 {
+                transform-origin: 100px 100px;
+                animation: rotate-ring-1 8s linear infinite;
+              }
+
+              .wave-ring-2 {
+                transform-origin: 100px 100px;
+                animation: rotate-ring-2 6s linear infinite;
+              }
+
+              .wave-ring-3 {
+                transform-origin: 100px 100px;
+                animation: rotate-ring-3 10s linear infinite;
+              }
+            `}</style>
+          </div>
+        )}
+
+        {/* Step: Analyzing Error */}
+        {step === 'analyzing-error' && (
+          <div className="bg-slate-800 rounded-lg p-12">
+            <div className="text-center mb-8">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h2 className="text-2xl font-bold mb-2 text-red-400">Analysis Failed</h2>
+              <p className="text-slate-300 mb-6">
+                {error || 'An unexpected error occurred during PRD analysis.'}
+              </p>
+            </div>
+
+            <div className="bg-slate-900 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-3">Troubleshooting Tips:</h3>
+              <ul className="text-slate-400 space-y-2 text-left">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Check your internet connection for AI API access</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Verify your Anthropic API key is configured correctly</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Try simplifying your PRD if it's very large or complex</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setStep('prd-upload')} className="btn-secondary">
+                Go Back
+              </button>
+              <button onClick={handleUploadPRD} className="btn-primary">
+                Retry Analysis
+              </button>
             </div>
           </div>
         )}
@@ -537,6 +788,9 @@ export default function ProjectOnboarding({
           onSelect={handleFileSelect}
           onClose={() => setShowFileBrowser(false)}
           fileFilter="pdf,docx,md,txt"
+          initialPath={
+            projectPath ? projectPath.substring(0, projectPath.lastIndexOf('/')) : undefined
+          }
         />
       )}
     </div>

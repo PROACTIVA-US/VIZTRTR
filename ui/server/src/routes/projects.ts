@@ -155,14 +155,19 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
   // Delete project
   router.delete('/:id', (req: Request, res: Response) => {
     try {
+      console.log(`[DELETE] Deleting project: ${req.params.id}`);
       const project = db.getProject(req.params.id);
       if (!project) {
+        console.log(`[DELETE] Project not found: ${req.params.id}`);
         return res.status(404).json({ error: 'Project not found' });
       }
 
+      console.log(`[DELETE] Project found, deleting...`);
       db.deleteProject(req.params.id);
+      console.log(`[DELETE] Project deleted successfully`);
       res.status(204).send();
     } catch (error) {
+      console.error(`[DELETE] Error deleting project:`, error);
       res.status(500).json({
         error: error instanceof Error ? error.message : 'Failed to delete project',
       });

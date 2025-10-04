@@ -87,7 +87,39 @@ app.get('/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     version: '0.1.0',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
   });
+});
+
+// Detailed health check with component status
+app.get('/api/health-detailed', (req, res) => {
+  const healthStatus = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: '0.1.0',
+    uptime: process.uptime(),
+    components: {
+      database: 'ok', // Could add actual DB health check
+      anthropic: anthropicApiKey ? 'configured' : 'missing',
+      memory: {
+        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+        heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB',
+      },
+    },
+  };
+  res.json(healthStatus);
+});
+
+// Restart server endpoint
+app.post('/api/restart-server', (req, res) => {
+  console.log('[Restart] Restarting server...');
+  res.json({ message: 'Server restarting...' });
+
+  // Give response time to send, then exit
+  setTimeout(() => {
+    process.exit(0); // tsx watch will automatically restart
+  }, 500);
 });
 
 // Check server status (proxy to avoid CORS issues)
