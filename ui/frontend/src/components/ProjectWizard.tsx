@@ -47,51 +47,30 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
     }
   };
 
-  // Browse for project path using hidden directory input
+  // Browse for project path - prompts user to paste path
   const handleBrowse = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    // @ts-ignore - webkitdirectory is not in TypeScript types but works in modern browsers
-    input.webkitdirectory = true;
-    // @ts-ignore
-    input.directory = true;
-    input.multiple = false;
+    const userPath = prompt(
+      'Enter the absolute path to your project directory:\n\n' +
+        'Example: /Users/you/Projects/my-frontend\n\n' +
+        'Tip: You can copy the path from Finder (⌘+⌥+C) or drag a folder into Terminal to get its path.',
+      projectPath || ''
+    );
 
-    input.onchange = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        // Get the directory path from the first file's path
-        const file = target.files[0];
-        // Extract directory path by removing the filename
-        const fullPath = file.webkitRelativePath || file.name;
-        const dirPath = fullPath.split('/')[0];
+    if (userPath && userPath.trim()) {
+      setProjectPath(userPath.trim());
 
-        // In a web context, we can't get absolute paths for security reasons
-        // So we'll prompt the user to paste the absolute path
-        const userPath = prompt(
-          `Selected: ${dirPath}\n\nPlease paste the absolute path to this directory:`,
-          ''
-        );
-
-        if (userPath && userPath.trim()) {
-          setProjectPath(userPath.trim());
-
-          // Auto-suggest name from path
-          if (!name && userPath.trim()) {
-            const parts = userPath.trim().split('/');
-            const suggestedName = parts[parts.length - 1] || '';
-            if (suggestedName) {
-              setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
-            }
-          }
-
-          // Auto-detect URL
-          handleDetectUrl();
+      // Auto-suggest name from path
+      if (!name && userPath.trim()) {
+        const parts = userPath.trim().split('/');
+        const suggestedName = parts[parts.length - 1] || '';
+        if (suggestedName) {
+          setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
         }
       }
-    };
 
-    input.click();
+      // Auto-detect URL
+      handleDetectUrl();
+    }
   };
 
   const handleNext = () => {
