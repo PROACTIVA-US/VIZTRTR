@@ -1,25 +1,15 @@
 import { useState, useEffect } from 'react';
+import type { BrowseResponse } from '../../../shared/src/api-types';
 
 interface FolderBrowserProps {
   onSelect: (path: string) => void;
   onClose: () => void;
 }
 
-interface Directory {
-  name: string;
-  path: string;
-}
-
-interface BrowseResponse {
-  currentPath: string;
-  parent: string | null;
-  directories: Directory[];
-}
-
 export default function FolderBrowser({ onSelect, onClose }: FolderBrowserProps) {
   const [currentPath, setCurrentPath] = useState('');
   const [parent, setParent] = useState<string | null>(null);
-  const [directories, setDirectories] = useState<Directory[]>([]);
+  const [directories, setDirectories] = useState<BrowseResponse['directories']>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
