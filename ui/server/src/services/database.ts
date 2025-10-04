@@ -4,7 +4,7 @@
 
 import Database from 'better-sqlite3';
 import path from 'path';
-import type { Project, Run } from '../types.js';
+import type { Project, Run } from '../types';
 
 export class VIZTRTRDatabase {
   private db: Database.Database;

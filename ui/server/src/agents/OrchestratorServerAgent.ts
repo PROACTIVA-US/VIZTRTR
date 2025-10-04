@@ -5,9 +5,9 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { VIZTRTROrchestrator } from '../../../../dist/core/orchestrator.js';
-import { VIZTRTRConfig } from '../../../../dist/core/types.js';
-import type { IterationUpdate, RunResult } from '../types.js';
+import { VIZTRTROrchestrator } from '../../../../dist/core/orchestrator';
+import { VIZTRTRConfig } from '../../../../dist/core/types';
+import type { IterationUpdate, RunResult } from '../types';
 
 export class OrchestratorServerAgent {
   private anthropic: Anthropic;

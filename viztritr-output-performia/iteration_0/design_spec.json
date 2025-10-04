@@ -1,0 +1,122 @@
+{
+  "iteration": 0,
+  "timestamp": "2025-10-04T00:28:30.457Z",
+  "currentScore": 5.8,
+  "currentIssues": [
+    {
+      "dimension": "visual_hierarchy",
+      "severity": "moderate",
+      "description": "Chord symbols (Fmaj7, Em7, etc.) compete visually with lyrics due to similar prominence",
+      "location": "Orange chord symbols above lyrics"
+    },
+    {
+      "dimension": "typography",
+      "severity": "critical",
+      "description": "Text size too small for teleprompter use case (3-10 ft viewing distance)",
+      "location": "Lyrics text throughout"
+    },
+    {
+      "dimension": "color_contrast",
+      "severity": "moderate",
+      "description": "Gray lyrics text (#6B7280) on black background fails WCAG AA standards (3.5:1 ratio)",
+      "location": "Lyrics text"
+    },
+    {
+      "dimension": "accessibility",
+      "severity": "critical",
+      "description": "No visible focus indicators on interactive elements",
+      "location": "Upload Song and Demo buttons"
+    },
+    {
+      "dimension": "spacing_layout",
+      "severity": "moderate",
+      "description": "Inconsistent vertical spacing between chord/lyric pairs",
+      "location": "Throughout the lyrics display"
+    }
+  ],
+  "recommendations": [
+    {
+      "dimension": "color_contrast",
+      "title": "Improve lyrics text contrast",
+      "description": "Change lyrics color from gray to white or very light gray for WCAG AA compliance",
+      "impact": 8,
+      "effort": 1,
+      "code": "className='text-white' // or 'text-gray-100' for slight differentiation"
+    },
+    {
+      "dimension": "typography",
+      "title": "Increase text size for teleprompter readability",
+      "description": "Scale lyrics to 48-64px and chords to 36-48px for optimal viewing at 3-10ft distance",
+      "impact": 9,
+      "effort": 2,
+      "code": "className='text-5xl lg:text-6xl leading-relaxed' // for lyrics\nclassName='text-3xl lg:text-4xl font-bold' // for chords"
+    },
+    {
+      "dimension": "accessibility",
+      "title": "Add keyboard focus indicators",
+      "description": "Implement visible focus rings on all interactive elements",
+      "impact": 9,
+      "effort": 2,
+      "code": "className='focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-black'"
+    },
+    {
+      "dimension": "spacing_layout",
+      "title": "Implement consistent vertical rhythm",
+      "description": "Use consistent spacing between chord/lyric pairs for better readability",
+      "impact": 6,
+      "effort": 2,
+      "code": "className='space-y-12' // parent container\nclassName='mb-2' // chord to lyric spacing"
+    },
+    {
+      "dimension": "visual_hierarchy",
+      "title": "Differentiate chord styling",
+      "description": "Make chords visually distinct from lyrics using size, weight, or positioning adjustments",
+      "impact": 7,
+      "effort": 3,
+      "code": "className='text-2xl font-medium text-orange-400 opacity-80' // subtle differentiation"
+    }
+  ],
+  "prioritizedChanges": [
+    {
+      "dimension": "color_contrast",
+      "title": "Improve lyrics text contrast",
+      "description": "Change lyrics color from gray to white or very light gray for WCAG AA compliance",
+      "impact": 8,
+      "effort": 1,
+      "code": "className='text-white' // or 'text-gray-100' for slight differentiation"
+    },
+    {
+      "dimension": "typography",
+      "title": "Increase text size for teleprompter readability",
+      "description": "Scale lyrics to 48-64px and chords to 36-48px for optimal viewing at 3-10ft distance",
+      "impact": 9,
+      "effort": 2,
+      "code": "className='text-5xl lg:text-6xl leading-relaxed' // for lyrics\nclassName='text-3xl lg:text-4xl font-bold' // for chords"
+    },
+    {
+      "dimension": "accessibility",
+      "title": "Add keyboard focus indicators",
+      "description": "Implement visible focus rings on all interactive elements",
+      "impact": 9,
+      "effort": 2,
+      "code": "className='focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-black'"
+    },
+    {
+      "dimension": "spacing_layout",
+      "title": "Implement consistent vertical rhythm",
+      "description": "Use consistent spacing between chord/lyric pairs for better readability",
+      "impact": 6,
+      "effort": 2,
+      "code": "className='space-y-12' // parent container\nclassName='mb-2' // chord to lyric spacing"
+    },
+    {
+      "dimension": "visual_hierarchy",
+      "title": "Differentiate chord styling",
+      "description": "Make chords visually distinct from lyrics using size, weight, or positioning adjustments",
+      "impact": 7,
+      "effort": 3,
+      "code": "className='text-2xl font-medium text-orange-400 opacity-80' // subtle differentiation"
+    }
+  ],
+  "estimatedNewScore": 7.9
+}

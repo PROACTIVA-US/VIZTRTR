@@ -4,8 +4,8 @@
  * Supports Z.AI API-compatible models
  */
 
-import { ModelProvider, CompletionRequest, CompletionResponse } from './ModelProvider.js';
-import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types.js';
+import { ModelProvider, CompletionRequest, CompletionResponse } from './ModelProvider';
+import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types';
 
 export class ZAIProvider extends ModelProvider {
   // Z.AI pricing (to be updated with actual pricing)

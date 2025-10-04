@@ -14,7 +14,7 @@ import {
   EvaluationResult,
 } from './types';
 import { ClaudeOpusVisionPlugin } from '../plugins/vision-claude';
-import { HybridScoringAgent } from '../agents/HybridScoringAgent';
+// import { HybridScoringAgent } from '../agents/HybridScoringAgent'; // TODO: Fix MCP SDK imports
 import { PuppeteerCapturePlugin } from '../plugins/capture-puppeteer';
 import { IterationMemoryManager } from '../memory/IterationMemoryManager';
 import { VerificationAgent } from '../agents/VerificationAgent';
@@ -36,7 +36,7 @@ export class VIZTRTROrchestrator {
   private reflectionAgent: ReflectionAgent;
   private filterAgent: RecommendationFilterAgent;
   private humanLoopAgent: HumanLoopAgent;
-  private hybridScoringAgent: HybridScoringAgent | null = null;
+  // private hybridScoringAgent: HybridScoringAgent | null = null; // TODO: Fix MCP SDK imports
   private backendManager: BackendServerManager | null = null;
   private iterations: IterationResult[] = [];
   private startTime: Date | null = null;
@@ -57,15 +57,16 @@ export class VIZTRTROrchestrator {
     this.humanLoopAgent = new HumanLoopAgent(config.humanLoop);
 
     // Initialize hybrid scoring if enabled
-    if (config.useChromeDevTools) {
-      const visionWeight = config.scoringWeights?.vision ?? 0.6;
-      const metricsWeight = config.scoringWeights?.metrics ?? 0.4;
-      this.hybridScoringAgent = new HybridScoringAgent(
-        config.anthropicApiKey!,
-        visionWeight,
-        metricsWeight
-      );
-    }
+    // TODO: Re-enable when MCP SDK imports are fixed
+    // if (config.useChromeDevTools) {
+    //   const visionWeight = config.scoringWeights?.vision ?? 0.6;
+    //   const metricsWeight = config.scoringWeights?.metrics ?? 0.4;
+    //   this.hybridScoringAgent = new HybridScoringAgent(
+    //     config.anthropicApiKey!,
+    //     visionWeight,
+    //     metricsWeight
+    //   );
+    // }
 
     // Ensure output directory exists
     this.ensureOutputDir();
@@ -334,26 +335,27 @@ export class VIZTRTROrchestrator {
     const evaluation = await this.evaluate(afterScreenshot);
 
     // Hybrid scoring (if enabled)
+    // TODO: Fix MCP SDK imports before re-enabling hybrid scoring
     let hybridScore;
-    if (this.hybridScoringAgent) {
-      console.log('🔬 Running hybrid scoring analysis...');
-      const result = await this.hybridScoringAgent.score(afterScreenshot, this.config.frontendUrl);
-      hybridScore = {
-        compositeScore: result.compositeScore,
-        visionScore: result.visionScore,
-        metricsScore: result.metricsScore,
-        confidence: result.confidence,
-        metricsBreakdown: {
-          performance: result.metrics?.performance || 0,
-          accessibility: result.metrics?.accessibility || 0,
-          bestPractices: result.metrics?.bestPractices || 0
-        }
-      };
-      console.log(`   Hybrid Score: ${result.compositeScore.toFixed(1)}/10 (confidence: ${(result.confidence * 100).toFixed(0)}%)`);
+    // if (this.hybridScoringAgent) {
+    //   console.log('🔬 Running hybrid scoring analysis...');
+    //   const result = await this.hybridScoringAgent.score(afterScreenshot, this.config.frontendUrl);
+    //   hybridScore = {
+    //     compositeScore: result.compositeScore,
+    //     visionScore: result.visionScore,
+    //     metricsScore: result.metricsScore,
+    //     confidence: result.confidence,
+    //     metricsBreakdown: {
+    //       performance: result.metrics?.performance || 0,
+    //       accessibility: result.metrics?.accessibility || 0,
+    //       bestPractices: result.metrics?.bestPractices || 0
+    //     }
+    //   };
+    //   console.log(`   Hybrid Score: ${result.compositeScore.toFixed(1)}/10 (confidence: ${(result.confidence * 100).toFixed(0)}%)`);
 
-      // Use hybrid composite score as the primary evaluation score
-      evaluation.compositeScore = result.compositeScore;
-    }
+    //   // Use hybrid composite score as the primary evaluation score
+    //   evaluation.compositeScore = result.compositeScore;
+    // }
 
     // Save evaluation
     const evalPath = path.join(iterationDir, 'evaluation.json');
@@ -599,8 +601,9 @@ ${report.iterations[report.bestIteration]?.designSpec.recommendations
 
   private async cleanup() {
     await this.capturePlugin.close();
-    if (this.hybridScoringAgent) {
-      await this.hybridScoringAgent.dispose();
-    }
+    // TODO: Fix MCP SDK imports before re-enabling hybrid scoring cleanup
+    // if (this.hybridScoringAgent) {
+    //   await this.hybridScoringAgent.dispose();
+    // }
   }
 }

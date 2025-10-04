@@ -6,18 +6,27 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as fs from 'fs';
 import * as path from 'path';
-import { VIZTRTRDatabase } from '../services/database.js';
-import { detectProjectType } from '../services/projectDetector.js';
-import { analyzePRD, analyzePRDFromFile, mergeAnalysisWithDetection } from '../services/prdAnalyzer.js';
-import { generateProductSpec, saveProductSpec, loadProductSpec, updateProductSpec } from '../services/productSpecGenerator.js';
-import type { CreateProjectRequest } from '../types.js';
+import { VIZTRTRDatabase } from '../services/database';
+import { detectProjectType } from '../services/projectDetector';
+import {
+  analyzePRD,
+  analyzePRDFromFile,
+  mergeAnalysisWithDetection,
+} from '../services/prdAnalyzer';
+import {
+  generateProductSpec,
+  saveProductSpec,
+  loadProductSpec,
+  updateProductSpec,
+} from '../services/productSpecGenerator';
+import type { CreateProjectRequest } from '../types';
 
 const CreateProjectSchema = z.object({
   name: z.string().min(1),
   projectPath: z.string().min(1),
   frontendUrl: z.string().url(),
   targetScore: z.number().min(0).max(10).optional(),
-  maxIterations: z.number().int().min(1).max(20).optional()
+  maxIterations: z.number().int().min(1).max(20).optional(),
 });
 
 export function createProjectsRouter(db: VIZTRTRDatabase): Router {
@@ -30,7 +39,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.json(projects);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to list projects'
+        error: error instanceof Error ? error.message : 'Failed to list projects',
       });
     }
   });
@@ -45,7 +54,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.json(project);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to get project'
+        error: error instanceof Error ? error.message : 'Failed to get project',
       });
     }
   });
@@ -60,7 +69,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       const project = db.createProject({
         ...data,
         targetScore: data.targetScore ?? 8.5,
-        maxIterations: data.maxIterations ?? 5
+        maxIterations: data.maxIterations ?? 5,
       });
 
       // Get PRD text (either from body or file)
@@ -89,12 +98,12 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
         let doclingData;
         if (prdFilePath && typeof prdFilePath === 'string' && prdFilePath.trim()) {
           const filePath = path.resolve(prdFilePath.trim());
-          const docling = await import('../services/doclingService.js');
+          const docling = await import('../services/doclingService');
           const service = new docling.DoclingService();
           const parsed = await service.parsePRD(filePath);
           doclingData = {
             tables: parsed.tables,
-            metadata: parsed.metadata
+            metadata: parsed.metadata,
           };
         }
 
@@ -120,7 +129,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to create project'
+        error: error instanceof Error ? error.message : 'Failed to create project',
       });
     }
   });
@@ -138,7 +147,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.json(updated);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to update project'
+        error: error instanceof Error ? error.message : 'Failed to update project',
       });
     }
   });
@@ -155,7 +164,57 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to delete project'
+        error: error instanceof Error ? error.message : 'Failed to delete project',
+      });
+    }
+  });
+
+  // Auto-detect frontend URL from package.json
+  router.post('/detect-url', async (req: Request, res: Response) => {
+    try {
+      const { projectPath } = req.body;
+
+      if (!projectPath || typeof projectPath !== 'string') {
+        return res.status(400).json({ error: 'projectPath is required' });
+      }
+
+      // Validate path exists
+      if (!fs.existsSync(projectPath)) {
+        return res.status(400).json({ error: 'Project path does not exist' });
+      }
+
+      // Look for package.json
+      const packageJsonPath = path.join(projectPath, 'package.json');
+      if (!fs.existsSync(packageJsonPath)) {
+        return res.json({ url: null, message: 'No package.json found' });
+      }
+
+      // Parse package.json
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
+      // Try to extract port from dev script
+      const devScript = packageJson.scripts?.dev || packageJson.scripts?.start || '';
+
+      // Common patterns: vite (5173), next (3000), create-react-app (3000)
+      let detectedPort = 3000; // Default
+
+      if (devScript.includes('vite')) {
+        detectedPort = 5173;
+      } else if (devScript.includes('next')) {
+        detectedPort = 3000;
+      }
+
+      // Try to parse --port or -p flag
+      const portMatch = devScript.match(/(?:--port|-p)\s+(\d+)/);
+      if (portMatch) {
+        detectedPort = parseInt(portMatch[1], 10);
+      }
+
+      const url = `http://localhost:${detectedPort}`;
+      res.json({ url });
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to detect URL',
       });
     }
   });
@@ -206,7 +265,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.json(detection);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to analyze project'
+        error: error instanceof Error ? error.message : 'Failed to analyze project',
       });
     }
   });
@@ -223,7 +282,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.json(runs);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to get runs'
+        error: error instanceof Error ? error.message : 'Failed to get runs',
       });
     }
   });
@@ -244,7 +303,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.json(spec);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to load product spec'
+        error: error instanceof Error ? error.message : 'Failed to load product spec',
       });
     }
   });
@@ -266,7 +325,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       res.json(updated);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to update product spec'
+        error: error instanceof Error ? error.message : 'Failed to update product spec',
       });
     }
   });
@@ -299,9 +358,10 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
-        messages: [{
-          role: 'user',
-          content: `You are an AI assistant helping with a VIZTRTR project.
+        messages: [
+          {
+            role: 'user',
+            content: `You are an AI assistant helping with a VIZTRTR project.
 
 Project: ${project.name}
 Frontend URL: ${project.frontendUrl}
@@ -311,18 +371,20 @@ ${productSpec ? `Product Specification:\n${JSON.stringify(productSpec, null, 2)}
 
 User Question: ${message}
 
-Provide a helpful, concise answer about the project.`
-        }]
+Provide a helpful, concise answer about the project.`,
+          },
+        ],
       });
 
-      const assistantMessage = response.content[0].type === 'text'
-        ? response.content[0].text
-        : 'Sorry, I could not generate a response.';
+      const assistantMessage =
+        response.content[0].type === 'text'
+          ? response.content[0].text
+          : 'Sorry, I could not generate a response.';
 
       res.json({ response: assistantMessage });
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to process chat'
+        error: error instanceof Error ? error.message : 'Failed to process chat',
       });
     }
   });
@@ -339,11 +401,11 @@ Provide a helpful, concise answer about the project.`
       // For now, return placeholder
       res.status(501).json({
         error: 'Document upload not yet implemented',
-        message: 'This endpoint will support PRD, screenshot, and video uploads'
+        message: 'This endpoint will support PRD, screenshot, and video uploads',
       });
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to upload document'
+        error: error instanceof Error ? error.message : 'Failed to upload document',
       });
     }
   });
@@ -369,11 +431,11 @@ Provide a helpful, concise answer about the project.`
         projectPath: project.projectPath,
         frontendUrl: project.frontendUrl,
         targetScore: project.targetScore,
-        maxIterations: project.maxIterations
+        maxIterations: project.maxIterations,
       });
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to load config'
+        error: error instanceof Error ? error.message : 'Failed to load config',
       });
     }
   });
@@ -405,7 +467,7 @@ Provide a helpful, concise answer about the project.`
       res.json({ message: 'Configuration updated', config });
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to update config'
+        error: error instanceof Error ? error.message : 'Failed to update config',
       });
     }
   });
@@ -427,14 +489,14 @@ Provide a helpful, concise answer about the project.`
         db.updateRun(run.id, {
           status: 'failed',
           completedAt: new Date().toISOString(),
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       });
 
       res.status(201).json(run);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to start run'
+        error: error instanceof Error ? error.message : 'Failed to start run',
       });
     }
   });
@@ -461,14 +523,14 @@ Provide a helpful, concise answer about the project.`
         db.updateRun(newRun.id, {
           status: 'failed',
           completedAt: new Date().toISOString(),
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       });
 
       res.status(201).json(newRun);
     } catch (error) {
       res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to retry run'
+        error: error instanceof Error ? error.message : 'Failed to retry run',
       });
     }
   });
@@ -480,7 +542,7 @@ Provide a helpful, concise answer about the project.`
  * Execute a VIZTRTR run in the background
  */
 async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
-  const { VIZTRTROrchestrator } = await import('../../../../dist/core/orchestrator.js');
+  const { VIZTRTROrchestrator } = await import('../../../../dist/core/orchestrator');
 
   // Update status to running
   db.updateRun(runId, { status: 'running' });
@@ -495,7 +557,7 @@ async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
     screenshotConfig: {
       width: 1280,
       height: 720,
-      fullPage: false
+      fullPage: false,
     },
     verbose: true,
   };
@@ -504,14 +566,14 @@ async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
 
   // Hook into iteration updates
   const originalRun = orchestrator.run.bind(orchestrator);
-  orchestrator.run = async function() {
+  orchestrator.run = async function () {
     const result = await originalRun();
 
     // Update run with final results
     db.updateRun(runId, {
       status: 'completed',
       completedAt: new Date().toISOString(),
-      currentIteration: result.iterations.length
+      currentIteration: result.iterations.length,
     });
 
     db.saveRunResult(runId, result);

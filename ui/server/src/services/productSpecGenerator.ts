@@ -7,7 +7,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { VIZTRTRProductSpec } from '../types/productSpec.js';
+import type { VIZTRTRProductSpec } from '../types/productSpec';
 
 export interface DoclingMetadata {
   tables?: Array<{ data: string; num_rows: number | null; num_cols: number | null }>;
