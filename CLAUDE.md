@@ -50,15 +50,15 @@ npm run test:coverage # Run tests with coverage
 ```bash
 npm run demo              # Run basic demo
 npm run test:performia    # Test on Performia project
-npm run test:cross-file   # Test cross-file validation
+npm run test:viztrtr-ui   # Test on VIZTRTR's own UI
 ```
 
 ### UI Development
 ```bash
-# Start backend server
+# Backend server (port 3001)
 cd ui/server && npm install && npm run dev
 
-# Start frontend (in new terminal)
+# Frontend (port 5173) - in new terminal
 cd ui/frontend && npm install && npm run dev
 ```
 
@@ -68,13 +68,25 @@ npm run lint          # Lint TypeScript files
 npm run lint:fix      # Auto-fix linting issues
 npm run format        # Format with Prettier
 npm run format:check  # Check formatting
-npm run precommit     # Run all checks
+npm run precommit     # Run all checks (lint + format + typecheck)
+```
+
+### Maintenance
+```bash
+npm run maintain         # Full maintenance (clean, docs, quality, git, security)
+npm run maintain:quick   # Quick maintenance (clean, quality:fix, git:status)
+npm run maintain:deep    # Deep maintenance (includes deps:check)
+npm run clean:all        # Clean dist, coverage, logs, temp files
+npm run docs:update      # Generate API docs and lint markdown
+npm run security:check   # Run npm audit with moderate level
+npm run deps:check       # Check for dependency updates (ncu)
 ```
 
 ### Setup
 ```bash
 npm install           # Install dependencies
 # Create .env file with: ANTHROPIC_API_KEY=sk-ant-...
+npm run prepare       # Install git hooks (lefthook)
 ```
 
 ## Architecture
@@ -252,11 +264,28 @@ Main config object (`VIZTRTRConfig` in `src/core/types.ts`) controls:
 - **Docs**: `docs/` - All documentation
 - **Build output**: `dist/` - Compiled JavaScript
 
-### Code Quality
+### Code Quality & Git Hooks
+The project uses **Lefthook** for fast, parallel git hooks:
+- **pre-commit**: Runs `lint-staged` (lint + format staged files) and `typecheck`
+- **pre-push**: Runs `npm test` and `security:check`
+- **commit-msg**: Validates commit message format
+
 Before committing:
 ```bash
 npm run precommit  # Runs lint, format check, typecheck
 ```
+
+The hooks are installed automatically via `npm run prepare` (runs on `npm install`).
+
+## TypeScript Configuration
+
+**Build settings** (`tsconfig.json`):
+- **Target**: ES2022 for modern features
+- **Module**: CommonJS for Node.js compatibility
+- **Source**: `src/` → **Output**: `dist/`
+- **Strict mode**: Enabled for type safety
+- **Declaration files**: Generated with source maps
+- **Root imports**: Absolute paths not configured (use relative imports)
 
 ## Important File Paths
 
@@ -265,6 +294,8 @@ When writing code that references files:
 - Orchestrator: `import { VIZTRTROrchestrator } from '../../src/core/orchestrator'`
 - From agents to types: `import { Type } from '../core/types'`
 - From plugins to types: `import { Type } from '../core/types'`
+
+**Note**: All imports use relative paths. The project does not use path aliases.
 
 ## Web UI
 
@@ -286,17 +317,26 @@ When writing code that references files:
 - `/api/runs/:id` - Get run status and results
 - `/api/runs/:id/stream` - SSE stream for real-time updates
 
-**Tech Stack**: Express, TypeScript, SQLite, CORS
+**Tech Stack**: Express, TypeScript, SQLite, CORS, @anthropic-ai/sdk, MCP SDK
 
 ### Running the UI
 ```bash
-# Terminal 1: Start backend
+# Terminal 1: Start backend (port 3001)
 cd ui/server && npm install && npm run dev
 
-# Terminal 2: Start frontend
+# Terminal 2: Start frontend (port 5173)
 cd ui/frontend && npm install && npm run dev
 
 # Access at http://localhost:5173
+```
+
+**Production Build:**
+```bash
+# Build backend
+cd ui/server && npm run build && npm start
+
+# Build frontend
+cd ui/frontend && npm run build && npm run preview
 ```
 
 ## Video Processing (Planned)
@@ -328,8 +368,57 @@ Features:
 
 Usage:
 ```bash
-npm run test:cross-file
+npm run build && node dist/examples/cross-file-validation-demo.js
 ```
+
+## ESLint Configuration
+
+The project uses **ESLint 9** with flat config (`eslint.config.js`):
+- TypeScript parser with project-aware type checking
+- Recommended TypeScript rules
+- Unused vars warnings (prefix with `_` to ignore)
+- Explicit return types disabled
+- `any` and non-null assertions: warnings only
+
+Files linted: `src/**/*.ts`
+Ignored: `dist/`, `node_modules/`, `*.js` (except config files)
+
+## Troubleshooting
+
+### Common Issues
+
+**TypeScript compilation errors:**
+```bash
+npm run clean:all && npm install && npm run build
+```
+
+**Frontend not accessible:**
+- Ensure dev server is running on the configured `frontendUrl`
+- Check `projectPath` points to the correct frontend directory
+- Verify port is not in use
+
+**API key errors:**
+- Verify `ANTHROPIC_API_KEY` is set in `.env`
+- Check key has sufficient credits at console.anthropic.com
+- Ensure `.env` is in project root, not in subdirectories
+
+**Memory/iteration issues:**
+- Check `viztritr-output/memory/iteration-memory.json` for stored attempts
+- Delete memory file to reset learning (will retry failed approaches)
+- Review `verbose: true` in config for detailed logging
+
+**Git hooks not running:**
+```bash
+npm run prepare  # Reinstall lefthook hooks
+```
+
+### Debugging Tips
+
+1. **Enable verbose logging**: Set `verbose: true` in config
+2. **Check iteration output**: Review files in `outputDir/iteration_N/`
+3. **Inspect agent thinking**: Look at Claude's extended thinking in implementation logs
+4. **Review memory state**: Check `iteration-memory.json` for learned patterns
+5. **Test single iteration**: Set `maxIterations: 1` for faster debugging
 
 ## Next Development Phases
 
