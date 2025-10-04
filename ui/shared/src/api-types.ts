@@ -18,6 +18,15 @@ export interface BrowseResponse {
   directories: Directory[];
 }
 
+export interface FileEntry {
+  name: string;
+  path: string;
+}
+
+export interface BrowseFilesResponse extends BrowseResponse {
+  files: FileEntry[];
+}
+
 export interface HomeResponse {
   path: string;
 }

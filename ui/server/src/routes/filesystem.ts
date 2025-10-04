@@ -6,7 +6,12 @@ import rateLimit from 'express-rate-limit';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { BrowseResponse, HomeResponse, ErrorResponse } from '../../shared/src/api-types';
+import type {
+  BrowseResponse,
+  BrowseFilesResponse,
+  HomeResponse,
+  ErrorResponse,
+} from '../../shared/src/api-types';
 
 const router = express.Router();
 
@@ -105,6 +110,100 @@ router.get('/browse', filesystemLimiter, async (req, res) => {
   } catch (error) {
     // Generic error handler - sanitize error messages
     console.error('Filesystem browse error:', error);
+    res.status(500).json<ErrorResponse>({
+      error: 'Failed to browse directory',
+    });
+  }
+});
+
+/**
+ * GET /api/filesystem/browse-files
+ * Browse directories and files on the server filesystem
+ */
+router.get('/browse-files', filesystemLimiter, async (req, res) => {
+  try {
+    const dirPath = (req.query.path as string) || os.homedir();
+    const fileFilter = req.query.filter as string | undefined;
+
+    // Security: prevent directory traversal attacks
+    const resolvedPath = path.resolve(dirPath);
+
+    // Security: prevent access to system and sensitive directories
+    const isForbidden = FORBIDDEN_DIRS.some(forbidden => {
+      const resolvedForbidden = path.resolve(forbidden);
+      return (
+        resolvedPath === resolvedForbidden || resolvedPath.startsWith(resolvedForbidden + path.sep)
+      );
+    });
+
+    if (isForbidden) {
+      return res.status(403).json<ErrorResponse>({
+        error: 'Access denied to system directories',
+      });
+    }
+
+    // Read directory contents
+    let entries;
+    try {
+      entries = await fs.promises.readdir(resolvedPath, { withFileTypes: true });
+    } catch (error) {
+      // Handle permission errors specifically
+      if (error instanceof Error && 'code' in error) {
+        const fsError = error as NodeJS.ErrnoException;
+        if (fsError.code === 'EACCES' || fsError.code === 'EPERM') {
+          return res.status(403).json<ErrorResponse>({
+            error: 'Permission denied',
+          });
+        }
+        if (fsError.code === 'ENOENT') {
+          return res.status(404).json<ErrorResponse>({
+            error: 'Directory not found',
+          });
+        }
+      }
+      throw error;
+    }
+
+    // Show directories (not hidden)
+    const directories = entries
+      .filter(entry => entry.isDirectory() && !entry.name.startsWith('.'))
+      .map(entry => ({
+        name: entry.name,
+        path: path.join(resolvedPath, entry.name),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Show files (not hidden), with optional extension filter
+    let files = entries
+      .filter(entry => entry.isFile() && !entry.name.startsWith('.'))
+      .map(entry => ({
+        name: entry.name,
+        path: path.join(resolvedPath, entry.name),
+      }));
+
+    // Apply file extension filter if provided
+    if (fileFilter) {
+      const extensions = fileFilter.split(',').map(ext => ext.trim().toLowerCase());
+      files = files.filter(file => {
+        const ext = path.extname(file.name).toLowerCase().slice(1);
+        return extensions.includes(ext);
+      });
+    }
+
+    files.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Get parent directory
+    const parent = path.dirname(resolvedPath);
+
+    res.json<BrowseFilesResponse>({
+      currentPath: resolvedPath,
+      parent: parent !== resolvedPath ? parent : null,
+      directories,
+      files,
+    });
+  } catch (error) {
+    // Generic error handler - sanitize error messages
+    console.error('Filesystem browse-files error:', error);
     res.status(500).json<ErrorResponse>({
       error: 'Failed to browse directory',
     });
