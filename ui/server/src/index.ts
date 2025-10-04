@@ -111,6 +111,17 @@ app.get('/api/health-detailed', (req, res) => {
   res.json(healthStatus);
 });
 
+// Restart server endpoint
+app.post('/api/restart-server', (req, res) => {
+  console.log('[Restart] Restarting server...');
+  res.json({ message: 'Server restarting...' });
+
+  // Give response time to send, then exit
+  setTimeout(() => {
+    process.exit(0); // tsx watch will automatically restart
+  }, 500);
+});
+
 // Check server status (proxy to avoid CORS issues)
 app.post('/api/check-server', async (req, res) => {
   try {

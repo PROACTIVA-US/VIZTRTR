@@ -21,14 +21,21 @@ export async function generateProductSpec(
   anthropicApiKey: string,
   doclingData?: DoclingMetadata
 ): Promise<VIZTRTRProductSpec> {
+  console.log('[ProductSpecGenerator] Starting PRD analysis...');
+  console.log('[ProductSpecGenerator] PRD length:', prdText.length, 'chars');
+  console.log('[ProductSpecGenerator] Detected components:', detectedComponents);
+
   const anthropic = new Anthropic({ apiKey: anthropicApiKey });
 
   // Build table context if available
   let tableContext = '';
   if (doclingData?.tables && doclingData.tables.length > 0) {
-    tableContext = `\n\n<extracted_tables>\nThe following tables were extracted from the PRD document:\n\n${doclingData.tables.map((table, idx) =>
-      `Table ${idx + 1} (${table.num_rows || '?'} rows × ${table.num_cols || '?'} cols):\n${table.data}`
-    ).join('\n\n')}\n</extracted_tables>`;
+    tableContext = `\n\n<extracted_tables>\nThe following tables were extracted from the PRD document:\n\n${doclingData.tables
+      .map(
+        (table, idx) =>
+          `Table ${idx + 1} (${table.num_rows || '?'} rows × ${table.num_cols || '?'} cols):\n${table.data}`
+      )
+      .join('\n\n')}\n</extracted_tables>`;
   }
 
   // Build metadata context if available
@@ -61,8 +68,10 @@ IMPORTANT:
 - Each component should have 2-4 user stories
 - Focus areas should be specific UI/UX concerns
 - Acceptance criteria should be measurable
+- Return ONLY valid, well-formed JSON - no trailing commas, all strings properly quoted
+- Do NOT include any text before or after the JSON object
 
-Return ONLY valid JSON matching this structure:
+Return ONLY valid JSON matching this structure (ensure all strings use double quotes, no trailing commas):
 {
   "productVision": "...",
   "targetUsers": ["..."],
@@ -85,39 +94,91 @@ Return ONLY valid JSON matching this structure:
   }
 }`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5',
-    max_tokens: 8000,
-    messages: [{ role: 'user', content: prompt }]
-  });
+  console.log('[ProductSpecGenerator] Calling Claude Sonnet 4.5...');
+  const startTime = Date.now();
 
-  const content = response.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type');
+  try {
+    // Add 60 second timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    clearTimeout(timeoutId);
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[ProductSpecGenerator] Claude responded in ${elapsed}ms`);
+
+    const content = response.content[0];
+    if (content.type !== 'text') {
+      throw new Error('Unexpected response type');
+    }
+
+    console.log('[ProductSpecGenerator] Parsing Claude response...');
+
+    // Extract JSON - find the first { and last }
+    const text = content.text;
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error('[ProductSpecGenerator] No JSON found in response');
+      throw new Error('No JSON found in Claude response');
+    }
+
+    const jsonString = text.substring(firstBrace, lastBrace + 1);
+    console.log('[ProductSpecGenerator] Extracted JSON string, length:', jsonString.length);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+      console.log('[ProductSpecGenerator] Successfully parsed product spec');
+    } catch (parseError) {
+      console.error('[ProductSpecGenerator] JSON parse error:', parseError);
+      console.error(
+        '[ProductSpecGenerator] Problematic JSON substring:',
+        jsonString.substring(31700, 31900)
+      );
+
+      // Try to fix common JSON issues
+      const fixedJson = jsonString
+        .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+        .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Quote unquoted keys
+        .replace(/:\s*'([^']*)'/g, ': "$1"'); // Replace single quotes with double quotes
+
+      try {
+        parsed = JSON.parse(fixedJson);
+        console.log('[ProductSpecGenerator] Successfully parsed after fixing JSON');
+      } catch (secondError) {
+        throw new Error(
+          `Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
+        );
+      }
+    }
+
+    // Build full spec
+    const spec: VIZTRTRProductSpec = {
+      projectId,
+      version: 1,
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      productVision: parsed.productVision,
+      targetUsers: parsed.targetUsers,
+      components: parsed.components,
+      globalConstraints: parsed.globalConstraints,
+      originalPRD: prdText,
+    };
+
+    console.log('[ProductSpecGenerator] Product spec generated successfully');
+    return spec;
+  } catch (error) {
+    console.error('[ProductSpecGenerator] Error generating product spec:', error);
+    throw error;
   }
-
-  // Extract JSON
-  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error('Failed to extract JSON from response');
-  }
-
-  const parsed = JSON.parse(jsonMatch[0]);
-
-  // Build full spec
-  const spec: VIZTRTRProductSpec = {
-    projectId,
-    version: 1,
-    createdAt: new Date().toISOString(),
-    lastUpdated: new Date().toISOString(),
-    productVision: parsed.productVision,
-    targetUsers: parsed.targetUsers,
-    components: parsed.components,
-    globalConstraints: parsed.globalConstraints,
-    originalPRD: prdText
-  };
-
-  return spec;
 }
 
 export async function saveProductSpec(
@@ -126,16 +187,10 @@ export async function saveProductSpec(
 ): Promise<void> {
   const specPath = path.join(workspacePath, 'product-spec.json');
   await fs.promises.mkdir(path.dirname(specPath), { recursive: true });
-  await fs.promises.writeFile(
-    specPath,
-    JSON.stringify(spec, null, 2),
-    'utf-8'
-  );
+  await fs.promises.writeFile(specPath, JSON.stringify(spec, null, 2), 'utf-8');
 }
 
-export async function loadProductSpec(
-  workspacePath: string
-): Promise<VIZTRTRProductSpec | null> {
+export async function loadProductSpec(workspacePath: string): Promise<VIZTRTRProductSpec | null> {
   const specPath = path.join(workspacePath, 'product-spec.json');
   try {
     const content = await fs.promises.readFile(specPath, 'utf-8');
@@ -154,7 +209,7 @@ export async function updateProductSpec(
     ...spec,
     ...updates,
     version: spec.version + 1,
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
   };
 
   await saveProductSpec(updated, workspacePath);
