@@ -14,14 +14,15 @@ import { createProjectsRouter } from './routes/projects';
 import { createRunsRouter } from './routes/runs';
 import { createEvaluateRouter } from './routes/evaluate';
 import analyzeRouter from './routes/analyze';
+import filesystemRouter from './routes/filesystem';
 
 // Load environment variables - try multiple locations for robustness
 const envPaths = [
-  path.join(process.cwd(), '.env'),          // Current working directory (most reliable with tsx)
-  path.join(__dirname, '.env'),              // Same as source dir
-  path.join(__dirname, '../.env'),           // ui/server/.env
-  path.join(__dirname, '../../.env'),        // ui/.env
-  path.join(__dirname, '../../../.env'),     // VIZTRTR/.env (project root)
+  path.join(process.cwd(), '.env'), // Current working directory (most reliable with tsx)
+  path.join(__dirname, '.env'), // Same as source dir
+  path.join(__dirname, '../.env'), // ui/server/.env
+  path.join(__dirname, '../../.env'), // ui/.env
+  path.join(__dirname, '../../../.env'), // VIZTRTR/.env (project root)
 ];
 
 let envLoaded = false;
@@ -78,13 +79,14 @@ app.use('/api/projects', createProjectsRouter(db));
 app.use('/api/runs', createRunsRouter(db, runManager));
 app.use('/api', createEvaluateRouter(anthropicApiKey));
 app.use('/api', analyzeRouter);
+app.use('/api/filesystem', filesystemRouter);
 
 // Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    version: '0.1.0'
+    version: '0.1.0',
   });
 });
 
@@ -97,8 +99,8 @@ app.get('/', (req, res) => {
       health: '/health',
       projects: '/api/projects',
       runs: '/api/runs',
-      evaluate: '/api/evaluate-prompt'
-    }
+      evaluate: '/api/evaluate-prompt',
+    },
   });
 });
 
@@ -106,7 +108,7 @@ app.get('/', (req, res) => {
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err);
   res.status(500).json({
-    error: err.message || 'Internal server error'
+    error: err.message || 'Internal server error',
   });
 });
 

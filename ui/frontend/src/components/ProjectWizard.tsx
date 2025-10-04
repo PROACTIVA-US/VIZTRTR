@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import FolderBrowser from './FolderBrowser';
 
 interface ProjectWizardProps {
   onClose: () => void;
@@ -10,18 +11,23 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showBrowser, setShowBrowser] = useState(false);
 
-  // Browse for project path - just focus the input
+  // Browse for project path
   const handleBrowse = () => {
-    // In a browser, we can't actually browse folders without uploading files
-    // So we'll just show a helpful tip
-    alert(
-      'To get your project path:\n\n' +
-        '• macOS: Open folder in Finder, press Cmd+Option+C to copy path\n' +
-        '• Or drag folder into Terminal to see the path\n' +
-        '• Or right-click folder → Get Info → copy the path\n\n' +
-        'Then paste it into the Project Path field.'
-    );
+    setShowBrowser(true);
+  };
+
+  const handleSelectFolder = (path: string) => {
+    setProjectPath(path);
+    setShowBrowser(false);
+
+    // Auto-suggest name from path
+    const parts = path.split('/');
+    const suggestedName = parts[parts.length - 1] || '';
+    if (suggestedName) {
+      setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+    }
   };
 
   const handleCreate = async () => {
@@ -160,6 +166,11 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
           </button>
         </div>
       </div>
+
+      {/* Folder Browser Modal */}
+      {showBrowser && (
+        <FolderBrowser onSelect={handleSelectFolder} onClose={() => setShowBrowser(false)} />
+      )}
     </div>
   );
 }
