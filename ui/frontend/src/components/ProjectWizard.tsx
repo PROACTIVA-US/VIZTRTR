@@ -6,53 +6,16 @@ interface ProjectWizardProps {
 }
 
 export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProps) {
-  const [step, setStep] = useState<'setup' | 'confirm'>('setup');
-  const [name, setName] = useState('');
   const [projectPath, setProjectPath] = useState('');
-  const [frontendUrl, setFrontendUrl] = useState('http://localhost:3000');
+  const [name, setName] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [detecting, setDetecting] = useState(false);
 
-  // Auto-detect frontend URL from package.json
-  const handleDetectUrl = async () => {
-    if (!projectPath.trim()) {
-      setError('Please enter a project path first');
-      return;
-    }
-
-    setDetecting(true);
-    setError('');
-
-    try {
-      const res = await fetch('http://localhost:3001/api/projects/detect-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectPath }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Could not detect URL');
-      }
-
-      const data = await res.json();
-      if (data.url) {
-        setFrontendUrl(data.url);
-      }
-    } catch (err) {
-      // Silently fail - user can enter manually
-      console.log('URL detection failed:', err);
-    } finally {
-      setDetecting(false);
-    }
-  };
-
-  // Browse for project path - prompts user to paste path
+  // Browse for project path
   const handleBrowse = () => {
     const userPath = prompt(
-      'Enter the absolute path to your project directory:\n\n' +
-        'Example: /Users/you/Projects/my-frontend\n\n' +
-        'Tip: You can copy the path from Finder (⌘+⌥+C) or drag a folder into Terminal to get its path.',
+      'Enter the absolute path to your project directory:',
       projectPath || ''
     );
 
@@ -60,43 +23,44 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
       setProjectPath(userPath.trim());
 
       // Auto-suggest name from path
-      if (!name && userPath.trim()) {
-        const parts = userPath.trim().split('/');
-        const suggestedName = parts[parts.length - 1] || '';
-        if (suggestedName) {
-          setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
-        }
+      const parts = userPath.trim().split('/');
+      const suggestedName = parts[parts.length - 1] || '';
+      if (suggestedName) {
+        setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
       }
-
-      // Auto-detect URL
-      handleDetectUrl();
     }
-  };
-
-  const handleNext = () => {
-    // Validation
-    if (!name.trim()) {
-      setError('Please enter a project name');
-      return;
-    }
-    if (!projectPath.trim()) {
-      setError('Please enter a project path');
-      return;
-    }
-    if (!frontendUrl.trim()) {
-      setError('Please enter a frontend URL');
-      return;
-    }
-
-    setError('');
-    setStep('confirm');
   };
 
   const handleCreate = async () => {
+    if (!confirmed) {
+      setError('Please confirm you want to create this project');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
+      // Detect frontend URL from package.json
+      let frontendUrl = 'http://localhost:3000'; // Default
+      try {
+        const detectRes = await fetch('http://localhost:3001/api/projects/detect-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectPath }),
+        });
+        if (detectRes.ok) {
+          const detectData = await detectRes.json();
+          if (detectData.url) {
+            frontendUrl = detectData.url;
+          }
+        }
+      } catch (err) {
+        // Silently use default
+        console.log('URL detection failed, using default:', err);
+      }
+
+      // Create project
       const res = await fetch('http://localhost:3001/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -104,8 +68,8 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
           name,
           projectPath,
           frontendUrl,
-          targetScore: 8.5, // Default
-          maxIterations: 5, // Default
+          targetScore: 8.5,
+          maxIterations: 5,
         }),
       });
 
@@ -114,7 +78,7 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
         throw new Error(data.error || 'Failed to create project');
       }
 
-      // Project created successfully - close wizard
+      // Project created successfully
       onComplete();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Creation failed');
@@ -128,14 +92,8 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-slate-700 shrink-0">
           <div>
-            <h2 className="text-2xl font-bold">
-              {step === 'setup' && 'Project Setup'}
-              {step === 'confirm' && 'Confirm Project'}
-            </h2>
-            <p className="text-sm text-slate-400 mt-1">
-              {step === 'setup' && 'Enter your project details'}
-              {step === 'confirm' && 'Review and create your project'}
-            </p>
+            <h2 className="text-2xl font-bold">Create Project</h2>
+            <p className="text-sm text-slate-400 mt-1">Set up your project for analysis</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             ✕
@@ -149,158 +107,85 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
           </div>
         )}
 
-        {/* Step 1: Project Setup */}
-        {step === 'setup' && (
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-              {/* Project Name */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Project Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="My Awesome Project"
-                  className="input w-full"
-                  autoFocus
-                />
-                <p className="text-sm text-slate-400 mt-2">
-                  A friendly name to identify your project
-                </p>
-              </div>
-
-              {/* Project Path */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Project Path <span className="text-red-400">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={projectPath}
-                    onChange={e => {
-                      setProjectPath(e.target.value);
-                      // Auto-suggest name from path
-                      if (!name && e.target.value) {
-                        const parts = e.target.value.split('/');
-                        const suggestedName = parts[parts.length - 1] || '';
-                        if (suggestedName) {
-                          setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
-                        }
-                      }
-                    }}
-                    onBlur={handleDetectUrl} // Auto-detect URL when path is entered
-                    placeholder="/Users/you/Projects/my-frontend"
-                    className="input flex-1"
-                  />
-                  <button onClick={handleBrowse} className="btn-secondary whitespace-nowrap">
-                    Browse...
-                  </button>
-                </div>
-                <p className="text-sm text-slate-400 mt-2">
-                  Absolute path to your frontend project directory
-                </p>
-              </div>
-
-              {/* Frontend URL */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Frontend URL <span className="text-red-400">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={frontendUrl}
-                    onChange={e => setFrontendUrl(e.target.value)}
-                    placeholder="http://localhost:3000"
-                    className="input flex-1"
-                  />
-                  <button
-                    onClick={handleDetectUrl}
-                    disabled={detecting || !projectPath}
-                    className="btn-secondary whitespace-nowrap"
-                  >
-                    {detecting ? 'Detecting...' : 'Auto-detect'}
-                  </button>
-                </div>
-                <p className="text-sm text-slate-400 mt-2">
-                  URL where your dev server runs. We'll try to auto-detect from package.json.
-                </p>
-              </div>
-
-              {/* Info box */}
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <p className="text-sm text-blue-300">
-                  <strong>💡 Tip:</strong> Make sure your dev server is running at the URL you
-                  specify before starting analysis.
-                </p>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-700 shrink-0 flex justify-end gap-3">
-              <button onClick={onClose} className="btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleNext} className="btn-primary">
-                Next →
+        {/* Content */}
+        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+          {/* Project Path */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Project Path <span className="text-red-400">*</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={projectPath}
+                onChange={e => {
+                  setProjectPath(e.target.value);
+                  // Auto-suggest name from path
+                  if (!name && e.target.value) {
+                    const parts = e.target.value.split('/');
+                    const suggestedName = parts[parts.length - 1] || '';
+                    if (suggestedName) {
+                      setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+                    }
+                  }
+                }}
+                placeholder="/Users/you/Projects/my-frontend"
+                className="input flex-1"
+                autoFocus
+              />
+              <button onClick={handleBrowse} className="btn-secondary whitespace-nowrap">
+                Browse...
               </button>
             </div>
+            <p className="text-sm text-slate-400 mt-2">
+              Absolute path to your frontend project directory
+            </p>
           </div>
-        )}
 
-        {/* Step 2: Confirmation */}
-        {step === 'confirm' && (
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-              <div className="bg-slate-900 rounded-lg p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-green-400">Create Project "{name}"?</h3>
-
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Name:</span>
-                    <span className="font-medium">{name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Path:</span>
-                    <span className="font-mono text-xs">{projectPath}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">URL:</span>
-                    <span className="font-mono text-xs">{frontendUrl}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Target Score:</span>
-                    <span>8.5/10</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Max Iterations:</span>
-                    <span>5 cycles</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <p className="text-sm text-blue-300">
-                  Your project will be saved and ready for analysis. You can configure advanced
-                  settings and add a PRD later from the project page.
-                </p>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-6 border-t border-slate-700 shrink-0 flex justify-between">
-              <button onClick={() => setStep('setup')} disabled={loading} className="btn-secondary">
-                ← Back
-              </button>
-              <button onClick={handleCreate} disabled={loading} className="btn-primary">
-                {loading ? 'Creating...' : `Create Project "${name}"`}
-              </button>
-            </div>
+          {/* Project Name */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Project Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="My Awesome Project"
+              className="input w-full"
+            />
+            <p className="text-sm text-slate-400 mt-2">A friendly name to identify your project</p>
           </div>
-        )}
+
+          {/* Confirmation */}
+          <div className="bg-slate-900 rounded-lg p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={e => setConfirmed(e.target.checked)}
+                className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+              />
+              <span className="text-sm">
+                I confirm I want to create the project "<strong>{name || '...'}</strong>"
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-slate-700 shrink-0 flex justify-end gap-3">
+          <button onClick={onClose} disabled={loading} className="btn-secondary">
+            Cancel
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={!projectPath.trim() || !name.trim() || !confirmed || loading}
+            className="btn-primary"
+          >
+            {loading ? 'Creating...' : 'Create Project'}
+          </button>
+        </div>
       </div>
     </div>
   );
