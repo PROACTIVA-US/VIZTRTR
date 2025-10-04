@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectWizard from '../components/ProjectWizard';
+import ProjectOnboarding from '../components/ProjectOnboarding';
 import type { Project } from '../types';
 
 interface DeleteConfirmModalProps {
@@ -42,6 +43,11 @@ function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [onboardingProject, setOnboardingProject] = useState<{
+    id: number;
+    name: string;
+    path: string;
+  } | null>(null);
   const navigate = useNavigate();
 
   const loadProjects = async () => {
@@ -62,8 +68,28 @@ function ProjectsPage() {
     loadProjects();
   }, []);
 
-  const handleWizardComplete = () => {
+  const handleWizardComplete = async (projectId: number) => {
     setShowWizard(false);
+
+    // Load project details to pass to onboarding
+    try {
+      const res = await fetch(`http://localhost:3001/api/projects/${projectId}`);
+      if (res.ok) {
+        const project = await res.json();
+        setOnboardingProject({
+          id: project.id,
+          name: project.name,
+          path: project.projectPath,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load project:', error);
+      loadProjects();
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setOnboardingProject(null);
     loadProjects();
   };
 
@@ -190,6 +216,15 @@ function ProjectsPage() {
 
       {showWizard && (
         <ProjectWizard onClose={() => setShowWizard(false)} onComplete={handleWizardComplete} />
+      )}
+
+      {onboardingProject && (
+        <ProjectOnboarding
+          projectId={onboardingProject.id}
+          projectName={onboardingProject.name}
+          projectPath={onboardingProject.path}
+          onComplete={handleOnboardingComplete}
+        />
       )}
 
       {deleteConfirm && (
