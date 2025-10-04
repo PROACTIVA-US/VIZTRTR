@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import FolderBrowser from './FolderBrowser';
+import { useState, useRef } from 'react';
 
 interface ProjectWizardProps {
   onClose: () => void;
@@ -11,22 +10,38 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showBrowser, setShowBrowser] = useState(false);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
-  // Browse for project path
+  // Browse for project path using native folder picker
   const handleBrowse = () => {
-    setShowBrowser(true);
+    folderInputRef.current?.click();
   };
 
-  const handleSelectFolder = (path: string) => {
-    setProjectPath(path);
-    setShowBrowser(false);
+  const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      // Get the path from the first file's webkitRelativePath
+      // This gives us "folder/file.txt", we just want "folder"
+      const firstFile = files[0];
+      const fullPath = (firstFile as any).webkitRelativePath || firstFile.name;
 
-    // Auto-suggest name from path
-    const parts = path.split('/');
-    const suggestedName = parts[parts.length - 1] || '';
-    if (suggestedName) {
-      setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+      // Extract just the folder path (everything before the first /)
+      const folderName = fullPath.split('/')[0];
+
+      // Get the directory path - use the file's path property if available
+      // @ts-ignore - webkitRelativePath might not be in types
+      const relativePath = firstFile.webkitRelativePath;
+      if (relativePath) {
+        // Extract folder path from first file
+        const path = relativePath.substring(0, relativePath.lastIndexOf('/'));
+        setProjectPath(path || folderName);
+
+        // Auto-suggest name from path
+        const suggestedName = folderName;
+        if (suggestedName) {
+          setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+        }
+      }
     }
   };
 
@@ -169,10 +184,16 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
         </div>
       </div>
 
-      {/* Folder Browser Modal */}
-      {showBrowser && (
-        <FolderBrowser onSelect={handleSelectFolder} onClose={() => setShowBrowser(false)} />
-      )}
+      {/* Hidden folder input */}
+      <input
+        ref={folderInputRef}
+        type="file"
+        webkitdirectory=""
+        directory=""
+        multiple
+        onChange={handleFolderSelect}
+        className="hidden"
+      />
     </div>
   );
 }
