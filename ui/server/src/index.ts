@@ -90,6 +90,32 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Check server status (proxy to avoid CORS issues)
+app.post('/api/check-server', async (req, res) => {
+  try {
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    // Try to fetch the URL with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      method: 'HEAD',
+    }).catch(() => null);
+
+    clearTimeout(timeoutId);
+
+    res.json({ running: response !== null && response.ok });
+  } catch (error) {
+    res.json({ running: false });
+  }
+});
+
 // Root
 app.get('/', (req, res) => {
   res.json({

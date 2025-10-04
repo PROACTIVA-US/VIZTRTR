@@ -73,52 +73,57 @@ export default function ProjectOnboarding({
   const handleUploadPRD = async () => {
     setAnalyzing(true);
     setStep('analyzing');
+    setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('projectId', projectId.toString());
-      formData.append('name', projectName);
-      formData.append('projectPath', projectPath);
-      formData.append('frontendUrl', 'http://localhost:3000'); // Will be detected
-      formData.append('targetScore', '8.5');
-      formData.append('maxIterations', '5');
+      let prdContent = '';
 
+      // Get PRD content from text or file
       if (prdMethod === 'text' && prdText) {
-        formData.append('prd', prdText);
+        prdContent = prdText;
       } else if (prdMethod === 'file' && prdFile) {
-        // For file upload, we need the file path (server-side)
-        // This is a simplified version - in production, you'd upload the file first
-        formData.append('prdFilePath', prdFile.name);
+        // Read file content
+        prdContent = await prdFile.text();
+      }
+
+      if (!prdContent) {
+        setError('Please provide a PRD');
+        setStep('prd-upload');
+        return;
       }
 
       // Call backend to analyze PRD and generate spec
       const res = await fetch(`http://localhost:3001/api/projects/${projectId}/analyze-prd`, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prd: prdContent }),
       });
 
-      if (res.ok) {
-        const spec = await res.json();
-        setProductSpec(spec);
-        setSpecJson(JSON.stringify(spec, null, 2));
-
-        // Detect frontend URL
-        const urlRes = await fetch('http://localhost:3001/api/projects/detect-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectPath }),
-        });
-
-        if (urlRes.ok) {
-          const urlData = await urlRes.json();
-          setFrontendUrl(urlData.url || 'http://localhost:3000');
-        }
-
-        setStep('spec-review');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to analyze PRD');
       }
+
+      const spec = await res.json();
+      setProductSpec(spec);
+      setSpecJson(JSON.stringify(spec, null, 2));
+
+      // Detect frontend URL
+      const urlRes = await fetch('http://localhost:3001/api/projects/detect-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectPath }),
+      });
+
+      if (urlRes.ok) {
+        const urlData = await urlRes.json();
+        setFrontendUrl(urlData.url || 'http://localhost:3000');
+      }
+
+      setStep('spec-review');
     } catch (error) {
       console.error('PRD analysis failed:', error);
-      alert('Failed to analyze PRD. Please try again.');
+      setError(error instanceof Error ? error.message : 'Failed to analyze PRD. Please try again.');
       setStep('prd-upload');
     } finally {
       setAnalyzing(false);
@@ -136,16 +141,26 @@ export default function ProjectOnboarding({
 
   const checkServerStatus = async () => {
     try {
-      const res = await fetch(frontendUrl, { mode: 'no-cors' });
-      setServerRunning(true);
+      // Use backend proxy to check server status (avoids CORS issues)
+      const res = await fetch('http://localhost:3001/api/check-server', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: frontendUrl }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setServerRunning(data.running);
+      } else {
+        setServerRunning(false);
+      }
     } catch (error) {
       setServerRunning(false);
     }
   };
 
   const handleStartServer = async () => {
-    // TODO: Implement server start via backend
-    alert('Server start not implemented yet. Please start manually.');
+    setError('Please start your frontend server manually from the project directory.');
   };
 
   const handleComplete = () => {
@@ -169,12 +184,24 @@ export default function ProjectOnboarding({
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setChatMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Chat request failed');
       }
+
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
     } catch (error) {
       console.error('Chat error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to get response. Please try again.';
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Error: ${errorMessage}`,
+        },
+      ]);
     }
   };
 
@@ -217,6 +244,13 @@ export default function ProjectOnboarding({
               VIZTRTR will analyze your PRD to generate a technical specification, UI/UX guidelines,
               and route structure.
             </p>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg">
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
 
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <button
