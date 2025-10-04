@@ -8,7 +8,6 @@ interface ProjectWizardProps {
 export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProps) {
   const [projectPath, setProjectPath] = useState('');
   const [name, setName] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,11 +31,6 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
   };
 
   const handleCreate = async () => {
-    if (!confirmed) {
-      setError('Please confirm you want to create this project');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
@@ -156,21 +150,6 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
             />
             <p className="text-sm text-slate-400 mt-2">A friendly name to identify your project</p>
           </div>
-
-          {/* Confirmation */}
-          <div className="bg-slate-900 rounded-lg p-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={confirmed}
-                onChange={e => setConfirmed(e.target.checked)}
-                className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-              />
-              <span className="text-sm">
-                I confirm I want to create the project "<strong>{name || '...'}</strong>"
-              </span>
-            </label>
-          </div>
         </div>
 
         {/* Footer */}
@@ -180,7 +159,7 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
           </button>
           <button
             onClick={handleCreate}
-            disabled={!projectPath.trim() || !name.trim() || !confirmed || loading}
+            disabled={!projectPath.trim() || !name.trim() || loading}
             className="btn-primary"
           >
             {loading ? 'Creating...' : 'Create Project'}
