@@ -63,15 +63,22 @@ Create a detailed JSON specification with:
    - Include: purpose, userStories, designPriorities, focusAreas, avoidAreas, acceptanceCriteria, status
 4. **globalConstraints**: accessibility, performance, browser, design requirements
 
+CRITICAL JSON FORMATTING RULES:
+1. Return ONLY valid JSON - no markdown, no code blocks, no explanations
+2. All strings MUST use double quotes ("), never single quotes (')
+3. NO trailing commas after the last item in arrays or objects
+4. ALL object keys MUST be quoted with double quotes
+5. Escape special characters in strings (newlines as \\n, quotes as \\")
+6. Do NOT include any text before the opening { or after the closing }
+
 IMPORTANT:
 - Break down the product into logical UI components (not just the detected files)
 - Each component should have 2-4 user stories
 - Focus areas should be specific UI/UX concerns
 - Acceptance criteria should be measurable
-- Return ONLY valid, well-formed JSON - no trailing commas, all strings properly quoted
-- Do NOT include any text before or after the JSON object
+- Keep descriptions concise to avoid JSON parsing issues
 
-Return ONLY valid JSON matching this structure (ensure all strings use double quotes, no trailing commas):
+Return ONLY valid JSON matching this structure:
 {
   "productVision": "...",
   "targetUsers": ["..."],
@@ -139,24 +146,76 @@ Return ONLY valid JSON matching this structure (ensure all strings use double qu
       console.log('[ProductSpecGenerator] Successfully parsed product spec');
     } catch (parseError) {
       console.error('[ProductSpecGenerator] JSON parse error:', parseError);
-      console.error(
-        '[ProductSpecGenerator] Problematic JSON substring:',
-        jsonString.substring(31700, 31900)
-      );
 
-      // Try to fix common JSON issues
-      const fixedJson = jsonString
-        .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
-        .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Quote unquoted keys
-        .replace(/:\s*'([^']*)'/g, ': "$1"'); // Replace single quotes with double quotes
+      // Extract error position if available
+      const errorMatch =
+        parseError instanceof Error ? parseError.message.match(/position (\d+)/) : null;
+      const errorPos = errorMatch ? parseInt(errorMatch[1]) : -1;
+
+      if (errorPos > 0) {
+        const contextStart = Math.max(0, errorPos - 100);
+        const contextEnd = Math.min(jsonString.length, errorPos + 100);
+        console.error(
+          '[ProductSpecGenerator] Error context:',
+          jsonString.substring(contextStart, contextEnd)
+        );
+      }
+
+      console.log('[ProductSpecGenerator] Attempting to fix JSON...');
 
       try {
-        parsed = JSON.parse(fixedJson);
-        console.log('[ProductSpecGenerator] Successfully parsed after fixing JSON');
-      } catch (secondError) {
-        throw new Error(
-          `Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
-        );
+        // Strategy: Re-request from Claude with stricter formatting
+        console.log('[ProductSpecGenerator] Retrying with stricter prompt...');
+
+        const retryResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-5',
+          max_tokens: 8000,
+          messages: [
+            { role: 'user', content: prompt },
+            {
+              role: 'assistant',
+              content: 'I will return ONLY valid JSON with no markdown formatting.',
+            },
+            {
+              role: 'user',
+              content:
+                'The previous response had JSON parsing errors. Please return ONLY the raw JSON object, with absolutely no markdown code blocks, no explanations, and all strings properly escaped. Start with { and end with }. Keep all text descriptions SHORT (under 100 characters each) to avoid escaping issues.',
+            },
+          ],
+        });
+
+        const retryContent = retryResponse.content[0];
+        if (retryContent.type !== 'text') {
+          throw new Error('Retry response was not text');
+        }
+
+        const retryText = retryContent.text;
+        const retryFirstBrace = retryText.indexOf('{');
+        const retryLastBrace = retryText.lastIndexOf('}');
+
+        if (retryFirstBrace === -1 || retryLastBrace === -1) {
+          throw new Error('No JSON found in retry response');
+        }
+
+        const retryJson = retryText.substring(retryFirstBrace, retryLastBrace + 1);
+        parsed = JSON.parse(retryJson);
+        console.log('[ProductSpecGenerator] Successfully parsed after retry');
+      } catch (retryError) {
+        console.error('[ProductSpecGenerator] Retry also failed:', retryError);
+
+        // Last resort: Return a minimal valid spec
+        console.log('[ProductSpecGenerator] Returning minimal fallback spec');
+        parsed = {
+          productVision: 'Unable to parse PRD - analysis failed',
+          targetUsers: ['General users'],
+          components: {},
+          globalConstraints: {
+            accessibility: ['WCAG 2.1 AA'],
+            performance: ['Standard performance'],
+            browser: ['Modern browsers'],
+            design: ['Consistent design system'],
+          },
+        };
       }
     }
 

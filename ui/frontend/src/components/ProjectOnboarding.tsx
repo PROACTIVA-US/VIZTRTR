@@ -75,7 +75,6 @@ export default function ProjectOnboarding({
   const [prdFilePath, setPrdFilePath] = useState('');
   const [prdFileName, setPrdFileName] = useState('');
   const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const [serverCrashed, setServerCrashed] = useState(false);
 
   const handleFileButtonClick = () => {
     setShowFileBrowser(true);
@@ -146,16 +145,6 @@ export default function ProjectOnboarding({
         if (!res.ok) {
           const errorData = await res.json();
           const errorMessage = errorData.error || 'Failed to analyze PRD';
-
-          // Detect server crash/SQLite errors
-          if (
-            errorMessage.includes('SQLite') ||
-            errorMessage.includes('bind') ||
-            errorMessage.includes('ECONNREFUSED')
-          ) {
-            throw new Error('SERVER_CRASHED');
-          }
-
           throw new Error(errorMessage);
         }
 
@@ -203,20 +192,7 @@ export default function ProjectOnboarding({
       }
     } catch (error) {
       console.error('PRD analysis failed:', error);
-
-      // Check if server crashed
-      if (error instanceof Error && error.message === 'SERVER_CRASHED') {
-        setServerCrashed(true);
-        setError(
-          'The backend server crashed. This can happen due to memory issues or database errors. Please restart the server to continue.'
-        );
-      } else {
-        setServerCrashed(false);
-        setError(
-          error instanceof Error ? error.message : 'Failed to analyze PRD. Please try again.'
-        );
-      }
-
+      setError(error instanceof Error ? error.message : 'Failed to analyze PRD. Please try again.');
       setStep('analyzing-error');
     } finally {
       setAnalyzing(false);
@@ -231,36 +207,6 @@ export default function ProjectOnboarding({
     setAnalyzing(false);
     setStep('prd-upload');
     setError('');
-  };
-
-  const handleRestartServer = async () => {
-    setError('Checking if VIZTRTR backend server is running...');
-    setServerCrashed(false); // Reset to show normal troubleshooting
-
-    try {
-      // Wait 2 seconds for user to manually restart in terminal
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Check if server is back up
-      const healthCheck = await fetch('http://localhost:3001/health', {
-        method: 'GET',
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (healthCheck.ok) {
-        // Server is up! Retry the analysis
-        setError('');
-        handleUploadPRD();
-      } else {
-        setError(
-          'VIZTRTR backend server (port 3001) is still not responding. Please restart it in a terminal.'
-        );
-      }
-    } catch (err) {
-      setError(
-        'VIZTRTR backend server (port 3001) is not responding. Restart it with: cd /Users/danielconnolly/Projects/VIZTRTR/ui/server && npm run dev'
-      );
-    }
   };
 
   const handleSpecEdit = () => {
@@ -608,80 +554,38 @@ export default function ProjectOnboarding({
         {step === 'analyzing-error' && (
           <div className="bg-slate-800 rounded-lg p-12">
             <div className="text-center mb-8">
-              <div className="text-6xl mb-4">{serverCrashed ? '🔧' : '⚠️'}</div>
-              <h2 className="text-2xl font-bold mb-2 text-red-400">
-                {serverCrashed ? 'Server Crashed' : 'Analysis Failed'}
-              </h2>
+              <div className="text-6xl mb-4">⚠️</div>
+              <h2 className="text-2xl font-bold mb-2 text-red-400">Analysis Failed</h2>
               <p className="text-slate-300 mb-6">
                 {error || 'An unexpected error occurred during PRD analysis.'}
               </p>
             </div>
 
-            {serverCrashed ? (
-              <div className="bg-slate-900 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-semibold mb-3">How to Fix:</h3>
-                <ul className="text-slate-400 space-y-2 text-left">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">1.</span>
-                    <span>
-                      Manually restart the VIZTRTR backend server in a terminal (see command below)
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">2.</span>
-                    <span>Click "Check Server & Retry" below once you've restarted it</span>
-                  </li>
-                  <li className="ml-6 mt-3">
-                    <div className="text-sm text-slate-300 mb-2">Terminal command:</div>
-                    <code className="bg-slate-800 px-3 py-1 rounded text-sm text-cyan-400">
-                      cd /Users/danielconnolly/Projects/VIZTRTR/ui/server && npm run dev
-                    </code>
-                  </li>
-                  <li className="flex items-start gap-2 mt-4">
-                    <span className="text-yellow-400 mt-1">ℹ️</span>
-                    <span className="text-sm italic">
-                      This is the VIZTRTR backend server (port 3001), not your project's server.
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            ) : (
-              <div className="bg-slate-900 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-semibold mb-3">Troubleshooting Tips:</h3>
-                <ul className="text-slate-400 space-y-2 text-left">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
-                    <span>Ensure the VIZTRTR backend server is running on port 3001</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
-                    <span>Check your internet connection for AI API access</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
-                    <span>Verify your Anthropic API key is configured correctly</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
-                    <span>Try simplifying your PRD if it's very large or complex</span>
-                  </li>
-                </ul>
-              </div>
-            )}
+            <div className="bg-slate-900 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-3">Troubleshooting Tips:</h3>
+              <ul className="text-slate-400 space-y-2 text-left">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Check your internet connection for AI API access</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Verify your Anthropic API key is configured correctly</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Try simplifying your PRD if it's very large or complex</span>
+                </li>
+              </ul>
+            </div>
 
             <div className="flex gap-3 justify-center">
               <button onClick={() => setStep('prd-upload')} className="btn-secondary">
                 Go Back
               </button>
-              {serverCrashed ? (
-                <button onClick={handleRestartServer} className="btn-primary">
-                  Check Server & Retry
-                </button>
-              ) : (
-                <button onClick={handleUploadPRD} className="btn-primary">
-                  Retry Analysis
-                </button>
-              )}
+              <button onClick={handleUploadPRD} className="btn-primary">
+                Retry Analysis
+              </button>
             </div>
           </div>
         )}
