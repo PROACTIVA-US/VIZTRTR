@@ -47,11 +47,51 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
     }
   };
 
-  // Browse for project path (opens native file picker if available)
+  // Browse for project path using hidden directory input
   const handleBrowse = () => {
-    // For now, show a helpful message
-    // TODO: Integrate with @tauri-apps/api or electron for native file picker
-    alert('Tip: You can drag and drop a folder here, or copy the path from Finder/Explorer');
+    const input = document.createElement('input');
+    input.type = 'file';
+    // @ts-ignore - webkitdirectory is not in TypeScript types but works in modern browsers
+    input.webkitdirectory = true;
+    // @ts-ignore
+    input.directory = true;
+    input.multiple = false;
+
+    input.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        // Get the directory path from the first file's path
+        const file = target.files[0];
+        // Extract directory path by removing the filename
+        const fullPath = file.webkitRelativePath || file.name;
+        const dirPath = fullPath.split('/')[0];
+
+        // In a web context, we can't get absolute paths for security reasons
+        // So we'll prompt the user to paste the absolute path
+        const userPath = prompt(
+          `Selected: ${dirPath}\n\nPlease paste the absolute path to this directory:`,
+          ''
+        );
+
+        if (userPath && userPath.trim()) {
+          setProjectPath(userPath.trim());
+
+          // Auto-suggest name from path
+          if (!name && userPath.trim()) {
+            const parts = userPath.trim().split('/');
+            const suggestedName = parts[parts.length - 1] || '';
+            if (suggestedName) {
+              setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+            }
+          }
+
+          // Auto-detect URL
+          handleDetectUrl();
+        }
+      }
+    };
+
+    input.click();
   };
 
   const handleNext = () => {
