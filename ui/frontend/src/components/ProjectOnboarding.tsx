@@ -3,8 +3,9 @@
  * Guides users through: PRD upload → Analysis → Tech Spec Review → Frontend Verification → Ready to Run
  */
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import FileBrowser from './FileBrowser';
 
 interface ProjectOnboardingProps {
   projectId: number;
@@ -70,18 +71,21 @@ export default function ProjectOnboarding({
     Array<{ role: 'user' | 'assistant'; content: string }>
   >([]);
   const [chatInput, setChatInput] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showFileBrowser, setShowFileBrowser] = useState(false);
+  const [prdFilePath, setPrdFilePath] = useState('');
 
   const handleFileButtonClick = () => {
-    fileInputRef.current?.click();
+    setShowFileBrowser(true);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPrdFile(file);
-      setPrdMethod('file');
-    }
+  const handleFileSelect = (path: string) => {
+    setPrdFilePath(path);
+    setPrdMethod('file');
+    setShowFileBrowser(false);
+
+    // Extract filename from path for display
+    const filename = path.split('/').pop() || path;
+    setPrdFile(new File([], filename));
   };
 
   const handleUploadPRD = async () => {
@@ -90,27 +94,24 @@ export default function ProjectOnboarding({
     setError('');
 
     try {
-      let prdContent = '';
+      // Call backend to analyze PRD and generate spec
+      const body =
+        prdMethod === 'text' && prdText
+          ? { prd: prdText }
+          : prdMethod === 'file' && prdFilePath
+            ? { prdFilePath }
+            : null;
 
-      // Get PRD content from text or file
-      if (prdMethod === 'text' && prdText) {
-        prdContent = prdText;
-      } else if (prdMethod === 'file' && prdFile) {
-        // Read file content
-        prdContent = await prdFile.text();
-      }
-
-      if (!prdContent) {
+      if (!body) {
         setError('Please provide a PRD');
         setStep('prd-upload');
         return;
       }
 
-      // Call backend to analyze PRD and generate spec
       const res = await fetch(`http://localhost:3001/api/projects/${projectId}/analyze-prd`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prd: prdContent }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -543,6 +544,15 @@ export default function ProjectOnboarding({
           </div>
         )}
       </div>
+
+      {/* FileBrowser Modal */}
+      {showFileBrowser && (
+        <FileBrowser
+          onSelect={handleFileSelect}
+          onClose={() => setShowFileBrowser(false)}
+          fileFilter="pdf,docx,md,txt"
+        />
+      )}
     </div>
   );
 }
