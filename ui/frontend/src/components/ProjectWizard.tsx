@@ -3,7 +3,7 @@ import FolderBrowser from './FolderBrowser';
 
 interface ProjectWizardProps {
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (projectId: number) => void;
 }
 
 export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProps) {
@@ -72,8 +72,10 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
         throw new Error(data.error || 'Failed to create project');
       }
 
-      // Project created successfully
-      onComplete();
+      const project = await res.json();
+
+      // Project created successfully - navigate to it
+      onComplete(project.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Creation failed');
       setLoading(false);

@@ -1,12 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ProjectWizard from '../components/ProjectWizard';
+import ProjectOnboarding from '../components/ProjectOnboarding';
 import type { Project } from '../types';
 
 function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  const [onboardingProject, setOnboardingProject] = useState<{
+    id: number;
+    name: string;
+    path: string;
+  } | null>(null);
   const navigate = useNavigate();
 
   const loadProjects = async () => {
@@ -27,9 +33,29 @@ function HomePage() {
     loadProjects();
   }, []);
 
-  const handleWizardComplete = () => {
+  const handleWizardComplete = async (projectId: number) => {
     setShowWizard(false);
-    loadProjects();
+
+    // Load project details to pass to onboarding
+    try {
+      const res = await fetch(`http://localhost:3001/api/projects/${projectId}`);
+      if (res.ok) {
+        const project = await res.json();
+        setOnboardingProject({
+          id: project.id,
+          name: project.name,
+          path: project.projectPath,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load project:', error);
+      navigate('/projects');
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setOnboardingProject(null);
+    navigate('/projects');
   };
 
   return (
@@ -85,9 +111,16 @@ function HomePage() {
 
       {/* Project Wizard Modal */}
       {showWizard && (
-        <ProjectWizard
-          onClose={() => setShowWizard(false)}
-          onComplete={handleWizardComplete}
+        <ProjectWizard onClose={() => setShowWizard(false)} onComplete={handleWizardComplete} />
+      )}
+
+      {/* Project Onboarding Flow */}
+      {onboardingProject && (
+        <ProjectOnboarding
+          projectId={onboardingProject.id}
+          projectName={onboardingProject.name}
+          projectPath={onboardingProject.path}
+          onComplete={handleOnboardingComplete}
         />
       )}
     </div>

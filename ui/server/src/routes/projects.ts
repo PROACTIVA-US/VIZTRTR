@@ -330,6 +330,74 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
     }
   });
 
+  // Analyze PRD and generate product spec
+  router.post('/:id/analyze-prd', async (req: Request, res: Response) => {
+    try {
+      const project = db.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const { prd, prdFilePath } = req.body;
+
+      // Get PRD text (either from body or file)
+      let prdText = '';
+      if (prdFilePath && typeof prdFilePath === 'string' && prdFilePath.trim()) {
+        const filePath = path.resolve(prdFilePath.trim());
+        if (!fs.existsSync(filePath)) {
+          return res.status(400).json({ error: 'PRD file not found' });
+        }
+        prdText = await fs.promises.readFile(filePath, 'utf-8');
+      } else if (prd && typeof prd === 'string' && prd.trim()) {
+        prdText = prd;
+      } else {
+        return res.status(400).json({ error: 'PRD text or file path is required' });
+      }
+
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+      }
+
+      // Detect components for context
+      const detection = await detectProjectType(project.projectPath);
+
+      // Prepare Docling data if available
+      let doclingData;
+      if (prdFilePath && typeof prdFilePath === 'string' && prdFilePath.trim()) {
+        const filePath = path.resolve(prdFilePath.trim());
+        const docling = await import('../services/doclingService');
+        const service = new docling.DoclingService();
+        const parsed = await service.parsePRD(filePath);
+        doclingData = {
+          tables: parsed.tables,
+          metadata: parsed.metadata,
+        };
+      }
+
+      // Generate structured spec
+      const spec = await generateProductSpec(
+        project.id,
+        prdText,
+        detection.detectedComponents,
+        apiKey,
+        doclingData
+      );
+
+      // Save to workspace
+      await saveProductSpec(spec, project.workspacePath);
+
+      // Update project to mark it has spec
+      db.updateProject(project.id, { hasProductSpec: true });
+
+      res.json(spec);
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to analyze PRD',
+      });
+    }
+  });
+
   // Project chat - AI assistant for project questions
   router.post('/:id/chat', async (req: Request, res: Response) => {
     try {
