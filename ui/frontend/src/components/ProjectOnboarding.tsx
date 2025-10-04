@@ -60,7 +60,6 @@ export default function ProjectOnboarding({
   const [step, setStep] = useState<Step>('prd-upload');
   const [prdMethod, setPrdMethod] = useState<'text' | 'file' | null>(null);
   const [prdText, setPrdText] = useState('');
-  const [prdFile, setPrdFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
   const [productSpec, setProductSpec] = useState<ProductSpec | null>(null);
@@ -73,6 +72,7 @@ export default function ProjectOnboarding({
   const [chatInput, setChatInput] = useState('');
   const [showFileBrowser, setShowFileBrowser] = useState(false);
   const [prdFilePath, setPrdFilePath] = useState('');
+  const [prdFileName, setPrdFileName] = useState('');
 
   const handleFileButtonClick = () => {
     setShowFileBrowser(true);
@@ -80,12 +80,9 @@ export default function ProjectOnboarding({
 
   const handleFileSelect = (path: string) => {
     setPrdFilePath(path);
+    setPrdFileName(path.split('/').pop() || path);
     setPrdMethod('file');
     setShowFileBrowser(false);
-
-    // Extract filename from path for display
-    const filename = path.split('/').pop() || path;
-    setPrdFile(new File([], filename));
   };
 
   const handleUploadPRD = async () => {
@@ -291,20 +288,9 @@ export default function ProjectOnboarding({
               >
                 <div className="text-4xl mb-2">📄</div>
                 <h3 className="font-semibold mb-1">Upload PRD File</h3>
-                <p className="text-sm text-slate-400">
-                  {prdFile ? `${prdFile.name}` : 'PDF, DOCX, MD, or TXT'}
-                </p>
+                <p className="text-sm text-slate-400">{prdFileName || 'PDF, DOCX, MD, or TXT'}</p>
               </button>
             </div>
-
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.md,.txt"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
 
             {prdMethod === 'text' && (
               <div className="mb-6">
@@ -327,7 +313,7 @@ export default function ProjectOnboarding({
                 disabled={
                   !prdMethod ||
                   (prdMethod === 'text' && !prdText.trim()) ||
-                  (prdMethod === 'file' && !prdFile)
+                  (prdMethod === 'file' && !prdFilePath)
                 }
                 className="btn-primary flex-1"
               >

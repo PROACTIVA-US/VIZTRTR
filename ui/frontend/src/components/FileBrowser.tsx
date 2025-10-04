@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface FileBrowserProps {
   onSelect: (path: string) => void;
@@ -26,41 +26,44 @@ export default function FileBrowser({ onSelect, onClose, fileFilter }: FileBrows
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const browsePath = async (path?: string) => {
-    setLoading(true);
-    setError('');
+  const browsePath = useCallback(
+    async (path?: string) => {
+      setLoading(true);
+      setError('');
 
-    try {
-      let url = path
-        ? `http://localhost:3001/api/filesystem/browse-files?path=${encodeURIComponent(path)}`
-        : 'http://localhost:3001/api/filesystem/browse-files';
+      try {
+        let url = path
+          ? `http://localhost:3001/api/filesystem/browse-files?path=${encodeURIComponent(path)}`
+          : 'http://localhost:3001/api/filesystem/browse-files';
 
-      if (fileFilter) {
-        url += `${path ? '&' : '?'}filter=${encodeURIComponent(fileFilter)}`;
+        if (fileFilter) {
+          url += `${path ? '&' : '?'}filter=${encodeURIComponent(fileFilter)}`;
+        }
+
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to browse directory');
+        }
+
+        const data: BrowseFilesResponse = await res.json();
+        setCurrentPath(data.currentPath);
+        setParent(data.parent);
+        setDirectories(data.directories);
+        setFiles(data.files);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to browse directory');
+      } finally {
+        setLoading(false);
       }
-
-      const res = await fetch(url);
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to browse directory');
-      }
-
-      const data: BrowseFilesResponse = await res.json();
-      setCurrentPath(data.currentPath);
-      setParent(data.parent);
-      setDirectories(data.directories);
-      setFiles(data.files);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to browse directory');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [fileFilter]
+  );
 
   useEffect(() => {
     browsePath();
-  }, []);
+  }, [browsePath]);
 
   const handleFileClick = (filePath: string) => {
     onSelect(filePath);

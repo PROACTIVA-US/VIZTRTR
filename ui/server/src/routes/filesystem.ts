@@ -6,7 +6,12 @@ import rateLimit from 'express-rate-limit';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { BrowseResponse, HomeResponse, ErrorResponse } from '../../shared/src/api-types';
+import type {
+  BrowseResponse,
+  BrowseFilesResponse,
+  HomeResponse,
+  ErrorResponse,
+} from '../../shared/src/api-types';
 
 const router = express.Router();
 
@@ -190,7 +195,7 @@ router.get('/browse-files', filesystemLimiter, async (req, res) => {
     // Get parent directory
     const parent = path.dirname(resolvedPath);
 
-    res.json({
+    res.json<BrowseFilesResponse>({
       currentPath: resolvedPath,
       parent: parent !== resolvedPath ? parent : null,
       directories,
