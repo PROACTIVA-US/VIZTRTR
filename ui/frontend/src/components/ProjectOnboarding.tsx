@@ -3,8 +3,9 @@
  * Guides users through: PRD upload → Analysis → Tech Spec Review → Frontend Verification → Ready to Run
  */
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import FileBrowser from './FileBrowser';
 
 interface ProjectOnboardingProps {
   projectId: number;
@@ -59,7 +60,6 @@ export default function ProjectOnboarding({
   const [step, setStep] = useState<Step>('prd-upload');
   const [prdMethod, setPrdMethod] = useState<'text' | 'file' | null>(null);
   const [prdText, setPrdText] = useState('');
-  const [prdFile, setPrdFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
   const [productSpec, setProductSpec] = useState<ProductSpec | null>(null);
@@ -70,18 +70,19 @@ export default function ProjectOnboarding({
     Array<{ role: 'user' | 'assistant'; content: string }>
   >([]);
   const [chatInput, setChatInput] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showFileBrowser, setShowFileBrowser] = useState(false);
+  const [prdFilePath, setPrdFilePath] = useState('');
+  const [prdFileName, setPrdFileName] = useState('');
 
   const handleFileButtonClick = () => {
-    fileInputRef.current?.click();
+    setShowFileBrowser(true);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPrdFile(file);
-      setPrdMethod('file');
-    }
+  const handleFileSelect = (path: string) => {
+    setPrdFilePath(path);
+    setPrdFileName(path.split('/').pop() || path);
+    setPrdMethod('file');
+    setShowFileBrowser(false);
   };
 
   const handleUploadPRD = async () => {
@@ -90,27 +91,24 @@ export default function ProjectOnboarding({
     setError('');
 
     try {
-      let prdContent = '';
+      // Call backend to analyze PRD and generate spec
+      const body =
+        prdMethod === 'text' && prdText
+          ? { prd: prdText }
+          : prdMethod === 'file' && prdFilePath
+            ? { prdFilePath }
+            : null;
 
-      // Get PRD content from text or file
-      if (prdMethod === 'text' && prdText) {
-        prdContent = prdText;
-      } else if (prdMethod === 'file' && prdFile) {
-        // Read file content
-        prdContent = await prdFile.text();
-      }
-
-      if (!prdContent) {
+      if (!body) {
         setError('Please provide a PRD');
         setStep('prd-upload');
         return;
       }
 
-      // Call backend to analyze PRD and generate spec
       const res = await fetch(`http://localhost:3001/api/projects/${projectId}/analyze-prd`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prd: prdContent }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -290,20 +288,9 @@ export default function ProjectOnboarding({
               >
                 <div className="text-4xl mb-2">📄</div>
                 <h3 className="font-semibold mb-1">Upload PRD File</h3>
-                <p className="text-sm text-slate-400">
-                  {prdFile ? `${prdFile.name}` : 'PDF, DOCX, MD, or TXT'}
-                </p>
+                <p className="text-sm text-slate-400">{prdFileName || 'PDF, DOCX, MD, or TXT'}</p>
               </button>
             </div>
-
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx,.md,.txt"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
 
             {prdMethod === 'text' && (
               <div className="mb-6">
@@ -326,7 +313,7 @@ export default function ProjectOnboarding({
                 disabled={
                   !prdMethod ||
                   (prdMethod === 'text' && !prdText.trim()) ||
-                  (prdMethod === 'file' && !prdFile)
+                  (prdMethod === 'file' && !prdFilePath)
                 }
                 className="btn-primary flex-1"
               >
@@ -543,6 +530,15 @@ export default function ProjectOnboarding({
           </div>
         )}
       </div>
+
+      {/* FileBrowser Modal */}
+      {showFileBrowser && (
+        <FileBrowser
+          onSelect={handleFileSelect}
+          onClose={() => setShowFileBrowser(false)}
+          fileFilter="pdf,docx,md,txt"
+        />
+      )}
     </div>
   );
 }
