@@ -3,7 +3,7 @@
  * Guides users through: PRD upload → Analysis → Tech Spec Review → Frontend Verification → Ready to Run
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface ProjectOnboardingProps {
@@ -70,6 +70,19 @@ export default function ProjectOnboarding({
     Array<{ role: 'user' | 'assistant'; content: string }>
   >([]);
   const [chatInput, setChatInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPrdFile(file);
+      setPrdMethod('file');
+    }
+  };
 
   const handleUploadPRD = async () => {
     setAnalyzing(true);
@@ -268,7 +281,7 @@ export default function ProjectOnboarding({
               </button>
 
               <button
-                onClick={() => setPrdMethod('file')}
+                onClick={handleFileButtonClick}
                 className={`p-6 rounded-lg border-2 transition-all ${
                   prdMethod === 'file'
                     ? 'border-blue-500 bg-blue-500/10'
@@ -277,9 +290,20 @@ export default function ProjectOnboarding({
               >
                 <div className="text-4xl mb-2">📄</div>
                 <h3 className="font-semibold mb-1">Upload PRD File</h3>
-                <p className="text-sm text-slate-400">PDF, DOCX, MD, or TXT</p>
+                <p className="text-sm text-slate-400">
+                  {prdFile ? `${prdFile.name}` : 'PDF, DOCX, MD, or TXT'}
+                </p>
               </button>
             </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.md,.txt"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
 
             {prdMethod === 'text' && (
               <div className="mb-6">
@@ -290,23 +314,6 @@ export default function ProjectOnboarding({
                   placeholder="Paste your Product Requirements Document here..."
                   className="w-full h-64 bg-slate-900 text-white p-4 rounded border border-slate-700 focus:border-blue-500 focus:outline-none font-mono text-sm"
                 />
-              </div>
-            )}
-
-            {prdMethod === 'file' && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Select PRD File</label>
-                <input
-                  type="file"
-                  accept=".pdf,.docx,.md,.txt"
-                  onChange={e => setPrdFile(e.target.files?.[0] || null)}
-                  className="w-full bg-slate-900 text-white p-4 rounded border border-slate-700"
-                />
-                {prdFile && (
-                  <p className="text-sm text-slate-400 mt-2">
-                    Selected: {prdFile.name} ({(prdFile.size / 1024).toFixed(1)} KB)
-                  </p>
-                )}
               </div>
             )}
 
