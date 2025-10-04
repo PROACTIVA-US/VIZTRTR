@@ -11,41 +11,17 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Browse for project path
+  // Browse for project path - just focus the input
   const handleBrowse = () => {
-    // Create hidden file input for directory selection
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.webkitdirectory = true;
-    input.directory = true;
-
-    input.onchange = (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        const relativePath = file.webkitRelativePath || '';
-        const folderName = relativePath.split('/')[0];
-
-        // Show dialog asking for full path since browser won't give it
-        const fullPath = prompt(
-          `Selected folder: "${folderName}"\n\nPaste the full absolute path to this folder:\n\n(Tip: Open folder in Finder, right-click → Get Info, copy path)`,
-          projectPath || ''
-        );
-
-        if (fullPath && fullPath.trim()) {
-          setProjectPath(fullPath.trim());
-
-          // Auto-suggest name from path
-          const parts = fullPath.trim().split('/');
-          const suggestedName = parts[parts.length - 1] || '';
-          if (suggestedName) {
-            setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
-          }
-        }
-      }
-    };
-
-    input.click();
+    // In a browser, we can't actually browse folders without uploading files
+    // So we'll just show a helpful tip
+    alert(
+      'To get your project path:\n\n' +
+        '• macOS: Open folder in Finder, press Cmd+Option+C to copy path\n' +
+        '• Or drag folder into Terminal to see the path\n' +
+        '• Or right-click folder → Get Info → copy the path\n\n' +
+        'Then paste it into the Project Path field.'
+    );
   };
 
   const handleCreate = async () => {
