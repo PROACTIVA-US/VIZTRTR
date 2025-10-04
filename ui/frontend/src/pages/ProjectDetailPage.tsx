@@ -52,10 +52,14 @@ export default function ProjectDetailPage() {
   const [productSpec, setProductSpec] = useState<ProductSpec | null>(null);
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'spec' | 'documents' | 'chat' | 'config'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'spec' | 'documents' | 'chat' | 'config'>(
+    'overview'
+  );
   const [editingSpec, setEditingSpec] = useState(false);
   const [specContent, setSpecContent] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{ role: 'user' | 'assistant'; content: string }>
+  >([]);
   const [chatInput, setChatInput] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -102,7 +106,7 @@ export default function ProjectDetailPage() {
       const res = await fetch(`http://localhost:3001/api/projects/${projectId}/spec`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsedSpec)
+        body: JSON.stringify(parsedSpec),
       });
 
       if (res.ok) {
@@ -132,9 +136,9 @@ export default function ProjectDetailPage() {
           message: userMessage,
           context: {
             productSpec,
-            project
-          }
-        })
+            project,
+          },
+        }),
       });
 
       if (res.ok) {
@@ -143,12 +147,40 @@ export default function ProjectDetailPage() {
       }
     } catch (error) {
       console.error('Chat error:', error);
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.'
-      }]);
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Sorry, I encountered an error. Please try again.',
+        },
+      ]);
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!projectId) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${project?.name}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        navigate('/projects');
+      } else {
+        alert('Failed to delete project');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete project');
     }
   };
 
@@ -164,7 +196,7 @@ export default function ProjectDetailPage() {
       try {
         const res = await fetch(`http://localhost:3001/api/projects/${projectId}/documents`, {
           method: 'POST',
-          body: formData
+          body: formData,
         });
 
         if (res.ok) {
@@ -207,18 +239,29 @@ export default function ProjectDetailPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <Link to="/projects" className="text-slate-400 hover:text-white transition-colors text-sm mb-2 inline-block">
+          <Link
+            to="/projects"
+            className="text-slate-400 hover:text-white transition-colors text-sm mb-2 inline-block"
+          >
             ← Back to Projects
           </Link>
           <h1 className="text-3xl font-bold">{project.name}</h1>
           <p className="text-slate-400 text-sm mt-1">{project.frontendUrl}</p>
         </div>
-        <Link
-          to={`/projects/${projectId}/runs/new`}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all"
-        >
-          Start New Run
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDeleteProject}
+            className="bg-red-600/10 text-red-400 border border-red-600/50 px-4 py-2 rounded-lg text-sm hover:bg-red-600/20 transition-all"
+          >
+            Delete Project
+          </button>
+          <Link
+            to={`/projects/${projectId}/runs/new`}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all"
+          >
+            Start New Run
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -229,7 +272,7 @@ export default function ProjectDetailPage() {
             { id: 'spec', label: 'Product Spec', icon: '📋' },
             { id: 'documents', label: 'Documents', icon: '📁' },
             { id: 'chat', label: 'AI Chat', icon: '💬' },
-            { id: 'config', label: 'Configuration', icon: '⚙️' }
+            { id: 'config', label: 'Configuration', icon: '⚙️' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -296,7 +339,9 @@ export default function ProjectDetailPage() {
                   <h3 className="font-semibold text-sm text-slate-400 mb-2">Key Features</h3>
                   <ul className="text-sm space-y-1">
                     {productSpec.overview.keyFeatures.map((feature, i) => (
-                      <li key={i} className="text-slate-300">• {feature}</li>
+                      <li key={i} className="text-slate-300">
+                        • {feature}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -304,7 +349,9 @@ export default function ProjectDetailPage() {
                   <h3 className="font-semibold text-sm text-slate-400 mb-2">Target Users</h3>
                   <ul className="text-sm space-y-1">
                     {productSpec.overview.targetUsers.map((user, i) => (
-                      <li key={i} className="text-slate-300">• {user}</li>
+                      <li key={i} className="text-slate-300">
+                        • {user}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -312,7 +359,9 @@ export default function ProjectDetailPage() {
                   <h3 className="font-semibold text-sm text-slate-400 mb-2">Routes</h3>
                   <ul className="text-sm space-y-1">
                     {productSpec.routes.slice(0, 5).map((route, i) => (
-                      <li key={i} className="text-slate-300">• {route.label}</li>
+                      <li key={i} className="text-slate-300">
+                        • {route.label}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -362,7 +411,7 @@ export default function ProjectDetailPage() {
                 </p>
                 <textarea
                   value={specContent}
-                  onChange={(e) => setSpecContent(e.target.value)}
+                  onChange={e => setSpecContent(e.target.value)}
                   className="w-full h-96 bg-slate-900 text-white font-mono text-sm p-4 rounded border border-slate-700 focus:border-blue-500 focus:outline-none"
                   spellCheck={false}
                 />
@@ -390,11 +439,15 @@ export default function ProjectDetailPage() {
                       <div key={i} className="bg-slate-800/50 p-3 rounded border border-slate-700">
                         <div className="flex items-center justify-between mb-1">
                           <code className="text-xs text-blue-400">{route.path}</code>
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            route.priority === 'high' ? 'bg-red-500/20 text-red-300' :
-                            route.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                            'bg-slate-500/20 text-slate-300'
-                          }`}>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded ${
+                              route.priority === 'high'
+                                ? 'bg-red-500/20 text-red-300'
+                                : route.priority === 'medium'
+                                  ? 'bg-yellow-500/20 text-yellow-300'
+                                  : 'bg-slate-500/20 text-slate-300'
+                            }`}
+                          >
                             {route.priority}
                           </span>
                         </div>
@@ -448,12 +501,11 @@ export default function ProjectDetailPage() {
                     <div className="flex-1">
                       <p className="font-semibold text-sm">{doc.name}</p>
                       <p className="text-xs text-slate-500">
-                        {doc.type} • {(doc.size / 1024).toFixed(1)} KB • {new Date(doc.uploadedAt).toLocaleDateString()}
+                        {doc.type} • {(doc.size / 1024).toFixed(1)} KB •{' '}
+                        {new Date(doc.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <button className="text-blue-400 hover:text-blue-300 text-sm">
-                      View
-                    </button>
+                    <button className="text-blue-400 hover:text-blue-300 text-sm">View</button>
                   </div>
                 </div>
               ))}
@@ -492,9 +544,7 @@ export default function ProjectDetailPage() {
               >
                 <div
                   className={`max-w-[80%] p-3 rounded-lg ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-800 text-slate-300'
+                    msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -515,8 +565,8 @@ export default function ProjectDetailPage() {
             <input
               type="text"
               value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              onChange={e => setChatInput(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               placeholder="Ask about your project..."
               className="flex-1 bg-slate-800 text-white px-4 py-3 rounded border border-slate-700 focus:border-blue-500 focus:outline-none"
               disabled={sending}
@@ -537,7 +587,8 @@ export default function ProjectDetailPage() {
           <div className="card">
             <h2 className="text-xl font-bold mb-4">Model Configuration</h2>
             <p className="text-sm text-slate-400 mb-6">
-              Configure AI models specifically for this project. These settings override global defaults.
+              Configure AI models specifically for this project. These settings override global
+              defaults.
             </p>
 
             <div className="space-y-6">
@@ -545,7 +596,9 @@ export default function ProjectDetailPage() {
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
                   Vision Model
-                  <span className="ml-2 text-xs font-normal text-slate-500">(Analyzes UI screenshots)</span>
+                  <span className="ml-2 text-xs font-normal text-slate-500">
+                    (Analyzes UI screenshots)
+                  </span>
                 </label>
                 <div className="grid md:grid-cols-2 gap-4">
                   <select className="bg-slate-700 text-white px-4 py-2 rounded border border-slate-600">
@@ -564,7 +617,9 @@ export default function ProjectDetailPage() {
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
                   Implementation Model
-                  <span className="ml-2 text-xs font-normal text-slate-500">(Generates code changes)</span>
+                  <span className="ml-2 text-xs font-normal text-slate-500">
+                    (Generates code changes)
+                  </span>
                 </label>
                 <div className="grid md:grid-cols-2 gap-4">
                   <select className="bg-slate-700 text-white px-4 py-2 rounded border border-slate-600">
@@ -588,7 +643,8 @@ export default function ProjectDetailPage() {
           <div className="card">
             <h2 className="text-xl font-bold mb-4">Backend Server Configuration</h2>
             <p className="text-sm text-slate-400 mb-6">
-              Configure backend server for full-stack testing with real data and WebSocket connections
+              Configure backend server for full-stack testing with real data and WebSocket
+              connections
             </p>
 
             <div className="space-y-4">
@@ -599,7 +655,9 @@ export default function ProjectDetailPage() {
                 />
                 <div>
                   <span className="text-white font-semibold">Enable Backend Server</span>
-                  <p className="text-xs text-slate-500">Start backend server before running tests</p>
+                  <p className="text-xs text-slate-500">
+                    Start backend server before running tests
+                  </p>
                 </div>
               </label>
 
@@ -631,7 +689,9 @@ export default function ProjectDetailPage() {
                     placeholder="/path/to/backend"
                     className="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none font-mono text-sm"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Absolute path to backend project directory</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Absolute path to backend project directory
+                  </p>
                 </div>
 
                 <div>
@@ -641,7 +701,9 @@ export default function ProjectDetailPage() {
                     placeholder="/health"
                     className="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none font-mono text-sm"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Endpoint to check if backend is ready</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Endpoint to check if backend is ready
+                  </p>
                 </div>
 
                 <div>
@@ -651,7 +713,9 @@ export default function ProjectDetailPage() {
                     placeholder="15000"
                     className="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Max time to wait for backend to become ready</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Max time to wait for backend to become ready
+                  </p>
                 </div>
 
                 <div>
@@ -673,11 +737,15 @@ export default function ProjectDetailPage() {
                       + Add Environment Variable
                     </button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Custom environment variables for test runs</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Custom environment variables for test runs
+                  </p>
                 </div>
 
                 <div className="bg-slate-800/50 p-4 rounded border border-slate-700">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">💡 Benefits of Backend Integration</h3>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2">
+                    💡 Benefits of Backend Integration
+                  </h3>
                   <ul className="text-xs text-slate-400 space-y-1">
                     <li>• Test with real data from database/APIs</li>
                     <li>• Verify WebSocket connections work correctly</li>
