@@ -234,18 +234,12 @@ export default function ProjectOnboarding({
   };
 
   const handleRestartServer = async () => {
-    setError('Restarting server...');
+    setError('Checking if VIZTRTR backend server is running...');
+    setServerCrashed(false); // Reset to show normal troubleshooting
 
     try {
-      // Call restart endpoint
-      await fetch('http://localhost:3001/api/restart-server', {
-        method: 'POST',
-        signal: AbortSignal.timeout(5000),
-      });
-
-      // Wait for server to restart
-      setError('Server restarting, waiting 3 seconds...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Wait 2 seconds for user to manually restart in terminal
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Check if server is back up
       const healthCheck = await fetch('http://localhost:3001/health', {
@@ -254,17 +248,18 @@ export default function ProjectOnboarding({
       });
 
       if (healthCheck.ok) {
+        // Server is up! Retry the analysis
         setError('');
-        setServerCrashed(false);
-        // Automatically retry the analysis
         handleUploadPRD();
       } else {
         setError(
-          'Server did not restart successfully. Please manually restart: cd ui/server && npm run dev'
+          'VIZTRTR backend server (port 3001) is still not responding. Please restart it in a terminal.'
         );
       }
     } catch (err) {
-      setError('Could not restart server. Please manually restart: cd ui/server && npm run dev');
+      setError(
+        'VIZTRTR backend server (port 3001) is not responding. Restart it with: cd /Users/danielconnolly/Projects/VIZTRTR/ui/server && npm run dev'
+      );
     }
   };
 
@@ -627,19 +622,26 @@ export default function ProjectOnboarding({
                 <h3 className="text-lg font-semibold mb-3">How to Fix:</h3>
                 <ul className="text-slate-400 space-y-2 text-left">
                   <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
+                    <span className="text-blue-400 mt-1">1.</span>
                     <span>
-                      Click "Check Server Status" below to verify if the server is running
+                      Manually restart the VIZTRTR backend server in a terminal (see command below)
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-1">•</span>
-                    <span>If the server is down, manually restart it by running:</span>
+                    <span className="text-blue-400 mt-1">2.</span>
+                    <span>Click "Check Server & Retry" below once you've restarted it</span>
                   </li>
-                  <li className="ml-6">
+                  <li className="ml-6 mt-3">
+                    <div className="text-sm text-slate-300 mb-2">Terminal command:</div>
                     <code className="bg-slate-800 px-3 py-1 rounded text-sm text-cyan-400">
-                      cd ui/server && npm run dev
+                      cd /Users/danielconnolly/Projects/VIZTRTR/ui/server && npm run dev
                     </code>
+                  </li>
+                  <li className="flex items-start gap-2 mt-4">
+                    <span className="text-yellow-400 mt-1">ℹ️</span>
+                    <span className="text-sm italic">
+                      This is the VIZTRTR backend server (port 3001), not your project's server.
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -673,7 +675,7 @@ export default function ProjectOnboarding({
               </button>
               {serverCrashed ? (
                 <button onClick={handleRestartServer} className="btn-primary">
-                  Restart Server & Retry
+                  Check Server & Retry
                 </button>
               ) : (
                 <button onClick={handleUploadPRD} className="btn-primary">
