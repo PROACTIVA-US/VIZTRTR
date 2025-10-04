@@ -61,6 +61,7 @@ export default function ProjectOnboarding({
   const [prdText, setPrdText] = useState('');
   const [prdFile, setPrdFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState('');
   const [productSpec, setProductSpec] = useState<ProductSpec | null>(null);
   const [specJson, setSpecJson] = useState('');
   const [frontendUrl, setFrontendUrl] = useState('');
