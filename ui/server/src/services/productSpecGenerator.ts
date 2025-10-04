@@ -165,10 +165,12 @@ Return ONLY valid JSON matching this structure:
 
       try {
         // Strategy: Re-request from Claude with stricter formatting
+        // Note: Retry doubles API cost but prevents total failure
+        // This is preferable to returning incomplete/invalid data
         console.log('[ProductSpecGenerator] Retrying with stricter prompt...');
 
         const retryResponse = await anthropic.messages.create({
-          model: 'claude-sonnet-4-5',
+          model: 'claude-sonnet-4-5', // Could use haiku here to reduce retry cost
           max_tokens: 8000,
           messages: [
             { role: 'user', content: prompt },
@@ -203,10 +205,11 @@ Return ONLY valid JSON matching this structure:
       } catch (retryError) {
         console.error('[ProductSpecGenerator] Retry also failed:', retryError);
 
-        // Last resort: Return a minimal valid spec
+        // Last resort: Return a minimal valid spec that preserves the PRD
         console.log('[ProductSpecGenerator] Returning minimal fallback spec');
         parsed = {
-          productVision: 'Unable to parse PRD - analysis failed',
+          productVision:
+            'Analysis incomplete due to parsing error. Please simplify your PRD and try again.',
           targetUsers: ['General users'],
           components: {},
           globalConstraints: {
@@ -215,6 +218,9 @@ Return ONLY valid JSON matching this structure:
             browser: ['Modern browsers'],
             design: ['Consistent design system'],
           },
+          // Preserve original PRD so user can reference it
+          _fallback: true,
+          _originalPRDPreview: prdText.substring(0, 500) + '...',
         };
       }
     }
