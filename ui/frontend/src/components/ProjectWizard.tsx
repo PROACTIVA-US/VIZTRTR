@@ -13,21 +13,39 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
 
   // Browse for project path
   const handleBrowse = () => {
-    const userPath = prompt(
-      'Enter the absolute path to your project directory:',
-      projectPath || ''
-    );
+    // Create hidden file input for directory selection
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.directory = true;
 
-    if (userPath && userPath.trim()) {
-      setProjectPath(userPath.trim());
+    input.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        const file = target.files[0];
+        const relativePath = file.webkitRelativePath || '';
+        const folderName = relativePath.split('/')[0];
 
-      // Auto-suggest name from path
-      const parts = userPath.trim().split('/');
-      const suggestedName = parts[parts.length - 1] || '';
-      if (suggestedName) {
-        setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+        // Show dialog asking for full path since browser won't give it
+        const fullPath = prompt(
+          `Selected folder: "${folderName}"\n\nPaste the full absolute path to this folder:\n\n(Tip: Open folder in Finder, right-click → Get Info, copy path)`,
+          projectPath || ''
+        );
+
+        if (fullPath && fullPath.trim()) {
+          setProjectPath(fullPath.trim());
+
+          // Auto-suggest name from path
+          const parts = fullPath.trim().split('/');
+          const suggestedName = parts[parts.length - 1] || '';
+          if (suggestedName) {
+            setName(suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1));
+          }
+        }
       }
-    }
+    };
+
+    input.click();
   };
 
   const handleCreate = async () => {
