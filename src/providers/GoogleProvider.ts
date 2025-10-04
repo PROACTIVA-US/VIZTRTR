@@ -5,8 +5,8 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ModelProvider, CompletionRequest, CompletionResponse } from './ModelProvider.js';
-import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types.js';
+import { ModelProvider, CompletionRequest, CompletionResponse } from './ModelProvider';
+import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types';
 
 export class GoogleProvider extends ModelProvider {
   private client: GoogleGenerativeAI;

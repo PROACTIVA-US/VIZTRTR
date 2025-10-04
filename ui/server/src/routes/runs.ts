@@ -4,9 +4,9 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { RunManager } from '../services/runManager.js';
-import { VIZTRTRDatabase } from '../services/database.js';
-import type { StartRunRequest, SSEMessage } from '../types.js';
+import { RunManager } from '../services/runManager';
+import { VIZTRTRDatabase } from '../services/database';
+import type { StartRunRequest, SSEMessage } from '../types';
 
 const StartRunSchema = z.object({
   projectId: z.string().min(1)

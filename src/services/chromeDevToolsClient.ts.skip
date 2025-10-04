@@ -5,15 +5,15 @@
  * and provides high-level methods for UI/UX analysis
  */
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { Client } from '@modelcontextprotocol/sdk/dist/cjs/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/dist/cjs/client/stdio.js';
 import type {
   PerformanceTrace,
   AccessibilitySnapshot,
   NetworkRequest,
   ConsoleMessage,
   ChromeDevToolsMetrics
-} from '../plugins/chrome-devtools.js';
+} from '../plugins/chrome-devtools';
 
 export interface ChromeDevToolsClientConfig {
   headless?: boolean;

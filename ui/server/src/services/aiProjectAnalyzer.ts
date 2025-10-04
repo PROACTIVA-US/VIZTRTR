@@ -5,7 +5,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { ProjectAnalysis } from '../types.js';
+import type { ProjectAnalysis } from '../types';
 
 export class AIProjectAnalyzer {
   private client: Anthropic;

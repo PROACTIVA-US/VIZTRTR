@@ -5,9 +5,9 @@
  * for more accurate and objective UI/UX scoring
  */
 
-import { MetricsAnalyzer, type MetricsScores } from '../services/MetricsAnalyzer.js';
-import type { EvaluationResult, Screenshot } from '../core/types.js';
-import { ClaudeOpusVisionPlugin } from '../plugins/vision-claude.js';
+import { MetricsAnalyzer, type MetricsScores } from '../services/MetricsAnalyzer';
+import type { EvaluationResult, Screenshot } from '../core/types';
+import { ClaudeOpusVisionPlugin } from '../plugins/vision-claude';
 
 export interface HybridScore {
   compositeScore: number; // 0-10 weighted combination

@@ -5,8 +5,8 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { ModelProvider, CompletionRequest, CompletionResponse } from './ModelProvider.js';
-import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types.js';
+import { ModelProvider, CompletionRequest, CompletionResponse } from './ModelProvider';
+import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types';
 
 export class AnthropicProvider extends ModelProvider {
   private client: Anthropic;

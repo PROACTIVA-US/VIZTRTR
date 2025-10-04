@@ -5,7 +5,7 @@
  * and converts them into actionable scores
  */
 
-import { createChromeDevToolsClient, type ChromeDevToolsClientConfig } from './chromeDevToolsClient.js';
+import { createChromeDevToolsClient, type ChromeDevToolsClientConfig } from './chromeDevToolsClient';
 
 export interface MetricsScores {
   performance: number; // 0-10

@@ -17,7 +17,7 @@ export interface DiscoveredFile {
 }
 
 export interface FileDiscoveryOptions {
-  extensions?: string[];  // File extensions to include (default: ['.tsx', '.ts', '.jsx', '.js'])
+  extensions?: string[];  // File extensions to include (default: ['.tsx', '.ts', '.jsx', ''])
   maxDepth?: number;      // Maximum directory depth (default: 10)
   excludeDirs?: string[]; // Directories to exclude (default: node_modules, dist, build)
   maxFileSize?: number;   // Maximum file size in bytes (default: 100KB)
@@ -25,7 +25,7 @@ export interface FileDiscoveryOptions {
 }
 
 const DEFAULT_OPTIONS: Required<FileDiscoveryOptions> = {
-  extensions: ['.tsx', '.ts', '.jsx', '.js'],
+  extensions: ['.tsx', '.ts', '.jsx', ''],
   maxDepth: 10,
   excludeDirs: ['node_modules', 'dist', 'build', '.git', 'coverage', '.next'],
   maxFileSize: 100 * 1024, // 100KB

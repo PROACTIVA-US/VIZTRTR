@@ -5,7 +5,7 @@
  * Provides a consistent interface for vision, implementation, and evaluation tasks
  */
 
-import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types.js';
+import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types';
 
 export interface CompletionRequest {
   systemPrompt: string;

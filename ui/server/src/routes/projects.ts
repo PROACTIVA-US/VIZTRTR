@@ -6,11 +6,11 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import * as fs from 'fs';
 import * as path from 'path';
-import { VIZTRTRDatabase } from '../services/database.js';
-import { detectProjectType } from '../services/projectDetector.js';
-import { analyzePRD, analyzePRDFromFile, mergeAnalysisWithDetection } from '../services/prdAnalyzer.js';
-import { generateProductSpec, saveProductSpec, loadProductSpec, updateProductSpec } from '../services/productSpecGenerator.js';
-import type { CreateProjectRequest } from '../types.js';
+import { VIZTRTRDatabase } from '../services/database';
+import { detectProjectType } from '../services/projectDetector';
+import { analyzePRD, analyzePRDFromFile, mergeAnalysisWithDetection } from '../services/prdAnalyzer';
+import { generateProductSpec, saveProductSpec, loadProductSpec, updateProductSpec } from '../services/productSpecGenerator';
+import type { CreateProjectRequest } from '../types';
 
 const CreateProjectSchema = z.object({
   name: z.string().min(1),
@@ -89,7 +89,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
         let doclingData;
         if (prdFilePath && typeof prdFilePath === 'string' && prdFilePath.trim()) {
           const filePath = path.resolve(prdFilePath.trim());
-          const docling = await import('../services/doclingService.js');
+          const docling = await import('../services/doclingService');
           const service = new docling.DoclingService();
           const parsed = await service.parsePRD(filePath);
           doclingData = {
@@ -480,7 +480,7 @@ Provide a helpful, concise answer about the project.`
  * Execute a VIZTRTR run in the background
  */
 async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
-  const { VIZTRTROrchestrator } = await import('../../../../dist/core/orchestrator.js');
+  const { VIZTRTROrchestrator } = await import('../../../../dist/core/orchestrator');
 
   // Update status to running
   db.updateRun(runId, { status: 'running' });

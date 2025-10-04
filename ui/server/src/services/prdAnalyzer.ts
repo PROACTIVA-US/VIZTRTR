@@ -9,7 +9,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { DoclingService } from './doclingService.js';
+import { DoclingService } from './doclingService';
 import * as fs from 'fs/promises';
 
 export interface PRDAnalysis {

@@ -2,19 +2,18 @@
  * AI Analysis Endpoints
  */
 import express from 'express';
-import { AIProjectAnalyzer } from '../services/aiProjectAnalyzer.js';
-import { VIZTRTRDatabase } from '../services/database.js';
+import { AIProjectAnalyzer } from '../services/aiProjectAnalyzer';
+import { VIZTRTRDatabase } from '../services/database';
 
 const router = express.Router();
 const db = new VIZTRTRDatabase();
 
 // Initialize AI analyzer (will need API key from env)
+// Note: API key is loaded in index.ts before this module is imported
 let aiAnalyzer: AIProjectAnalyzer | null = null;
 
 if (process.env.ANTHROPIC_API_KEY) {
   aiAnalyzer = new AIProjectAnalyzer(process.env.ANTHROPIC_API_KEY);
-} else {
-  console.warn('⚠️  ANTHROPIC_API_KEY not set - AI analysis will be unavailable');
 }
 
 // Rate limiting for expensive AI analysis

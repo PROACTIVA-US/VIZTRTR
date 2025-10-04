@@ -3,10 +3,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { VIZTRTRDatabase } from './database.js';
-import { OrchestratorServerAgent } from '../agents/OrchestratorServerAgent.js';
-import { VIZTRTRConfig } from '../../../../dist/core/types.js';
-import type { Run, IterationUpdate, RunResult, SSEMessage } from '../types.js';
+import { VIZTRTRDatabase } from './database';
+import { OrchestratorServerAgent } from '../agents/OrchestratorServerAgent';
+import { VIZTRTRConfig } from '../../../../dist/core/types';
+import type { Run, IterationUpdate, RunResult, SSEMessage } from '../types';
 
 export class RunManager extends EventEmitter {
   private db: VIZTRTRDatabase;

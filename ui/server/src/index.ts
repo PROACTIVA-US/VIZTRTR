@@ -8,17 +8,39 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { VIZTRTRDatabase } from './services/database.js';
-import { RunManager } from './services/runManager.js';
-import { createProjectsRouter } from './routes/projects.js';
-import { createRunsRouter } from './routes/runs.js';
-import { createEvaluateRouter } from './routes/evaluate.js';
-import analyzeRouter from './routes/analyze.js';
+import { VIZTRTRDatabase } from './services/database';
+import { RunManager } from './services/runManager';
+import { createProjectsRouter } from './routes/projects';
+import { createRunsRouter } from './routes/runs';
+import { createEvaluateRouter } from './routes/evaluate';
+import analyzeRouter from './routes/analyze';
 
-// Load environment variables - try multiple locations
-dotenv.config({ path: path.join(__dirname, '../../../.env') }); // From dist/
-dotenv.config({ path: path.join(process.cwd(), '../../.env') }); // From ui/server/
-dotenv.config(); // From current directory
+// Load environment variables - try multiple locations for robustness
+const envPaths = [
+  path.join(process.cwd(), '.env'),          // Current working directory (most reliable with tsx)
+  path.join(__dirname, '.env'),              // Same as source dir
+  path.join(__dirname, '../.env'),           // ui/server/.env
+  path.join(__dirname, '../../.env'),        // ui/.env
+  path.join(__dirname, '../../../.env'),     // VIZTRTR/.env (project root)
+];
+
+let envLoaded = false;
+for (const envPath of envPaths) {
+  const result = dotenv.config({ path: envPath });
+  if (!result.error && result.parsed?.ANTHROPIC_API_KEY) {
+    console.log(`✓ Loaded .env from: ${envPath}`);
+    envLoaded = true;
+    break;
+  }
+}
+
+// Verify API key is loaded
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn('⚠️  ANTHROPIC_API_KEY not set - AI analysis will be unavailable');
+  console.warn('   Tried loading from:', envPaths);
+  console.warn('   Current working directory:', process.cwd());
+  console.warn('   __dirname:', __dirname);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;

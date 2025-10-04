@@ -13,7 +13,7 @@ import type {
   ScreenshotConfig,
   Screenshot,
   VIZTRTRConfig
-} from '../core/types.js';
+} from '../core/types';
 
 export interface PerformanceTrace {
   insights: PerformanceInsight[];
@@ -138,7 +138,7 @@ export class ChromeDevToolsPlugin implements VIZTRTRPlugin {
    */
   private async getClient() {
     if (!this.client) {
-      const { createChromeDevToolsClient } = await import('../services/chromeDevToolsClient.js');
+      const { createChromeDevToolsClient } = await import('../services/chromeDevToolsClient');
       this.client = createChromeDevToolsClient({
         headless: this.config.chromeDevToolsConfig?.headless ?? false,
         viewport: this.config.chromeDevToolsConfig?.viewport
