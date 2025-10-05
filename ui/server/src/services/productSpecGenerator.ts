@@ -172,16 +172,15 @@ Return ONLY valid JSON matching this structure:
         const retryResponse = await anthropic.messages.create({
           model: 'claude-sonnet-4-5', // Could use haiku here to reduce retry cost
           max_tokens: 8000,
+          temperature: 0, // Reduce randomness for more consistent JSON
           messages: [
-            { role: 'user', content: prompt },
-            {
-              role: 'assistant',
-              content: 'I will return ONLY valid JSON with no markdown formatting.',
-            },
             {
               role: 'user',
               content:
-                'The previous response had JSON parsing errors. Please return ONLY the raw JSON object, with absolutely no markdown code blocks, no explanations, and all strings properly escaped. Start with { and end with }. Keep all text descriptions SHORT (under 100 characters each) to avoid escaping issues.',
+                'Generate a simplified product spec in valid JSON format. Return ONLY the JSON object with no markdown.\n\nIMPORTANT RULES:\n1. Use double quotes for all strings\n2. Escape all quotes inside strings with \\\\\n3. NO trailing commas\n4. Keep descriptions under 80 characters\n5. No special characters except escaped quotes\n\nGenerate spec for this PRD:\n' +
+                prdText.substring(0, 3000) +
+                '\n\nDetected components: ' +
+                detectedComponents.join(', '),
             },
           ],
         });
@@ -205,7 +204,7 @@ Return ONLY valid JSON matching this structure:
       } catch (retryError) {
         console.error('[ProductSpecGenerator] Retry also failed:', retryError);
 
-        // Last resort: Return a minimal valid spec that preserves the PRD
+        // Last resort: Return a minimal valid spec without metadata fields
         console.log('[ProductSpecGenerator] Returning minimal fallback spec');
         parsed = {
           productVision:
@@ -218,9 +217,6 @@ Return ONLY valid JSON matching this structure:
             browser: ['Modern browsers'],
             design: ['Consistent design system'],
           },
-          // Preserve original PRD so user can reference it
-          _fallback: true,
-          _originalPRDPreview: prdText.substring(0, 500) + '...',
         };
       }
     }

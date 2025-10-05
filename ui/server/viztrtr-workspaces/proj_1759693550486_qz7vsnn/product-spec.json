@@ -1,0 +1,529 @@
+{
+  "projectId": "proj_1759693550486_qz7vsnn",
+  "version": 1,
+  "createdAt": "2025-10-05T19:52:25.605Z",
+  "lastUpdated": "2025-10-05T19:52:25.605Z",
+  "productVision": "Performia is a revolutionary music performance system that transforms live performance by following musicians in real-time through AI-powered audio analysis and an intelligent Living Chart teleprompter, enabling artists to focus on their artistry without worrying about forgetting lyrics or chords.",
+  "targetUsers": [
+    "Live performers (vocalists, guitarists, bands) who perform 3-4 gigs per week and need large, readable fonts from 6ft away with zero distractions",
+    "Rehearsal musicians learning new songs who need to edit chords and song structure while practicing with isolated stems",
+    "Casual hobbyists practicing at home who need a simple, intuitive interface to explore demo songs"
+  ],
+  "components": {
+    "TeleprompterView": {
+      "purpose": "Fullscreen Living Chart display with real-time syllable highlighting and auto-scrolling for distraction-free performance",
+      "userStories": [
+        "As a live performer, I need to see lyrics in large, readable text from 6 feet away so I can perform without moving closer to the screen",
+        "As a vocalist, I need the current syllable highlighted in real-time so I always know exactly where I am in the song",
+        "As a musician, I need the active line centered on screen so I don't have to search for my place",
+        "As a guitarist, I need to see chord names above lyrics so I can play the correct chords at the right time"
+      ],
+      "designPriorities": [
+        "Maximum readability from distance",
+        "Zero-latency feel",
+        "Minimal visual distraction",
+        "Smooth auto-scrolling"
+      ],
+      "focusAreas": [
+        "Font size control (2.5rem to 6rem range)",
+        "Syllable highlighting with cyan glow effect",
+        "Auto-centering active line at 50% viewport",
+        "Past lyrics dimmed to 30% opacity",
+        "Chord display options (off, names, diagrams)",
+        "60fps rendering performance",
+        "Virtual scrolling for long songs"
+      ],
+      "avoidAreas": [
+        "Complex animations that distract from lyrics",
+        "UI chrome visible during performance",
+        "Small or hard-to-read fonts",
+        "Jerky or stuttering scroll behavior"
+      ],
+      "acceptanceCriteria": [
+        "Font size range 2.5rem to 6rem with default at 3.5rem",
+        "Syllable highlighting latency under 100ms",
+        "Active line centered at 50% viewport height",
+        "Sustained 60fps for 10+ minute songs",
+        "WCAG AAA contrast ratio (16:1) for lyrics",
+        "Readable from 6 feet away at default size"
+      ],
+      "status": "active"
+    },
+    "AudioPlayer": {
+      "purpose": "Full-featured audio playback controls with precise seeking, volume control, and real-time sync with lyrics",
+      "userStories": [
+        "As a musician, I need to play/pause audio quickly so I can control playback during practice",
+        "As a rehearsal musician, I need to seek to specific parts of the song so I can practice difficult sections",
+        "As a performer, I need to adjust volume levels so I can balance with my live playing",
+        "As a user, I need to see current playback time so I know where I am in the song"
+      ],
+      "designPriorities": [
+        "Instant responsiveness",
+        "Large touch targets",
+        "Clear visual feedback",
+        "Precise seeking control"
+      ],
+      "focusAreas": [
+        "Play/pause button with clear icon states",
+        "Draggable progress bar with cyan fill",
+        "Volume slider with mute toggle",
+        "Monospace time display (MM:SS format)",
+        "Real-time sync with syllable highlighting",
+        "Audio latency under 50ms",
+        "Keyboard shortcut support (spacebar)"
+      ],
+      "avoidAreas": [
+        "Small, hard-to-click controls",
+        "Delayed audio response",
+        "Confusing progress bar interaction",
+        "Hidden volume controls"
+      ],
+      "acceptanceCriteria": [
+        "Play/pause responds within 50ms",
+        "Progress bar supports click and drag seeking",
+        "Volume control range 0.0 to 1.0 with mute",
+        "Time display updates at 10Hz minimum",
+        "Touch targets minimum 44x44px",
+        "Keyboard shortcuts functional"
+      ],
+      "status": "active"
+    },
+    "StemSelector": {
+      "purpose": "Toggle between audio stems (full mix, vocals, bass, drums, other) for isolated practice and performance",
+      "userStories": [
+        "As a rehearsal musician, I need to isolate vocal stems so I can practice singing without distraction",
+        "As a guitarist, I need to mute guitar parts so I can practice my own playing",
+        "As a drummer, I need to hear just the drums so I can learn the drum parts",
+        "As a user, I need to see which stems are available so I don't waste time trying unavailable options"
+      ],
+      "designPriorities": [
+        "Clear stem availability status",
+        "Fast stem switching",
+        "Visual feedback for active stem",
+        "Loading state visibility"
+      ],
+      "focusAreas": [
+        "5 stem types clearly labeled",
+        "Loading spinner for stems in progress",
+        "Availability check via HEAD request",
+        "Active stem highlighted with cyan background",
+        "Disabled state for unavailable stems",
+        "Smooth audio transition between stems",
+        "Keyboard navigation support"
+      ],
+      "avoidAreas": [
+        "Confusing stem labels",
+        "Long loading times without feedback",
+        "Audio clicks during stem switching",
+        "Unclear active state"
+      ],
+      "acceptanceCriteria": [
+        "All 5 stem types displayed (Full, Vocals, Bass, Drums, Other)",
+        "Loading state shows spinning icon at 50% opacity",
+        "Active stem has cyan background and scale 105%",
+        "Unavailable stems grayed at 60% opacity",
+        "Stem switching completes within 500ms",
+        "Audio crossfade to prevent clicks"
+      ],
+      "status": "active"
+    },
+    "FullChart": {
+      "purpose": "Document-style song editor for inline editing of title, artist, lyrics, chords, and song structure",
+      "userStories": [
+        "As a musician, I need to edit incorrect lyrics so my performance chart is accurate",
+        "As a guitarist, I need to correct auto-detected chords so I play the right harmonies",
+        "As a band leader, I need to rearrange song sections so the chart matches our arrangement",
+        "As a user, I need to add section labels so I can organize the song structure clearly"
+      ],
+      "designPriorities": [
+        "Inline editing simplicity",
+        "Clear section organization",
+        "Non-destructive editing",
+        "Fast save operations"
+      ],
+      "focusAreas": [
+        "Click-to-edit for all text fields",
+        "Section headers with drag handles",
+        "Chord autocomplete dropdown",
+        "Real-time chord validation",
+        "Add/remove section buttons",
+        "Undo/redo support",
+        "Auto-save on blur"
+      ],
+      "avoidAreas": [
+        "Modal dialogs for simple edits",
+        "Confusing edit mode switching",
+        "Loss of unsaved changes",
+        "Slow save operations"
+      ],
+      "acceptanceCriteria": [
+        "Click any text to enter edit mode",
+        "Chord autocomplete appears within 200ms",
+        "Section drag-to-reorder functional",
+        "Changes save automatically on blur",
+        "Undo/redo supports 50+ actions",
+        "Edit operations complete under 100ms"
+      ],
+      "status": "active"
+    },
+    "LibraryView": {
+      "purpose": "Song search and library management with instant filtering, sorting, and quick actions",
+      "userStories": [
+        "As a performer, I need to search my song library quickly so I can find songs for my setlist",
+        "As a user, I need to filter songs by key and BPM so I can find songs that match my vocal range",
+        "As a band member, I need to see song metadata at a glance so I can choose appropriate songs",
+        "As a musician, I need quick access to play, edit, and delete actions so I can manage my library efficiently"
+      ],
+      "designPriorities": [
+        "Instant search results",
+        "Clear visual hierarchy",
+        "Fast filtering and sorting",
+        "Scannable song cards"
+      ],
+      "focusAreas": [
+        "Instant search with fuzzy matching",
+        "Filter by genre, key, BPM, difficulty",
+        "Sort by title, date, last played",
+        "Song cards with thumbnail and metadata",
+        "Quick action buttons (Play, Edit, Delete)",
+        "Search within 5 seconds target",
+        "Keyboard navigation for power users"
+      ],
+      "avoidAreas": [
+        "Slow search performance",
+        "Cluttered song cards",
+        "Hidden filter options",
+        "Confusing quick actions"
+      ],
+      "acceptanceCriteria": [
+        "Search results appear within 5 seconds",
+        "Fuzzy matching supports typos",
+        "Filter combinations work correctly",
+        "Song cards show title, artist, key, BPM, genre",
+        "Quick actions accessible with single click",
+        "Keyboard shortcuts for common actions"
+      ],
+      "status": "active"
+    },
+    "SettingsPanel": {
+      "purpose": "Quick access to performance controls including chord display, font size, transpose, and capo settings",
+      "userStories": [
+        "As a performer, I need to adjust font size quickly so I can see lyrics from my performance distance",
+        "As a guitarist, I need to transpose songs so they match my vocal range",
+        "As a capo user, I need to set capo position so chords display correctly for my playing",
+        "As a musician, I need to toggle chord display modes so I can choose between names and diagrams"
+      ],
+      "designPriorities": [
+        "Fast settings changes",
+        "Clear visual feedback",
+        "Non-modal when possible",
+        "Settings persistence"
+      ],
+      "focusAreas": [
+        "Font size slider (50% to 150%)",
+        "Transpose selector (-12 to +12 semitones)",
+        "Capo selector (0 to 12 frets)",
+        "Chord display mode toggle (Off, Names, Diagrams)",
+        "Settings presets for common configurations",
+        "High contrast mode toggle",
+        "Settings response under 2 seconds"
+      ],
+      "avoidAreas": [
+        "Modal blocking performance view",
+        "Slow settings application",
+        "Lost settings between sessions",
+        "Confusing control layouts"
+      ],
+      "acceptanceCriteria": [
+        "Settings panel slides in from left at 384px width",
+        "Font size changes apply immediately",
+        "Transpose updates all chords correctly",
+        "Capo setting adjusts chord display",
+        "Settings persist across sessions",
+        "All changes complete within 2 seconds"
+      ],
+      "status": "active"
+    },
+    "Header": {
+      "purpose": "Top navigation bar with settings access, upload button, demo button, and song title display",
+      "userStories": [
+        "As a user, I need quick access to settings so I can adjust preferences during performance",
+        "As a musician, I need to upload new songs easily so I can expand my library",
+        "As a new user, I need to load demo songs so I can explore features without uploading",
+        "As a performer, I need to see the current song title so I know what I'm performing"
+      ],
+      "designPriorities": [
+        "Always accessible",
+        "Clear visual hierarchy",
+        "Minimal height to maximize content area",
+        "Consistent placement"
+      ],
+      "focusAreas": [
+        "Settings button with gear icon and cyan background",
+        "Upload Song button with clear label",
+        "Demo button for first-time users",
+        "Centered song title and artist display",
+        "Consistent 64-80px height",
+        "Responsive layout for different screen sizes",
+        "Keyboard shortcuts for all actions"
+      ],
+      "avoidAreas": [
+        "Excessive height stealing content space",
+        "Hidden critical functions",
+        "Cluttered button arrangement",
+        "Unclear button purposes"
+      ],
+      "acceptanceCriteria": [
+        "Header height between 64-80px",
+        "Settings button opens panel within 100ms",
+        "Upload button triggers file picker",
+        "Song title centered and truncated if needed",
+        "All buttons minimum 44x44px touch targets",
+        "Keyboard shortcuts functional"
+      ],
+      "status": "active"
+    },
+    "ChordDiagram": {
+      "purpose": "Visual guitar chord representation with fretboard grid and finger positions",
+      "userStories": [
+        "As a guitarist, I need to see chord diagrams so I can learn unfamiliar chord shapes",
+        "As a beginner, I need clear finger position markers so I know where to place my fingers",
+        "As a musician, I need chord names labeled clearly so I can identify chords quickly",
+        "As a performer, I need chord diagrams sized appropriately so I can read them during performance"
+      ],
+      "designPriorities": [
+        "Clear finger positions",
+        "Readable from distance",
+        "Standard guitar notation",
+        "Compact size"
+      ],
+      "focusAreas": [
+        "6-string fretboard grid (typically 4-5 frets shown)",
+        "Finger position dots with numbers",
+        "Open/muted string indicators at top",
+        "Chord name label above diagram",
+        "Fret number indication for barre chords",
+        "High contrast for visibility",
+        "Consistent sizing with lyrics"
+      ],
+      "avoidAreas": [
+        "Overly complex diagrams",
+        "Too small to read from distance",
+        "Inconsistent notation",
+        "Cluttered visual design"
+      ],
+      "acceptanceCriteria": [
+        "Diagram shows 6 strings and 4-5 frets",
+        "Finger positions clearly marked with dots",
+        "Open strings marked with 'O', muted with 'X'",
+        "Chord name displayed above diagram",
+        "Diagram size proportional to font size setting",
+        "WCAG AA contrast for all elements"
+      ],
+      "status": "active"
+    },
+    "UploadFlow": {
+      "purpose": "Guided workflow for uploading audio files and monitoring analysis progress",
+      "userStories": [
+        "As a musician, I need to drag-and-drop audio files so uploading is quick and easy",
+        "As a user, I need to see analysis progress so I know how long to wait",
+        "As a performer, I need clear error messages if upload fails so I can fix the problem",
+        "As a user, I need to know when my song is ready so I can start practicing"
+      ],
+      "designPriorities": [
+        "Simple upload process",
+        "Clear progress feedback",
+        "Error handling",
+        "Fast analysis"
+      ],
+      "focusAreas": [
+        "Drag-and-drop zone with hover state",
+        "File format validation (WAV, MP3, M4A, FLAC)",
+        "Progress bar with percentage and status",
+        "Analysis time estimate display",
+        "Error messages with actionable steps",
+        "Success state with play button",
+        "Cancel upload option"
+      ],
+      "avoidAreas": [
+        "Confusing upload interface",
+        "No progress feedback",
+        "Cryptic error messages",
+        "Long waits without updates"
+      ],
+      "acceptanceCriteria": [
+        "Drag-and-drop and click-to-browse both work",
+        "Supported formats validated before upload",
+        "Progress updates at least every 2 seconds",
+        "Analysis completes within 30 seconds per song",
+        "Errors show clear, actionable messages",
+        "Success state transitions to playback automatically"
+      ],
+      "status": "active"
+    },
+    "AudioControlsBar": {
+      "purpose": "Integrated control bar combining audio player and stem selector for performance mode",
+      "userStories": [
+        "As a performer, I need all audio controls in one place so I can focus on the lyrics",
+        "As a rehearsal musician, I need quick access to both playback and stem controls so I can practice efficiently",
+        "As a user, I need the control bar to stay visible so I can always access playback functions",
+        "As a performer, I need the control bar to be unobtrusive so it doesn't distract from lyrics"
+      ],
+      "designPriorities": [
+        "Integrated layout",
+        "Always accessible",
+        "Minimal visual weight",
+        "Logical grouping"
+      ],
+      "focusAreas": [
+        "Fixed height 120-180px",
+        "Horizontal layout with stem selector on left",
+        "Audio player controls in center",
+        "Volume and time on right",
+        "Gray-800 background to differentiate from lyrics",
+        "16px padding for touch targets",
+        "Responsive layout for narrower screens"
+      ],
+      "avoidAreas": [
+        "Excessive height",
+        "Cluttered control arrangement",
+        "Overlapping lyrics area",
+        "Hard-to-reach controls"
+      ],
+      "acceptanceCriteria": [
+        "Bar height between 120-180px",
+        "All controls accessible without scrolling",
+        "Stem selector and player visually grouped",
+        "Controls respond within 100ms",
+        "Bar remains fixed at top of teleprompter",
+        "Responsive layout maintains usability"
+      ],
+      "status": "active"
+    },
+    "KeyboardShortcuts": {
+      "purpose": "Comprehensive keyboard navigation for power users and accessibility",
+      "userStories": [
+        "As a power user, I need keyboard shortcuts so I can navigate without touching the mouse",
+        "As a performer, I need emergency font controls so I can adjust size during performance",
+        "As a musician with mobility limitations, I need full keyboard access so I can use the app independently",
+        "As a user, I need discoverable shortcuts so I can learn them easily"
+      ],
+      "designPriorities": [
+        "Full keyboard accessibility",
+        "Standard shortcut patterns",
+        "Discoverable shortcuts",
+        "No conflicts with browser shortcuts"
+      ],
+      "focusAreas": [
+        "Spacebar for play/pause",
+        "Arrow keys for section navigation",
+        "Cmd/Ctrl+, for settings",
+        "Cmd/Ctrl+L for library",
+        "Cmd/Ctrl+E for edit mode",
+        "Escape to close modals",
+        "Cmd/Ctrl+Up/Down for font size",
+        "Tab for control navigation"
+      ],
+      "avoidAreas": [
+        "Non-standard key combinations",
+        "Conflicting with browser shortcuts",
+        "Hidden shortcuts without documentation",
+        "Shortcuts that only work in certain modes"
+      ],
+      "acceptanceCriteria": [
+        "All 8 documented shortcuts functional",
+        "Shortcuts work in all relevant contexts",
+        "Visual feedback for shortcut actions",
+        "Shortcuts listed in settings panel",
+        "No conflicts with browser defaults",
+        "Focus indicators visible for tab navigation"
+      ],
+      "status": "planned"
+    },
+    "AccessibilityFeatures": {
+      "purpose": "Comprehensive accessibility support including screen readers, high contrast, and reduced motion",
+      "userStories": [
+        "As a visually impaired musician, I need screen reader support so I can use the app independently",
+        "As a user with photosensitivity, I need reduced motion mode so animations don't cause discomfort",
+        "As a user with low vision, I need high contrast mode so I can read all text clearly",
+        "As a keyboard-only user, I need focus indicators so I know where I am in the interface"
+      ],
+      "designPriorities": [
+        "WCAG 2.1 AA minimum",
+        "Screen reader compatibility",
+        "Keyboard navigation",
+        "Visual accessibility options"
+      ],
+      "focusAreas": [
+        "Semantic HTML elements",
+        "ARIA labels on all interactive elements",
+        "ARIA live regions for dynamic content",
+        "High contrast mode toggle",
+        "Reduced motion mode respecting prefers-reduced-motion",
+        "2px cyan focus indicators",
+        "Minimum 44x44px touch targets",
+        "16:1 contrast for lyrics, 7:1 for chords"
+      ],
+      "avoidAreas": [
+        "Div soup without semantic meaning",
+        "Missing ARIA labels",
+        "Invisible focus indicators",
+        "Motion without respect for user preferences"
+      ],
+      "acceptanceCriteria": [
+        "Lighthouse accessibility score 95+",
+        "All elements keyboard accessible",
+        "Screen reader announces all state changes",
+        "High contrast mode provides 21:1 minimum ratio",
+        "Reduced motion disables all animations",
+        "Focus indicators visible on all interactive elements",
+        "WCAG AAA contrast for critical elements"
+      ],
+      "status": "in-progress"
+    }
+  },
+  "globalConstraints": {
+    "accessibility": [
+      "WCAG 2.1 Level AA minimum compliance",
+      "WCAG 2.1 Level AAA for lyrics and chords",
+      "Screen reader support (VoiceOver, NVDA)",
+      "Full keyboard navigation with visible focus indicators",
+      "Semantic HTML with ARIA labels",
+      "High contrast mode option",
+      "Reduced motion mode respecting user preferences",
+      "Minimum touch targets 44x44px",
+      "ARIA live regions for dynamic content"
+    ],
+    "performance": [
+      "60fps sustained rendering for 10+ minute songs",
+      "Audio latency under 50ms",
+      "Syllable highlighting latency under 100ms",
+      "Settings changes complete within 2 seconds",
+      "Song analysis complete within 30 seconds",
+      "Search results within 5 seconds",
+      "Time to first performance under 30 seconds",
+      "Zero layout thrashing during scroll"
+    ],
+    "browser": [
+      "Chrome 90+",
+      "Safari 14+",
+      "Firefox 88+",
+      "Edge 90+",
+      "Desktop only (mobile in Phase 2)",
+      "Minimum screen resolution 1280x720"
+    ],
+    "design": [
+      "Performance-first design philosophy",
+      "Zero-latency feel for all interactions",
+      "Progressive disclosure of complexity",
+      "Musician mental model (sections, keys, chords)",
+      "Near-black backgrounds (rgb(10, 10, 12)) for stage use",
+      "Performia cyan (rgb(6, 182, 212)) as primary accent",
+      "Warm amber (rgb(250, 204, 21)) for chords",
+      "Tailwind CSS 4 utility classes",
+      "Consistent spacing system (4px base unit)",
+      "Typography scale optimized for distance reading"
+    ]
+  },
+  "originalPRD": "# 🎵 Performia - Complete Documentation\n\n**Version:** 3.0\n**Last Updated:** October 1, 2025\n**Status:** Living Document\n\n---\n\n## 📖 Table of Contents\n\n### Quick Navigation\n- [🎯 Product Overview](#-product-overview)\n- [🚀 Quick Start](#-quick-start)\n- [🏗️ Architecture](#️-architecture)\n- [🎨 Design System](#-design-system)\n- [🧩 Component Library](#-component-library)\n- [📋 Feature Status](#-feature-status)\n- [🗺️ Roadmap](#️-roadmap)\n- [🔧 Developer Guide](#-developer-guide)\n- [♿ Accessibility](#-accessibility)\n- [📊 Success Metrics](#-success-metrics)\n\n---\n\n## 🎯 Product Overview\n\n### What is Performia?\n\n**Performia** is a revolutionary music performance system that transforms how musicians perform live. By combining real-time audio analysis, AI-powered audio processing, and an intelligent \"Living Chart\" teleprompter, Performia enables musicians to focus on their artistry.\n\n**Core Value Proposition:**\n*\"Never forget lyrics or chords again. Performia follows YOU in real-time.\"*\n\n### Target Users\n\n1. **Live Performers** (Primary)\n   - Vocalists, guitarists, bands\n   - Perform 3-4 gigs per week\n   - Need large fonts readable from 6ft away\n   - Zero distractions during performance\n\n2. **Rehearsal Musicians** (Secondary)\n   - Learning new songs\n   - Need to edit chords and structure\n   - Practice with isolated stems\n\n3. **Casual Hobbyists** (Tertiary)\n   - Home practice\n   - Need simple, intuitive interface\n   - Explore demo songs\n\n### Design Philosophy\n\n> **\"The best interface for performance is no interface at all.\"**\n\n**Core Principles:**\n1. **Performance-First**: UI disappears during performance\n2. **Zero-Latency Feel**: <100ms perceived interaction time\n3. **Musician Mental Model**: Sections, keys, chords\n4. **Progressive Disclosure**: Complexity hidden until needed\n5. **Accessibility by Default**: Works for all musicians\n\n---\n\n## 🚀 Quick Start\n\n### Running Performia\n\n#### Backend (Python + C++)\n```bash\ncd backend\npython -m venv venv\nsource venv/bin/activate  # On Windows: venv\\Scripts\\activate\npip install -r requirements.txt\npython src/main.py\n```\n\nBackend runs on: `http://localhost:8000`\n\n#### Frontend (React + Vite)\n```bash\ncd frontend\nnpm install\nnpm run dev\n```\n\nFrontend runs on: `http://localhost:5001`\n\n### First-Time User Flow\n\n1. **Open Performia** → Demo song \"Yesterday\" loads automatically\n2. **Click Settings** (gear icon) → Adjust font size, transpose\n3. **Click Play** → Watch syllables highlight in real-time\n4. **Upload Song** → Drop audio file, wait ~30s for analysis\n5. **Perform** → Fullscreen lyrics with chords, zero distractions\n\n---\n\n## 🏗️ Architecture\n\n### Tech Stack\n\n**Frontend:**\n- React 19 + TypeScript 5\n- Vite 6 (build tool)\n- Tailwind CSS 4 (styling)\n- React hooks (state management)\n\n**Backend:**\n- Python 3.11 + FastAPI\n- JUCE (C++ audio engine)\n- Librosa (audio analysis)\n- Demucs (stem separation)\n- Whisper (speech recognition / ASR)\n- **SongPrep** (planned - song structure parsing)\n\n### Data Flow\n\n```\n1. Upload Audio → Backend\n2. Analysis Pipeline → Song Map JSON\n3. Frontend → Display Living Chart\n4. Audio Playback → Syllable Sync\n```\n\n### Song Map Schema\n\n```json\n{\n  \"title\": \"Song Title\",\n  \"artist\": \"Artist Name\",\n  \"key\": \"C Major\",\n  \"bpm\": 120,\n  \"sections\": [\n    {\n      \"name\": \"Verse 1\",\n      \"lines\": [\n        {\n          \"syllables\": [\n            {\n              \"text\": \"Hello\",\n              \"startTime\": 0.5,\n              \"duration\": 0.3,\n              \"chord\": \"C\"\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}\n```\n\n### API Endpoints\n\n| Endpoint | Method | Purpose |\n|----------|--------|---------|\n| `/upload` | POST | Upload audio file |\n| `/progress/:jobId` | GET | Analysis progress |\n| `/songmap/:jobId` | GET | Get Song Map JSON |\n| `/audio/:jobId/original` | GET | Get original audio |\n| `/audio/:jobId/stem/:type` | GET | Get stem (vocals, bass, drums, other) |\n\n---\n\n## 🎨 Design System\n\n### Color Palette\n\n#### Performance Mode (Stage)\n```css\n--bg-performance: rgb(10, 10, 12)      /* Near-black, minimal glare */\n--text-lyrics: rgb(240, 240, 245)      /* Cool white, max legibility */\n--chord-inactive: #FACC15              /* Warm amber (WCAG AAA) */\n--chord-active: #06b6d4                /* Performia cyan */\n--highlight-sung: rgba(6, 182, 212, 0.3)  /* Cyan glow */\n```\n\n#### UI Chrome (Controls)\n```css\n--bg-chrome: #111827                   /* Gray-900 */\n--bg-panel: #1f2937                    /* Gray-800 */\n--bg-input: #374151                    /* Gray-700 */\n--accent-primary: #06b6d4              /* Performia cyan */\n--accent-hover: #06d4f1                /* Lighter cyan */\n--accent-success: #22c55e              /* Green */\n--accent-warning: #eab308              /* Yellow */\n--accent-error: #ef4444                /* Red */\n```\n\n### Typography Scale\n\n```css\n/* Teleprompter (Performance) */\n--font-lyrics-default: 3.5rem   /* 56px - Stage optimized */\n--font-lyrics-min: 2.5rem       /* 40px */\n--font-lyrics-max: 6.0rem       /* 96px */\n--font-chord: 2.8rem            /* 45px - 80% ratio maintained */\n\n/* UI Chrome */\n--font-header-1: 2.5rem         /* Song title */\n--font-header-2: 1.875rem       /* Artist */\n--font-body: 1.125rem           /* Editable text */\n--font-control: 1rem            /* Buttons */\n--font-label: 0.875rem          /* Labels */\n--font-caption: 0.75rem         /* Metadata */\n```\n\n### Spacing System\n\n```css\n--space-xs:   4px\n--space-sm:   8px\n--space-md:   16px\n--space-lg:   24px\n--space-xl:   32px\n--space-2xl:  48px\n```\n\n### Border Radius\n\n```css\n--radius-sm:  4px\n--radius-md:  8px\n--radius-lg:  12px\n--radius-xl:  16px\n--radius-full: 9999px  /* Pill shape */\n```\n\n### Shadows\n\n```css\n--shadow-sm: 0 1px 2px rgba(0,0,0,0.05)\n--shadow-md: 0 4px 6px rgba(0,0,0,0.1)\n--shadow-lg: 0 10px 15px rgba(0,0,0,0.1)\n--shadow-xl: 0 20px 25px rgba(0,0,0,0.1)\n--shadow-cyan: 0 10px 15px rgba(6,182,212,0.2)\n```\n\n---\n\n## 🧩 Component Library\n\n### Core Components\n\n#### 1. TeleprompterView (Living Chart)\n**File:** `frontend/components/TeleprompterView.tsx`\n\n**Purpose:** Fullscreen lyrics with real-time syllable highlighting\n\n**Features:**\n- Real-time syllable highlighting\n- Auto-scroll (active line centered)\n- Chord display (names or diagrams)\n- Audio controls integration\n- Font size control (50%-150%)\n\n**Layout:**\n```\n┌─────────────────────────────────────┐\n│ [Audio Controls Bar]                │  ← 120-180px height\n├─────────────────────────────────────┤\n│                                     │\n│    Past lyrics (30% opacity)        │\n│                                     │\n│  ╔═══════════════════════════════╗ │\n│  ║   C              G            ║ │  ← Active line\n│  ║   Here comes the sun ◆ doo   ║ │  ← ◆ = current syllable\n│  ╚═══════════════════════════════╝ │\n│                                     │\n│    Future lyrics (100% opacity)     │\n│                                     │\n└─────────────────────────────────────┘\n```\n\n**Props:**\n```typescript\ninterface TeleprompterViewProps {\n  songMap: SongMap;\n  transpose: number;\n  capo: number;\n  chordDisplay: 'off' | 'names' | 'diagrams';\n  jobId?: string;\n}\n```\n\n---\n\n#### 2. AudioPlayer ✨ NEW\n**File:** `frontend/components/AudioPlayer.tsx`\n\n**Purpose:** Full-featured audio player with playback controls\n\n**Features:**\n- Play/pause button\n- Progress bar (draggable seek)\n- Volume control (slider + mute)\n- Time display (MM:SS / MM:SS)\n- Real-time sync with lyrics\n\n**UI Elements:**\n- **Progress Bar:** Cyan fill, gray background, draggable\n- **Play/Pause:** Cyan button, black text, icons ▶ ⏸\n- **Volume:** Slider (0.0-1.0), mute button 🔇 🔉 🔊\n- **Time:** Monospace font, white text\n\n**Container:** Gray-800 background, 16px padding, 8px radius\n\n**Props:**\n```typescript\ninterface AudioPlayerProps {\n  audioUrl: string;\n  onTimeUpdate: (currentTime: number) => void;\n  onDurationChange?: (duration: number) => void;\n  onPlayStateChange?: (isPlaying: boolean) => void;\n}\n```\n\n---\n\n#### 3. StemSelector ✨ NEW\n**File:** `frontend/components/StemSelector.tsx`\n\n**Purpose:** Toggle between audio stems (vocals, drums, bass, etc.)\n\n**Features:**\n- 5 stem types: Full Mix, Vocals, Bass, Drums, Other\n- Loading states (spinner icon)\n- Availability check (HEAD request)\n- Active state highlighting\n\n**Button States:**\n- **Selected:** Cyan background, black text, scale 105%, play icon ▶\n- **Unselected:** Gray-700 background, white text, hover gray-600\n- **Loading:** 50% opacity, spinning clock ⌛\n- **Unavailable:** 60% opacity, grayed out\n\n**Props:**\n```typescript\ninterface StemSelectorProps {\n  jobId: string;\n  baseUrl?: string;\n  onStemChange: (stemUrl: string, stemType: StemType) => void;\n}\n\ntype StemType = 'original' | 'vocals' | 'bass' | 'drums' | 'other';\n```\n\n---\n\n#### 4. Full Chart (Song Editor)\n**File:** `frontend/components/BlueprintView.tsx`\n\n**Purpose:** Document-style editor for song structure and chords\n\n**Features:**\n- Inline editing (click to edit)\n- Edit title, artist, lyrics, chords\n- Section headers (Verse, Chorus, etc.)\n- Chord autocomplete (planned Sprint 4)\n- Drag-to-reorder sections (planned Sprint 4)\n\n**Layout:**\n```\n┌─────────────────────────────────────┐\n│  Song Title (editable)              │\n│  Artist Name (editable)             │\n│  Key: C Major | BPM: 120            │\n├─────────────────────────────────────┤\n│  ┌─ [ Verse 1 ] ─────────────────┐ │\n│  │  C            G                │ │\n│  │  Here comes the sun           │ │\n│  └────────────────────────────────┘ │\n│                                     │\n│  ┌─ [ Chorus ] ──────── [⋮] ─────┐ │  ← Drag handle\n│  │  ...                           │ │\n│  └────────────────────────────────┘ │\n│                                     │\n│  [+ Add Section]                    │\n└─────────────────────────────────────┘\n```\n\n---\n\n#### 5. LibraryView\n**File:** `frontend/components/LibraryView.tsx`\n\n**Purpose:** Song search and library management\n\n**Features:**\n- Instant search (title, artist, lyrics, tags)\n- Filter by genre, key, BPM, difficulty\n- Sort by title, date added, last played\n- Quick actions: Play, Edit, Delete\n- Song cards with metadata\n\n**Search:** Fuzzy matching, autocomplete (planned Sprint 4)\n\n---\n\n#### 6. SettingsPanel\n**File:** `frontend/components/SettingsPanel.tsx`\n\n**Purpose:** Quick access to performance controls\n\n**Features:**\n- Chord display mode (Off, Names, Diagrams)\n- Font size slider (50%-150%)\n- Transpose (-12 to +12)\n- Capo (0-12 frets)\n- Settings presets (planned Sprint 4)\n- High contrast mode (planned Sprint 3)\n\n**Layout:** Slide-in from left, 384px width\n\n---\n\n#### 7. Header\n**File:** `frontend/components/Header.tsx`\n\n**Elements:**\n- Settings button (gear icon, cyan background)\n- Upload Song button\n- Demo button\n- Song title/artist display (center)\n\n---\n\n#### 8. ChordDiagram\n**File:** `frontend/components/ChordDiagram.tsx`\n\n**Purpose:** Guitar chord visualization\n\n**Elements:**\n- Fretboard grid\n- Finger positions\n- Chord name label\n\n---\n\n### Component Hierarchy\n\n```\nApp (State Manager)\n├── Header\n│   ├── Settings Button → Opens SettingsPanel\n│   ├── Upload Button → Triggers upload flow\n│   └── Song Title (center)\n│\n├── Main Content (View-Switched)\n│   ├── TeleprompterView (Performance Mode)\n│   │   ├── Audio Controls Bar ✨ NEW\n│   │   │   ├── StemSelector ✨ NEW\n│   │   │   └── AudioPlayer ✨ NEW\n│   │   └── Lyrics Display (Living Chart)\n│   │\n│   ├── Full Chart (Edit Mode)\n│   └── SongMapDemo\n│\n├── Footer\n│\n└── SettingsPanel (Modal)\n    └── LibraryView\n```\n\n---\n\n## 📋 Feature Status\n\n### ✅ Complete (Sprint 1-2)\n\n| Feature | Component | Status |\n|---------|-----------|--------|\n| **Teleprompter display** | TeleprompterView | ✅ Complete |\n| **Syllable highlighting** | TeleprompterView | ✅ Complete |\n| **Auto-scroll** | TeleprompterView | ✅ Complete |\n| **Chord display** | TeleprompterView | ✅ Complete |\n| **Audio playback** | AudioPlayer | ✅ Complete |\n| **Stem selection** | StemSelector | ✅ Complete |\n| **Progress bar** | AudioPlayer | ✅ Complete |\n| **Volume control** | AudioPlayer | ✅ Complete |\n| **Song Map generation** | Backend | ✅ Complete |\n| **Library management** | LibraryView | ✅ Complete |\n| **Settings panel** | SettingsPanel | ✅ Complete |\n| **Full Chart editor** | BlueprintView | ✅ Complete |\n\n### 🔨 In Progress\n\n| Feature | Target | Current | Sprint |\n|---------|--------|---------|--------|\n| **60fps rendering** | 60fps | 50fps | Sprint 3 |\n| **Settings speed** | <2s | ~4s | Sprint 3 |\n\n### 📋 Planned\n\n#### Sprint 3 (Oct 8-21): Performance & Accessibility\n- [ ] 60fps rendering optimization\n- [ ] Auto-center active line (50% viewport)\n- [ ] Keyboard navigation (8 shortcuts)\n- [ ] ARIA labels and semantic HTML\n- [ ] High contrast mode\n- [ ] Focus indicators\n- [ ] Reduced motion mode\n\n#### Sprint 4 (Oct 22 - Nov 4): Enhanced Editing + SongPrep Experimentation\n- [ ] Chord autocomplete popup\n- [ ] Drag-to-reorder sections\n- [ ] Real-time chord validation\n- [ ] Emergency font adjust (double-tap)\n- [ ] Library autocomplete search\n- [ ] Settings presets\n- [ ] **SongPrep Integration Research** (NEW)\n  - [ ] Clone SongPrep repository and set up environment\n  - [ ] Download 7B model weights from HuggingFace\n  - [ ] Test on 10 sample songs\n  - [ ] Benchmark inference speed and accuracy\n  - [ ] Compare section detection vs current heuristics\n  - [ ] Assess GPU requirements and resource impact\n  - [ ] Document findings and integration recommendations\n\n#### Sprint 5 (Nov 5-18): Polish & Testing + SongPrep Integration\n- [ ] Micro-interactions and animations\n- [ ] Loading states (skeleton screens)\n- [ ] User testing\n- [ ] Bug fixes and polish\n- [ ] **SongPrep Integration** (if Sprint 4 experiments successful)\n  - [ ] Create `backend/src/services/songprep/` module\n  - [ ] Implement parser for SongPrep output → Song Map format\n  - [ ] Update orchestrator for parallel processing\n  - [ ] Add confidence scoring to sections\n  - [ ] E2E testing: Audio → SongPrep → Living Chart\n  - [ ] Performance optimization (GPU, caching)\n\n### 🔮 Future (Post-MVP)\n\n- **Phase 2 (Q1 2026):** Setlist management, mobile support, SongPrep fine-tuning\n- **Phase 3 (Q2 2026):** Collaborative editing, cloud sync, genre-specific structure models\n- **Phase 4 (Q3 2026):** AI accompaniment (drums, bass, keys)\n- **Phase 5 (Q4 2026):** Voice commands, custom training datasets\n\n---\n\n## 🗺️ Roadmap\n\n### MVP Timeline\n\n| Sprint | Dates | Theme | Deliverables |\n|--------|-------|-------|--------------|\n| **1-2** | ✅ Complete | Backend + Audio | Analysis pipeline, audio playback, stems |\n| **3** | Oct 8-21 | Performance + A11y | 60fps, keyboard nav, ARIA, high contrast |\n| **4** | Oct 22-Nov 4 | Enhanced Editing | Chord autocomplete, drag sections, emergency font |\n| **5** | Nov 5-18 | Polish + Testing | Animations, loading states, user testing |\n| **MVP** | Nov 22 | Launch | Feature complete, accessible, bug-free |\n\n### Sprint 3 Breakdown (Oct 8-21)\n\n**Week 1: Performance**\n1. Optimize TeleprompterView rendering (virtual scrolling)\n2. Add syllable pulse animation\n3. Implement auto-centering (50% viewport)\n\n**Week 2: Accessibility**\n1. Keyboard navigation (8 shortcuts)\n2. ARIA labels on all elements\n3. High contrast mode\n4. Focus indicators\n\n**Acceptance Criteria:**\n- [ ] 60fps sustained for 10-min song\n- [ ] All elements keyboard accessible\n- [ ] WCAG AAA contrast ratios\n- [ ] Lighthouse accessibility score: 95+\n\n---\n\n## 🔧 Developer Guide\n\n### Project Structure\n\n```\nPerformia/\n├── frontend/                  # React frontend\n│   ├── components/           # React components\n│   ├── services/             # Library service, etc.\n│   ├── hooks/                # Custom hooks\n│   ├── data/                 # Mock data\n│   ├── types.ts              # TypeScript definitions\n│   └── index.css             # Global styles\n│\n├── backend/                   # Python backend\n│   ├── src/\n│   │   ├── main.py           # FastAPI server\n│   │   ├── services/         # Audio analysis\n│   │   └── schemas/          # JSON schemas\n│   └── requirements.txt\n│\n└── PERFORMIA_MASTER_DOCS.md  # This file\n```\n\n### Development Workflow\n\n1. **Start Backend:**\n   ```bash\n   cd backend\n   python src/main.py\n   ```\n\n2. **Start Frontend:**\n   ```bash\n   cd frontend\n   npm run dev\n   ```\n\n3. **Make Changes:**\n   - Hot reload enabled (Vite)\n   - Backend restarts on file change\n\n4. **Test:**\n   ```bash\n   # Frontend\n   npm test\n\n   # Backend\n   pytest\n   ```\n\n5. **Commit:**\n   ```bash\n   git add .\n   git commit -m \"feat: description\"\n   git push\n   ```\n\n### Key Files to Know\n\n| File | Purpose |\n|------|---------|\n| `frontend/App.tsx` | Main app component, state management |\n| `frontend/components/TeleprompterView.tsx` | Living Chart display |\n| `frontend/components/AudioPlayer.tsx` | Audio playback controls |\n| `frontend/types.ts` | TypeScript type definitions |\n| `backend/src/main.py` | FastAPI server, routes |\n| `backend/schemas/song_map.schema.json` | Song Map structure |\n\n### Adding a New Component\n\n1. Create file in `frontend/components/`\n2. Define TypeScript interface for props\n3. Implement component with accessibility (ARIA labels)\n4. Add to parent component\n5. Update this documentation\n\n### Debugging Tips\n\n**Frontend:**\n- React DevTools for component tree\n- Console.log sparingly (use breakpoints)\n- Check Network tab for API calls\n\n**Backend:**\n- FastAPI auto-docs: `http://localhost:8000/docs`\n- Check logs for errors\n- Use Python debugger (pdb)\n\n**Performance:**\n- Chrome DevTools Performance tab\n- Target: 60fps (16.67ms per frame)\n- Check for layout thrashing\n\n---\n\n## ♿ Accessibility\n\n### WCAG Compliance\n\n**Target:** WCAG 2.1 AA minimum, AAA for critical elements\n\n### Contrast Ratios\n\n| Element | Ratio | Standard |\n|---------|-------|----------|\n| Lyrics | 16:1 | AAA |\n| Chords | 7:1 | AAA |\n| UI Controls | 4.5:1 | AA |\n\n### Keyboard Navigation\n\n| Key | Action | Context |\n|-----|--------|---------|\n| **Space** | Play/pause | Teleprompter |\n| **←/→** | Prev/next section | Teleprompter |\n| **Cmd+,** | Open settings | Global |\n| **Cmd+L** | Open library | Global |\n| **Cmd+E** | Toggle edit mode | Global |\n| **Esc** | Close modal | Global |\n| **Tab** | Navigate controls | Settings |\n| **Cmd+↑/↓** | Font size ±10% | Teleprompter |\n\n### Screen Reader Support\n\n- Semantic HTML (`<header>`, `<main>`, `<nav>`)\n- ARIA labels on all interactive elements\n- ARIA live regions for dynamic content\n- Announce section changes and playback state\n\n### Visual Accessibility\n\n- **High contrast mode** (black-on-white toggle)\n- **Focus indicators** (2px cyan outline)\n- **Reduced motion** (disable animations)\n- **Minimum touch targets** (44x44px)\n\n### Testing Checklist\n\n- [ ] Tab through all interactive elements\n- [ ] Test with screen reader (VoiceOver/NVDA)\n- [ ] Check contrast with WCAG Color Contrast Checker\n- [ ] Test reduced motion preference\n- [ ] Verify focus indicators visible\n\n---\n\n## 📊 Success Metrics\n\n### Quantitative Targets\n\n| Metric | Target | Current | Status |\n|--------|--------|---------|--------|\n| **Time to first performance** | <30s | ✅ 25s | ✅ Met |\n| **Song search speed** | <5s | ✅ 3s | ✅ Met |\n| **Settings adjust speed** | <2s | 🔨 4s | 🔨 In progress |\n| **Frame rate** | 60fps | 🔨 50fps | 🔨 In progress |\n| **Audio latency** | <50ms | ✅ 35ms | ✅ Met |\n| **Analysis speed** | <30s/song | ✅ 22s | ✅ Met |\n| **Chord accuracy** | 90%+ | ✅ 92% | ✅ Met |\n| **Lyric accuracy** | 95%+ | ✅ 96% | ✅ Met |\n\n### Qualitative Targets\n\n- **Ease of use:** 4.5+ stars (out of 5)\n- **Feature discovery:** 80%+ without tutorial\n- **Visual clarity:** 95%+ \"easy to read\"\n- **Performance satisfaction:** 90%+ \"feels instant\"\n\n### Analytics to Track\n\n1. Time to first performance\n2. Songs uploaded per user\n3. Most used features\n4. Error rate\n5. Session duration\n6. Return rate (weekly active)\n\n---\n\n## 🔍 Frequently Asked Questions\n\n### General\n\n**Q: What audio formats are supported?**\nA: WAV, MP3, M4A, FLAC\n\n**Q: How long does song analysis take?**\nA: ~30 seconds per song (varies by length)\n\n**Q: Can I edit the auto-generated chords?**\nA: Yes, use Full Chart to edit chords inline\n\n**Q: Does it work offline?**\nA: Not yet (planned for Phase 3)\n\n### Technical\n\n**Q: Why 60fps target?**\nA: Smooth scrolling is critical for reading during performance. 60fps = 16.67ms per frame.\n\n**Q: Canvas vs DOM for rendering?**\nA: Currently DOM. Will optimize first, consider Canvas only if needed (accessibility trade-off).\n\n**Q: How does syllable sync work?**\nA: RequestAnimationFrame checks current audio time, finds matching syllable, updates highlight.\n\n**Q: Why Performia cyan?**\nA: High contrast with warm amber chords, signals \"now\", cool color stands out.\n\n---\n\n## 📝 Contribution Guidelines\n\n### Code Style\n\n- **TypeScript:** Strict mode, explicit types\n- **React:** Functional components, hooks\n- **CSS:** Tailwind utility classes, avoid inline styles\n- **Naming:** camelCase for variables, PascalCase for components\n\n### Commit Messages\n\n```\nfeat: Add emergency font adjust gesture\nfix: Resolve audio sync latency issue\ndocs: Update component API reference\nrefactor: Optimize TeleprompterView rendering\ntest: Add unit tests for chord validation\n```\n\n### Pull Requests\n\n1. Create feature branch: `git checkout -b feat/my-feature`\n2. Make changes and commit\n3. Push: `git push -u origin feat/my-feature`\n4. Open PR with description\n5. Request review\n6. Merge after approval\n\n---\n\n## 🐛 Known Issues & Limitations\n\n### Current Limitations\n\n1. **Desktop only** (mobile support in Phase 2)\n2. **Local storage** (no cloud sync yet)\n3. **No collaboration** (single user editing)\n4. **English lyrics only** (multi-language in future)\n\n### Known Bugs\n\n*None currently tracked for MVP*\n\n### Workarounds\n\n**Issue:** Font size changes lag\n**Workaround:** Use preset sizes instead of slider\n\n**Issue:** Large songs (>10min) slow down\n**Workaround:** Virtual scrolling coming in Sprint 3\n\n---\n\n## 📚 Additional Resources\n\n### External Links\n\n- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)\n- [React Performance](https://react.dev/learn/render-and-commit)\n- [Tailwind CSS Docs](https://tailwindcss.com/docs)\n- [FastAPI Docs](https://fastapi.tiangolo.com/)\n- **[SongPrep Repository](https://github.com/tencent-ailab/SongPrep)** - Song structure parsing\n- **[SongPrep Paper](https://arxiv.org/abs/2509.17404)** - Technical details\n\n### Internal Files\n\n- `backend/schemas/song_map.schema.json` - Song Map structure\n- `frontend/types.ts` - TypeScript definitions\n- `.claude/CLAUDE.md` - Agent SDK instructions\n- **`docs/research/SONGPREP_ANALYSIS.md`** - SongPrep integration research\n\n---\n\n## 📅 Document History\n\n| Version | Date | Changes |\n|---------|------|---------|\n| 3.0 | Oct 1, 2025 | Consolidated all docs into master file |\n| 2.0 | Oct 1, 2025 | Added AudioPlayer & StemSelector specs |\n| 1.0 | Sep 30, 2025 | Initial documentation structure |\n\n---\n\n## 🎯 Core Principle\n\n> **\"The best interface for performance is no interface at all.\"**\n\nEvery decision must answer:\n**\"Does this help the musician perform better, or does it distract?\"**\n\nIf it distracts → Cut it.\nIf it helps → Polish it until it's invisible.\n\n---\n\n**Maintained by:** Performia Development Team\n**Next Review:** End of Sprint 3 (Oct 21, 2025)\n**Questions?** Check the FAQ or open an issue\n"
+}
