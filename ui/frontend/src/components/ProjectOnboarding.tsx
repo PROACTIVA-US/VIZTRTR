@@ -375,7 +375,14 @@ export default function ProjectOnboarding({
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Cancel clicked, navigating to /projects');
+                  console.log('Cancel clicked, resetting and navigating to /projects');
+                  // Reset all state before navigating
+                  setError('');
+                  setPrdMethod(null);
+                  setPrdText('');
+                  setPrdFilePath('');
+                  setPrdFileName('');
+                  setStep('prd-upload');
                   navigate('/projects');
                 }}
                 className="btn-secondary"
