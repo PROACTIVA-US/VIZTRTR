@@ -169,14 +169,21 @@ export default function ProjectOnboarding({
           const detectedUrl = urlData.url || 'http://localhost:3000';
           setFrontendUrl(detectedUrl);
 
-          // Show warning if server not verified
+          // Show warnings based on verification status
           if (!urlData.verified) {
             console.warn(
               `[PRD Analysis] Frontend server not running at ${detectedUrl}. User will need to start it.`
             );
-            if (urlData.message) {
-              console.warn(`[PRD Analysis] ${urlData.message}`);
-            }
+          } else if (urlData.verified && !urlData.matched) {
+            console.warn(
+              `[PRD Analysis] Server running at ${detectedUrl} but project name doesn't match. Please verify this is the correct project.`
+            );
+          } else if (urlData.matched) {
+            console.log(`[PRD Analysis] ✓ Server verified and project matched at ${detectedUrl}`);
+          }
+
+          if (urlData.message) {
+            console.log(`[PRD Analysis] ${urlData.message}`);
           }
         }
 
