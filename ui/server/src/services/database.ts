@@ -100,7 +100,9 @@ export class VIZTRTRDatabase {
   }
 
   // Projects
-  createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'workspacePath'>): Project {
+  createProject(
+    project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'workspacePath'>
+  ): Project {
     const id = `proj_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const now = new Date().toISOString();
 
@@ -131,7 +133,7 @@ export class VIZTRTRDatabase {
       targetScore: project.targetScore || 8.5,
       maxIterations: project.maxIterations || 5,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
   }
 
@@ -155,7 +157,13 @@ export class VIZTRTRDatabase {
     if (fields) {
       const values = Object.entries(updates)
         .filter(([k]) => k !== 'id' && k !== 'createdAt')
-        .map(([, v]) => v);
+        .map(([k, v]) => {
+          // Convert boolean to integer for SQLite (0/1)
+          if (k === 'hasProductSpec' && typeof v === 'boolean') {
+            return v ? 1 : 0;
+          }
+          return v;
+        });
 
       const stmt = this.db.prepare(`
         UPDATE projects SET ${fields}, updatedAt = ? WHERE id = ?
@@ -193,7 +201,7 @@ export class VIZTRTRDatabase {
       status: 'queued',
       currentIteration: 0,
       maxIterations,
-      startedAt: now
+      startedAt: now,
     };
   }
 
@@ -211,7 +219,7 @@ export class VIZTRTRDatabase {
       maxIterations: row.maxIterations,
       startedAt: row.startedAt,
       completedAt: row.completedAt || undefined,
-      error: row.error || undefined
+      error: row.error || undefined,
     };
   }
 
@@ -230,7 +238,7 @@ export class VIZTRTRDatabase {
       maxIterations: row.maxIterations,
       startedAt: row.startedAt,
       completedAt: row.completedAt || undefined,
-      error: row.error || undefined
+      error: row.error || undefined,
     }));
   }
 
