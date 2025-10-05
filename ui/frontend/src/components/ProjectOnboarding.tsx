@@ -166,7 +166,18 @@ export default function ProjectOnboarding({
 
         if (urlRes.ok) {
           const urlData = await urlRes.json();
-          setFrontendUrl(urlData.url || 'http://localhost:3000');
+          const detectedUrl = urlData.url || 'http://localhost:3000';
+          setFrontendUrl(detectedUrl);
+
+          // Show warning if server not verified
+          if (!urlData.verified) {
+            console.warn(
+              `[PRD Analysis] Frontend server not running at ${detectedUrl}. User will need to start it.`
+            );
+            if (urlData.message) {
+              console.warn(`[PRD Analysis] ${urlData.message}`);
+            }
+          }
         }
 
         setStep('spec-review');
@@ -251,7 +262,8 @@ export default function ProjectOnboarding({
 
     const userMsg = chatInput.trim();
     setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    const newMessages = [...chatMessages, { role: 'user', content: userMsg }];
+    setChatMessages(newMessages);
 
     try {
       const res = await fetch(`http://localhost:3001/api/projects/${projectId}/chat`, {
@@ -259,6 +271,7 @@ export default function ProjectOnboarding({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
+          history: chatMessages, // Send full conversation history
           context: { productSpec, projectPath },
         }),
       });
