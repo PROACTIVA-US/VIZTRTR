@@ -14,6 +14,7 @@ viztritr-output/
 # UI server outputs
 ui/server/*.db
 ui/server/viztrtr-output/
+ui/server/viztrtr-workspaces/
 
 # Project-specific outputs
 projects/*/output/
