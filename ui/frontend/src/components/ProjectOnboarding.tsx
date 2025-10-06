@@ -75,6 +75,8 @@ export default function ProjectOnboarding({
   const [prdFilePath, setPrdFilePath] = useState('');
   const [prdFileName, setPrdFileName] = useState('');
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [startingServer, setStartingServer] = useState(false);
+  const [serverStartOutput, setServerStartOutput] = useState('');
 
   const handleFileButtonClick = () => {
     setShowFileBrowser(true);
@@ -238,11 +240,9 @@ export default function ProjectOnboarding({
 
   const checkServerStatus = async () => {
     try {
-      // Use backend proxy to check server status (avoids CORS issues)
-      const res = await fetch('http://localhost:3001/api/check-server', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: frontendUrl }),
+      // Use the new server status endpoint
+      const res = await fetch(`http://localhost:3001/api/projects/${projectId}/server/status`, {
+        method: 'GET',
       });
 
       if (res.ok) {
@@ -257,7 +257,36 @@ export default function ProjectOnboarding({
   };
 
   const handleStartServer = async () => {
-    setError('Please start your frontend server manually from the project directory.');
+    setStartingServer(true);
+    setServerStartOutput('');
+    setError('');
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/projects/${projectId}/server/start`, {
+        method: 'POST',
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setServerStartOutput(data.output || 'Server started successfully!');
+        setFrontendUrl(data.url || frontendUrl);
+        setServerRunning(true);
+
+        // Wait a moment then check status to confirm
+        setTimeout(() => {
+          checkServerStatus();
+        }, 2000);
+      } else {
+        setError(data.error || 'Failed to start server');
+        setServerRunning(false);
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to start server');
+      setServerRunning(false);
+    } finally {
+      setStartingServer(false);
+    }
   };
 
   const handleComplete = () => {
@@ -787,15 +816,30 @@ export default function ProjectOnboarding({
               <div className="bg-yellow-500/10 border border-yellow-500/50 rounded-lg p-4 mb-6">
                 <h3 className="font-semibold text-yellow-400 mb-2">Server Not Running</h3>
                 <p className="text-sm text-slate-300 mb-3">
-                  Please start your frontend dev server manually at:
+                  VIZTRTR can automatically start your frontend dev server, or you can start it
+                  manually at:
                   <br />
                   <code className="text-yellow-400">{projectPath}</code>
                 </p>
+
+                {error && (
+                  <div className="mb-3 p-3 bg-red-500/10 border border-red-500 rounded">
+                    <p className="text-sm text-red-400">{error}</p>
+                  </div>
+                )}
+
+                {serverStartOutput && (
+                  <div className="mb-3 p-3 bg-slate-900 rounded text-xs font-mono max-h-32 overflow-y-auto">
+                    <pre className="text-slate-300 whitespace-pre-wrap">{serverStartOutput}</pre>
+                  </div>
+                )}
+
                 <button
                   onClick={handleStartServer}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 text-sm"
+                  disabled={startingServer}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Try to Start Server
+                  {startingServer ? 'Starting Server...' : 'Start Server Automatically'}
                 </button>
               </div>
             )}
