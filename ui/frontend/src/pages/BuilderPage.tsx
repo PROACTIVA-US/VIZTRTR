@@ -112,40 +112,6 @@ export default function BuilderPage() {
         </div>
       </main>
 
-      {/* Footer with additional info */}
-      <footer className="mt-16 border-t border-slate-800 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
-            <div className="flex items-center gap-2">
-              <span>Powered by</span>
-              <span className="font-semibold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                Claude
-              </span>
-              <span>+</span>
-              <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                VIZTRTR
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <a
-                href="https://github.com/yourusername/viztritr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-slate-300 transition-colors"
-              >
-                GitHub
-              </a>
-              <a href="/docs" className="hover:text-slate-300 transition-colors">
-                Documentation
-              </a>
-              <a href="/about" className="hover:text-slate-300 transition-colors">
-                About
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
-
       {/* Add custom animations to tailwind.config.js */}
       <style>{`
         @keyframes blob {
