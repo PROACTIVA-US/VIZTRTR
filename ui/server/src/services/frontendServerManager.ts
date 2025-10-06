@@ -1,11 +1,12 @@
 /**
  * Frontend Server Manager
- * Checks if frontend servers are running and can auto-start them
+ * Manages frontend dev servers with proper process lifecycle and concurrency control
  */
 
 import { spawn, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as net from 'net';
 
 interface ServerStatus {
   running: boolean;
@@ -23,13 +24,60 @@ interface StartServerResult {
   output?: string;
 }
 
+interface ServerConfig {
+  timeout?: number; // Startup timeout in milliseconds (default: 30000)
+  maxOutputLines?: number; // Max output lines to store (default: 100)
+}
+
+interface ManagedProcess {
+  process: ChildProcess;
+  starting: boolean;
+  output: string[];
+}
+
+// Status cache to reduce redundant network requests
+interface CachedStatus {
+  status: ServerStatus;
+  timestamp: number;
+}
+
+const STATUS_CACHE_TTL = 2000; // 2 seconds
+
 export class FrontendServerManager {
-  private runningServers: Map<string, ChildProcess> = new Map();
+  private runningServers: Map<string, ManagedProcess> = new Map();
+  private statusCache: Map<string, CachedStatus> = new Map();
+  private readonly defaultConfig: Required<ServerConfig> = {
+    timeout: 30000,
+    maxOutputLines: 100,
+  };
 
   /**
-   * Check if a server is running on the given URL
+   * Check if a port is available
    */
-  async checkServerStatus(url: string): Promise<ServerStatus> {
+  private async isPortAvailable(port: number): Promise<boolean> {
+    return new Promise(resolve => {
+      const server = net.createServer();
+      server.once('error', () => resolve(false));
+      server.once('listening', () => {
+        server.close();
+        resolve(true);
+      });
+      server.listen(port);
+    });
+  }
+
+  /**
+   * Check if a server is running on the given URL with caching
+   */
+  async checkServerStatus(url: string, useCache = true): Promise<ServerStatus> {
+    // Check cache first
+    if (useCache) {
+      const cached = this.statusCache.get(url);
+      if (cached && Date.now() - cached.timestamp < STATUS_CACHE_TTL) {
+        return cached.status;
+      }
+    }
+
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 3000);
@@ -41,27 +89,55 @@ export class FrontendServerManager {
 
       clearTimeout(timeout);
 
-      if (response.ok) {
-        const portMatch = url.match(/:(\d+)/);
-        return {
-          running: true,
-          url,
-          port: portMatch ? parseInt(portMatch[1], 10) : undefined,
-        };
-      }
+      const status: ServerStatus = response.ok
+        ? {
+            running: true,
+            url,
+            port: this.extractPort(url),
+          }
+        : { running: false };
 
-      return { running: false };
+      // Cache the result
+      this.statusCache.set(url, { status, timestamp: Date.now() });
+      return status;
     } catch (error) {
-      return { running: false };
+      const status: ServerStatus = { running: false };
+      this.statusCache.set(url, { status, timestamp: Date.now() });
+      return status;
     }
   }
 
   /**
-   * Start a frontend dev server
+   * Extract port from URL
    */
-  async startServer(projectPath: string): Promise<StartServerResult> {
+  private extractPort(url: string): number | undefined {
+    const portMatch = url.match(/:(\d+)/);
+    return portMatch ? parseInt(portMatch[1], 10) : undefined;
+  }
+
+  /**
+   * Start a frontend dev server with concurrency protection
+   */
+  async startServer(projectPath: string, config: ServerConfig = {}): Promise<StartServerResult> {
+    const mergedConfig = { ...this.defaultConfig, ...config };
+
     try {
-      // Check if package.json exists
+      // Check for concurrent start attempts
+      const existing = this.runningServers.get(projectPath);
+      if (existing) {
+        if (existing.starting) {
+          return {
+            success: false,
+            error: 'Server is already starting. Please wait.',
+          };
+        }
+        return {
+          success: false,
+          error: 'Server is already running. Stop it first.',
+        };
+      }
+
+      // Validate project structure
       const packageJsonPath = path.join(projectPath, 'package.json');
       if (!fs.existsSync(packageJsonPath)) {
         return {
@@ -81,38 +157,98 @@ export class FrontendServerManager {
         };
       }
 
+      // Detect expected port from config or script
+      const expectedPort = this.detectExpectedPort(projectPath, devScript);
+      if (expectedPort) {
+        const portAvailable = await this.isPortAvailable(expectedPort);
+        if (!portAvailable) {
+          return {
+            success: false,
+            error: `Port ${expectedPort} is already in use. Please free the port and try again.`,
+          };
+        }
+      }
+
       console.log(`[FrontendServerManager] Starting dev server at ${projectPath}`);
       console.log(`[FrontendServerManager] Running: npm run dev`);
 
-      // Spawn the dev server process
+      // Spawn the dev server process with proper cleanup handling
+      // Using detached: true to create a new process group
       const serverProcess = spawn('npm', ['run', 'dev'], {
         cwd: projectPath,
         shell: true,
-        detached: false,
+        detached: true, // Create new process group for better cleanup
         stdio: ['ignore', 'pipe', 'pipe'],
       });
 
-      // Capture output for debugging
-      let output = '';
+      // Store process with starting flag
+      const managed: ManagedProcess = {
+        process: serverProcess,
+        starting: true,
+        output: [],
+      };
+      this.runningServers.set(projectPath, managed);
+
+      // Capture output with line limits
       serverProcess.stdout?.on('data', data => {
-        output += data.toString();
+        const lines = data.toString().split('\n');
+        managed.output.push(...lines);
+        // Trim to max lines
+        if (managed.output.length > mergedConfig.maxOutputLines) {
+          managed.output = managed.output.slice(-mergedConfig.maxOutputLines);
+        }
         console.log(`[FrontendServerManager] stdout: ${data}`);
       });
 
       serverProcess.stderr?.on('data', data => {
-        output += data.toString();
+        const lines = data.toString().split('\n');
+        managed.output.push(...lines);
+        if (managed.output.length > mergedConfig.maxOutputLines) {
+          managed.output = managed.output.slice(-mergedConfig.maxOutputLines);
+        }
         console.log(`[FrontendServerManager] stderr: ${data}`);
       });
 
-      // Store the process
-      this.runningServers.set(projectPath, serverProcess);
+      // Handle unexpected process exit
+      serverProcess.on('exit', code => {
+        if (code !== 0 && code !== null) {
+          console.error(
+            `[FrontendServerManager] Server process exited unexpectedly with code ${code}`
+          );
+          this.runningServers.delete(projectPath);
+        }
+      });
 
-      // Wait for server to start (check for common startup messages)
-      const started = await this.waitForServerStart(projectPath, output, serverProcess);
+      // Wait for server to start with configurable timeout
+      const started = await this.waitForServerStart(managed, mergedConfig.timeout);
+
+      // Mark as not starting anymore
+      managed.starting = false;
 
       if (!started.success) {
         this.stopServer(projectPath);
         return started;
+      }
+
+      // Verify server is actually reachable
+      if (started.url) {
+        const verified = await this.checkServerStatus(started.url, false);
+        if (!verified.running) {
+          console.warn(
+            `[FrontendServerManager] Server started but not yet reachable at ${started.url}. Waiting...`
+          );
+          // Give it a few more seconds
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          const retryVerified = await this.checkServerStatus(started.url, false);
+          if (!retryVerified.running) {
+            this.stopServer(projectPath);
+            return {
+              success: false,
+              error: `Server started but is not reachable at ${started.url}`,
+              output: managed.output.join('\n'),
+            };
+          }
+        }
       }
 
       return {
@@ -120,10 +256,11 @@ export class FrontendServerManager {
         url: started.url,
         port: started.port,
         pid: serverProcess.pid,
-        output,
+        output: managed.output.slice(-20).join('\n'), // Return last 20 lines
       };
     } catch (error) {
       console.error('[FrontendServerManager] Error starting server:', error);
+      this.runningServers.delete(projectPath);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -132,86 +269,127 @@ export class FrontendServerManager {
   }
 
   /**
-   * Wait for server to start and detect URL
+   * Detect expected port from vite.config, package.json, or script
+   */
+  private detectExpectedPort(projectPath: string, devScript: string): number | null {
+    // Check vite.config
+    const viteConfigPaths = [
+      path.join(projectPath, 'vite.config.ts'),
+      path.join(projectPath, 'vite.config.js'),
+    ];
+
+    for (const configPath of viteConfigPaths) {
+      if (fs.existsSync(configPath)) {
+        const config = fs.readFileSync(configPath, 'utf-8');
+        const portMatch = config.match(/port:\s*(\d+)/);
+        if (portMatch) {
+          return parseInt(portMatch[1], 10);
+        }
+      }
+    }
+
+    // Check dev script for port flag
+    const scriptPortMatch = devScript.match(/--port[= ](\d+)/);
+    if (scriptPortMatch) {
+      return parseInt(scriptPortMatch[1], 10);
+    }
+
+    return null;
+  }
+
+  /**
+   * Wait for server to start and detect URL with improved patterns
    */
   private async waitForServerStart(
-    projectPath: string,
-    initialOutput: string,
-    process: ChildProcess
+    managed: ManagedProcess,
+    timeout: number
   ): Promise<StartServerResult> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
+    return new Promise(resolve => {
+      const timeoutId = setTimeout(() => {
         resolve({
           success: false,
-          error: 'Server startup timeout (30 seconds)',
+          error: `Server startup timeout (${timeout / 1000} seconds)`,
         });
-      }, 30000);
+      }, timeout);
 
-      let output = initialOutput;
+      const patterns = [
+        // Vite patterns
+        { regex: /Local:\s+(https?:\/\/localhost:\d+)/, group: 1 },
+        { regex: /Local:\s+(https?:\/\/127\.0\.0\.1:\d+)/, group: 1 },
+        // Next.js patterns
+        { regex: /started server on.*?(https?:\/\/[^:]+):(\d+)/, urlFromParts: true },
+        { regex: /ready.*?on (https?:\/\/[^\s]+)/, group: 1 },
+        // Generic patterns
+        { regex: /(https?:\/\/localhost:\d+)/, group: 1 },
+        // Port-only patterns (construct URL)
+        { regex: /localhost:(\d+)/, portOnly: true },
+        { regex: /127\.0\.0\.1:(\d+)/, portOnly: true },
+      ];
 
-      const checkOutput = (data: Buffer) => {
-        output += data.toString();
+      const checkOutput = () => {
+        const fullOutput = managed.output.join('\n');
 
-        // Look for common dev server startup messages
-        // Vite: "Local:   http://localhost:5173/"
-        // Next: "ready - started server on 0.0.0.0:3000"
-        // CRA: "webpack compiled successfully"
+        for (const pattern of patterns) {
+          const match = fullOutput.match(pattern.regex);
+          if (match) {
+            clearTimeout(timeoutId);
 
-        const viteMatch = output.match(/Local:\s+(http:\/\/localhost:\d+)/);
-        const nextMatch = output.match(/started server on.*:(\d+)/);
-        const portMatch = output.match(/localhost:(\d+)/);
+            let url: string;
+            let port: number;
 
-        if (viteMatch) {
-          clearTimeout(timeout);
-          const url = viteMatch[1];
-          const portNum = parseInt(url.match(/:(\d+)/)![1], 10);
-          resolve({
-            success: true,
-            url,
-            port: portNum,
-            output,
-          });
-        } else if (nextMatch) {
-          clearTimeout(timeout);
-          const port = parseInt(nextMatch[1], 10);
-          const url = `http://localhost:${port}`;
-          resolve({
-            success: true,
-            url,
-            port,
-            output,
-          });
-        } else if (portMatch && output.includes('ready')) {
-          clearTimeout(timeout);
-          const port = parseInt(portMatch[1], 10);
-          const url = `http://localhost:${port}`;
-          resolve({
-            success: true,
-            url,
-            port,
-            output,
-          });
+            if (pattern.portOnly) {
+              port = parseInt(match[1], 10);
+              url = `http://localhost:${port}`;
+            } else if (pattern.urlFromParts) {
+              const host = match[1];
+              port = parseInt(match[2], 10);
+              url = `${host}:${port}`;
+            } else {
+              url = match[pattern.group!];
+              const portMatch = url.match(/:(\d+)/);
+              port = portMatch ? parseInt(portMatch[1], 10) : 80;
+            }
+
+            // Additional validation: check for "ready" or "compiled" indicators
+            const isReady =
+              fullOutput.includes('ready') ||
+              fullOutput.includes('compiled') ||
+              fullOutput.includes('Local:') ||
+              fullOutput.includes('started server');
+
+            if (isReady) {
+              resolve({
+                success: true,
+                url,
+                port,
+                output: managed.output.join('\n'),
+              });
+              return;
+            }
+          }
         }
       };
 
-      process.stdout?.on('data', checkOutput);
-      process.stderr?.on('data', checkOutput);
+      // Check output every 500ms
+      const intervalId = setInterval(checkOutput, 500);
 
-      process.on('error', error => {
-        clearTimeout(timeout);
+      managed.process.on('error', error => {
+        clearTimeout(timeoutId);
+        clearInterval(intervalId);
         resolve({
           success: false,
           error: error.message,
         });
       });
 
-      process.on('exit', code => {
-        clearTimeout(timeout);
-        if (code !== 0) {
+      managed.process.on('exit', code => {
+        clearTimeout(timeoutId);
+        clearInterval(intervalId);
+        if (code !== 0 && code !== null) {
           resolve({
             success: false,
             error: `Server process exited with code ${code}`,
-            output,
+            output: managed.output.join('\n'),
           });
         }
       });
@@ -219,17 +397,60 @@ export class FrontendServerManager {
   }
 
   /**
-   * Stop a running dev server
+   * Stop a running dev server with proper process group cleanup
    */
   stopServer(projectPath: string): boolean {
-    const process = this.runningServers.get(projectPath);
-    if (process) {
+    const managed = this.runningServers.get(projectPath);
+    if (managed) {
       console.log(`[FrontendServerManager] Stopping server at ${projectPath}`);
-      process.kill('SIGTERM');
+
+      try {
+        // Kill the entire process group (negative PID)
+        // This ensures child processes (like Vite's actual server) are also killed
+        if (managed.process.pid) {
+          process.kill(-managed.process.pid, 'SIGTERM');
+        }
+
+        // Fallback: kill the process directly
+        managed.process.kill('SIGTERM');
+
+        // Force kill after 5 seconds if still running
+        setTimeout(() => {
+          if (managed.process.pid) {
+            try {
+              process.kill(-managed.process.pid, 'SIGKILL');
+              managed.process.kill('SIGKILL');
+            } catch (e) {
+              // Process already dead
+            }
+          }
+        }, 5000);
+      } catch (error) {
+        console.error(`[FrontendServerManager] Error killing process:`, error);
+      }
+
       this.runningServers.delete(projectPath);
+      this.statusCache.delete(projectPath);
       return true;
     }
     return false;
+  }
+
+  /**
+   * Check if a server is currently starting
+   */
+  isServerStarting(projectPath: string): boolean {
+    const managed = this.runningServers.get(projectPath);
+    return managed?.starting ?? false;
+  }
+
+  /**
+   * Get server output for a project
+   */
+  getServerOutput(projectPath: string, lastN = 50): string[] {
+    const managed = this.runningServers.get(projectPath);
+    if (!managed) return [];
+    return managed.output.slice(-lastN);
   }
 
   /**
@@ -244,11 +465,9 @@ export class FrontendServerManager {
    */
   stopAllServers(): void {
     console.log('[FrontendServerManager] Stopping all servers');
-    for (const [projectPath, process] of this.runningServers.entries()) {
-      console.log(`[FrontendServerManager] Stopping server at ${projectPath}`);
-      process.kill('SIGTERM');
+    for (const projectPath of this.runningServers.keys()) {
+      this.stopServer(projectPath);
     }
-    this.runningServers.clear();
   }
 }
 

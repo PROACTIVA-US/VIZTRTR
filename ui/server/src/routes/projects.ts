@@ -754,6 +754,114 @@ Your role:
     }
   });
 
+  /**
+   * POST /api/projects/:id/server/start
+   * Start the frontend dev server for a project
+   */
+  router.post('/:id/server/start', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id, 10);
+      const project = db.getProject(projectId);
+
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      console.log(`[API] Starting frontend server for project ${projectId}`);
+
+      const result = await frontendServerManager.startServer(project.projectPath);
+
+      if (result.success) {
+        res.json({
+          success: true,
+          url: result.url,
+          port: result.port,
+          pid: result.pid,
+          message: 'Frontend server started successfully',
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: result.error,
+          output: result.output,
+        });
+      }
+    } catch (error) {
+      console.error('[API] Error starting server:', error);
+      res.status(500).json({
+        error: 'Failed to start frontend server',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  /**
+   * POST /api/projects/:id/server/stop
+   * Stop the frontend dev server for a project
+   */
+  router.post('/:id/server/stop', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id, 10);
+      const project = db.getProject(projectId);
+
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      console.log(`[API] Stopping frontend server for project ${projectId}`);
+
+      const stopped = frontendServerManager.stopServer(project.projectPath);
+
+      if (stopped) {
+        res.json({
+          success: true,
+          message: 'Frontend server stopped successfully',
+        });
+      } else {
+        res.json({
+          success: false,
+          message: 'No running server found for this project',
+        });
+      }
+    } catch (error) {
+      console.error('[API] Error stopping server:', error);
+      res.status(500).json({
+        error: 'Failed to stop frontend server',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  /**
+   * GET /api/projects/:id/server/status
+   * Check if the frontend server is running
+   */
+  router.get('/:id/server/status', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id, 10);
+      const project = db.getProject(projectId);
+
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const status = await frontendServerManager.checkServerStatus(project.frontendUrl);
+
+      res.json({
+        running: status.running,
+        url: status.url,
+        port: status.port,
+        projectUrl: project.frontendUrl,
+      });
+    } catch (error) {
+      console.error('[API] Error checking server status:', error);
+      res.status(500).json({
+        error: 'Failed to check server status',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
   return router;
 }
 
@@ -802,114 +910,3 @@ async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
 
   await orchestrator.run();
 }
-
-/**
- * POST /api/projects/:id/server/start
- * Start the frontend dev server for a project
- */
-router.post('/:id/server/start', async (req, res) => {
-  try {
-    const projectId = parseInt(req.params.id, 10);
-    const db = new VIZTRTRDatabase();
-    const project = db.getProject(projectId);
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    console.log(`[API] Starting frontend server for project ${projectId}`);
-
-    const result = await frontendServerManager.startServer(project.projectPath);
-
-    if (result.success) {
-      res.json({
-        success: true,
-        url: result.url,
-        port: result.port,
-        pid: result.pid,
-        message: 'Frontend server started successfully',
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: result.error,
-        output: result.output,
-      });
-    }
-  } catch (error) {
-    console.error('[API] Error starting server:', error);
-    res.status(500).json({
-      error: 'Failed to start frontend server',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-/**
- * POST /api/projects/:id/server/stop
- * Stop the frontend dev server for a project
- */
-router.post('/:id/server/stop', async (req, res) => {
-  try {
-    const projectId = parseInt(req.params.id, 10);
-    const db = new VIZTRTRDatabase();
-    const project = db.getProject(projectId);
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    console.log(`[API] Stopping frontend server for project ${projectId}`);
-
-    const stopped = frontendServerManager.stopServer(project.projectPath);
-
-    if (stopped) {
-      res.json({
-        success: true,
-        message: 'Frontend server stopped successfully',
-      });
-    } else {
-      res.json({
-        success: false,
-        message: 'No running server found for this project',
-      });
-    }
-  } catch (error) {
-    console.error('[API] Error stopping server:', error);
-    res.status(500).json({
-      error: 'Failed to stop frontend server',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-/**
- * GET /api/projects/:id/server/status
- * Check if the frontend server is running
- */
-router.get('/:id/server/status', async (req, res) => {
-  try {
-    const projectId = parseInt(req.params.id, 10);
-    const db = new VIZTRTRDatabase();
-    const project = db.getProject(projectId);
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    const status = await frontendServerManager.checkServerStatus(project.frontendUrl);
-
-    res.json({
-      running: status.running,
-      url: status.url,
-      port: status.port,
-      projectUrl: project.frontendUrl,
-    });
-  } catch (error) {
-    console.error('[API] Error checking server status:', error);
-    res.status(500).json({
-      error: 'Failed to check server status',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});

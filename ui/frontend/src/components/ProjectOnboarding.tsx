@@ -76,6 +76,7 @@ export default function ProjectOnboarding({
   const [prdFileName, setPrdFileName] = useState('');
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [startingServer, setStartingServer] = useState(false);
+  const [stoppingServer, setStoppingServer] = useState(false);
   const [serverStartOutput, setServerStartOutput] = useState('');
 
   const handleFileButtonClick = () => {
@@ -273,10 +274,8 @@ export default function ProjectOnboarding({
         setFrontendUrl(data.url || frontendUrl);
         setServerRunning(true);
 
-        // Wait a moment then check status to confirm
-        setTimeout(() => {
-          checkServerStatus();
-        }, 2000);
+        // Poll for server status with exponential backoff instead of single timeout
+        await pollServerStatus(data.url || frontendUrl);
       } else {
         setError(data.error || 'Failed to start server');
         setServerRunning(false);
@@ -286,6 +285,54 @@ export default function ProjectOnboarding({
       setServerRunning(false);
     } finally {
       setStartingServer(false);
+    }
+  };
+
+  const handleStopServer = async () => {
+    setStoppingServer(true);
+    setError('');
+
+    try {
+      const res = await fetch(`http://localhost:3001/api/projects/${projectId}/server/stop`, {
+        method: 'POST',
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setServerRunning(false);
+        setServerStartOutput('Server stopped');
+      } else {
+        setError(data.message || 'No running server found');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to stop server');
+    } finally {
+      setStoppingServer(false);
+    }
+  };
+
+  // Poll server status with exponential backoff
+  const pollServerStatus = async (url: string, maxAttempts = 5) => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const delay = Math.min(1000 * Math.pow(2, i), 5000); // 1s, 2s, 4s, 5s, 5s
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      try {
+        const res = await fetch(`http://localhost:3001/api/projects/${projectId}/server/status`, {
+          method: 'GET',
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.running) {
+            setServerRunning(true);
+            return;
+          }
+        }
+      } catch (err) {
+        // Continue polling
+      }
     }
   };
 
@@ -804,10 +851,21 @@ export default function ProjectOnboarding({
                 </button>
               </div>
               {serverRunning !== null && (
-                <div
-                  className={`mt-2 p-3 rounded ${serverRunning ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}
-                >
-                  {serverRunning ? '✓ Server is running' : '✗ Server not detected'}
+                <div className="mt-2 flex items-center justify-between">
+                  <div
+                    className={`flex-1 p-3 rounded ${serverRunning ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}
+                  >
+                    {serverRunning ? '✓ Server is running' : '✗ Server not detected'}
+                  </div>
+                  {serverRunning && (
+                    <button
+                      onClick={handleStopServer}
+                      disabled={stoppingServer}
+                      className="ml-2 px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {stoppingServer ? 'Stopping...' : 'Stop Server'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
