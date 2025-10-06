@@ -201,22 +201,122 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       const devScript = packageJson.scripts?.dev || packageJson.scripts?.start || '';
 
       // Common patterns: vite (5173), next (3000), create-react-app (3000)
-      let detectedPort = 3000; // Default
+      const candidatePorts: number[] = [];
 
       if (devScript.includes('vite')) {
-        detectedPort = 5173;
+        candidatePorts.push(5173);
       } else if (devScript.includes('next')) {
-        detectedPort = 3000;
+        candidatePorts.push(3000);
+      } else {
+        candidatePorts.push(3000); // Default
       }
 
       // Try to parse --port or -p flag
       const portMatch = devScript.match(/(?:--port|-p)\s+(\d+)/);
       if (portMatch) {
-        detectedPort = parseInt(portMatch[1], 10);
+        candidatePorts.unshift(parseInt(portMatch[1], 10)); // Prioritize explicit port
       }
 
-      const url = `http://localhost:${detectedPort}`;
-      res.json({ url });
+      // Also check common alternative ports
+      candidatePorts.push(5174, 3001, 4000, 8080);
+
+      // Test each port to see if server is actually running AND matches the project
+      const testUrl = async (port: number): Promise<{ url: string; match: boolean } | null> => {
+        const url = `http://localhost:${port}`;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3000);
+
+          // Fetch the HTML to check page title and meta tags
+          const response = await fetch(url, {
+            method: 'GET',
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeout);
+
+          if (!response.ok) {
+            return null;
+          }
+
+          // Get HTML content to verify it's the right project
+          const html = await response.text();
+
+          // Extract project name from package.json for matching
+          const projectName = packageJson.name || '';
+          const projectDisplayName = packageJson.displayName || projectName;
+
+          // Check for project identifiers in HTML
+          const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+          const title = titleMatch ? titleMatch[1].trim() : '';
+
+          // Check if title or HTML contains project name
+          const nameInTitle =
+            title.toLowerCase().includes(projectName.toLowerCase()) ||
+            title.toLowerCase().includes(projectDisplayName.toLowerCase());
+          const nameInHtml =
+            html.toLowerCase().includes(projectName.toLowerCase()) ||
+            html.toLowerCase().includes(projectDisplayName.toLowerCase());
+
+          // Also check for Vite dev server signature (means it's a dev server)
+          const isDevServer = html.includes('__vite') || html.includes('@vite/client');
+
+          const isMatch = nameInTitle || (nameInHtml && isDevServer);
+
+          console.log(
+            `[URL Detection] Server at ${url}: title="${title}", projectName="${projectName}", match=${isMatch}`
+          );
+
+          return { url, match: isMatch };
+        } catch (error) {
+          // Server not running on this port
+          return null;
+        }
+      };
+
+      // Test ports in order, prioritizing matches
+      let firstRunningServer: { url: string; match: boolean } | null = null;
+
+      for (const port of candidatePorts) {
+        const result = await testUrl(port);
+        if (result) {
+          // If it's a match, use it immediately
+          if (result.match) {
+            return res.json({
+              url: result.url,
+              verified: true,
+              matched: true,
+              message: 'Server verified and project matched',
+            });
+          }
+          // Otherwise, keep track of first running server as fallback
+          if (!firstRunningServer) {
+            firstRunningServer = result;
+          }
+        }
+      }
+
+      // If we found a running server but no match, warn the user
+      if (firstRunningServer) {
+        return res.json({
+          url: firstRunningServer.url,
+          verified: true,
+          matched: false,
+          message:
+            'Server is running but project name does not match. Please verify this is the correct project.',
+        });
+      }
+
+      // No running server found, return best guess
+      const defaultUrl = `http://localhost:${candidatePorts[0]}`;
+      console.log(
+        `[URL Detection] No running server found. Suggesting ${defaultUrl} based on package.json`
+      );
+      res.json({
+        url: defaultUrl,
+        verified: false,
+        message: 'Server not currently running. Please start your frontend dev server.',
+      });
     } catch (error) {
       res.status(500).json({
         error: error instanceof Error ? error.message : 'Failed to detect URL',
@@ -411,7 +511,7 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
         return res.status(404).json({ error: 'Project not found' });
       }
 
-      const { message, context } = req.body;
+      const { message, history = [], context } = req.body;
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
       }
@@ -428,25 +528,41 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       const Anthropic = (await import('@anthropic-ai/sdk')).default;
       const anthropic = new Anthropic({ apiKey });
 
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        messages: [
-          {
-            role: 'user',
-            content: `You are an AI assistant helping with a VIZTRTR project.
+      // Build system prompt with context
+      const systemPrompt = `You are an AI assistant helping edit and refine a product specification for a VIZTRTR project.
 
 Project: ${project.name}
 Frontend URL: ${project.frontendUrl}
 Project Path: ${project.projectPath}
 
-${productSpec ? `Product Specification:\n${JSON.stringify(productSpec, null, 2)}\n\n` : ''}
+${productSpec ? `Current Product Specification:\n${JSON.stringify(productSpec, null, 2)}\n\n` : ''}
 
-User Question: ${message}
+Your role:
+- Help the user refine and edit the product specification
+- Maintain conversation context across multiple messages
+- Suggest specific JSON edits when asked
+- Answer questions about the spec structure
+- Be concise but helpful`;
 
-Provide a helpful, concise answer about the project.`,
-          },
-        ],
+      // Build conversation messages array
+      const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+        // Add conversation history
+        ...history.map((msg: { role: string; content: string }) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        })),
+        // Add current user message
+        {
+          role: 'user' as const,
+          content: message,
+        },
+      ];
+
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages,
       });
 
       const assistantMessage =

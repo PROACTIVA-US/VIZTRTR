@@ -166,7 +166,25 @@ export default function ProjectOnboarding({
 
         if (urlRes.ok) {
           const urlData = await urlRes.json();
-          setFrontendUrl(urlData.url || 'http://localhost:3000');
+          const detectedUrl = urlData.url || 'http://localhost:3000';
+          setFrontendUrl(detectedUrl);
+
+          // Show warnings based on verification status
+          if (!urlData.verified) {
+            console.warn(
+              `[PRD Analysis] Frontend server not running at ${detectedUrl}. User will need to start it.`
+            );
+          } else if (urlData.verified && !urlData.matched) {
+            console.warn(
+              `[PRD Analysis] Server running at ${detectedUrl} but project name doesn't match. Please verify this is the correct project.`
+            );
+          } else if (urlData.matched) {
+            console.log(`[PRD Analysis] ✓ Server verified and project matched at ${detectedUrl}`);
+          }
+
+          if (urlData.message) {
+            console.log(`[PRD Analysis] ${urlData.message}`);
+          }
         }
 
         setStep('spec-review');
@@ -251,7 +269,8 @@ export default function ProjectOnboarding({
 
     const userMsg = chatInput.trim();
     setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    const newMessages = [...chatMessages, { role: 'user', content: userMsg }];
+    setChatMessages(newMessages);
 
     try {
       const res = await fetch(`http://localhost:3001/api/projects/${projectId}/chat`, {
@@ -259,6 +278,7 @@ export default function ProjectOnboarding({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
+          history: chatMessages, // Send full conversation history
           context: { productSpec, projectPath },
         }),
       });
@@ -375,7 +395,14 @@ export default function ProjectOnboarding({
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Cancel clicked, navigating to /projects');
+                  console.log('Cancel clicked, resetting and navigating to /projects');
+                  // Reset all state before navigating
+                  setError('');
+                  setPrdMethod(null);
+                  setPrdText('');
+                  setPrdFilePath('');
+                  setPrdFileName('');
+                  setStep('prd-upload');
                   navigate('/projects');
                 }}
                 className="btn-secondary"
@@ -602,31 +629,30 @@ export default function ProjectOnboarding({
             </div>
 
             <div className="bg-slate-900 rounded-lg p-6 mb-6 max-h-96 overflow-y-auto">
-              <h3 className="font-semibold mb-3">Overview</h3>
-              <p className="text-sm text-slate-300 mb-4">{productSpec.overview.purpose}</p>
+              <h3 className="font-semibold mb-3">Product Vision</h3>
+              <p className="text-sm text-slate-300 mb-4">{productSpec.productVision}</p>
 
-              <h3 className="font-semibold mb-2">Key Features</h3>
+              <h3 className="font-semibold mb-2">Target Users</h3>
               <ul className="text-sm text-slate-300 space-y-1 mb-4">
-                {productSpec.overview.keyFeatures.slice(0, 5).map((feature, i) => (
-                  <li key={i}>• {feature}</li>
+                {productSpec.targetUsers?.slice(0, 3).map((user: string, i: number) => (
+                  <li key={i}>• {user}</li>
                 ))}
               </ul>
 
-              <h3 className="font-semibold mb-2">Technical Stack</h3>
-              <p className="text-sm text-slate-300 mb-4">
-                Framework: {productSpec.technicalRequirements.framework}
-              </p>
-
-              <h3 className="font-semibold mb-2">Routes ({productSpec.routes.length})</h3>
+              <h3 className="font-semibold mb-2">
+                Components ({Object.keys(productSpec.components || {}).length})
+              </h3>
               <div className="grid gap-2">
-                {productSpec.routes.slice(0, 4).map((route, i) => (
-                  <div key={i} className="bg-slate-800 p-2 rounded text-sm">
-                    <code className="text-blue-400">{route.path}</code> - {route.label}
-                  </div>
-                ))}
-                {productSpec.routes.length > 4 && (
+                {Object.keys(productSpec.components || {})
+                  .slice(0, 5)
+                  .map((componentName, i) => (
+                    <div key={i} className="bg-slate-800 p-2 rounded text-sm">
+                      <code className="text-blue-400">{componentName}</code>
+                    </div>
+                  ))}
+                {Object.keys(productSpec.components || {}).length > 5 && (
                   <p className="text-sm text-slate-500">
-                    + {productSpec.routes.length - 4} more routes
+                    + {Object.keys(productSpec.components || {}).length - 5} more components
                   </p>
                 )}
               </div>
