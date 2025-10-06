@@ -5,8 +5,21 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { DesignSpec, Changes, FileChange, ValidationResult, ChangeConstraints, CrossFileValidationResult } from '../core/types';
-import { validateFileChanges, formatValidationResult, getEffortBasedLimit, validateCrossFileInterfaces, formatCrossFileValidationResult } from '../core/validation';
+import {
+  DesignSpec,
+  Changes,
+  FileChange,
+  ValidationResult,
+  ChangeConstraints,
+  CrossFileValidationResult,
+} from '../core/types';
+import {
+  validateFileChanges,
+  formatValidationResult,
+  getEffortBasedLimit,
+  validateCrossFileInterfaces,
+  formatCrossFileValidationResult,
+} from '../core/validation';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -34,7 +47,14 @@ export class ClaudeSonnetImplementationPlugin {
     const fileChanges: FileChange[] = [];
 
     // Reset validation stats for this run
-    this.validationStats = { total: 0, passed: 0, failed: 0, crossFileChecks: 0, crossFileBlocked: 0, reasons: [] };
+    this.validationStats = {
+      total: 0,
+      passed: 0,
+      failed: 0,
+      crossFileChecks: 0,
+      crossFileBlocked: 0,
+      reasons: [],
+    };
 
     for (const recommendation of topChanges) {
       console.log(`   - Implementing: ${recommendation.title} (effort: ${recommendation.effort})`);
@@ -268,7 +288,9 @@ Return your response as JSON:
           );
 
           console.warn(`   ❌ Change REJECTED by cross-file validation`);
-          console.warn(`   💡 This change would break ${crossFileResult.affectedFiles.length} dependent file(s)`);
+          console.warn(
+            `   💡 This change would break ${crossFileResult.affectedFiles.length} dependent file(s)`
+          );
 
           crossFileResult.suggestions.forEach(suggestion => {
             console.warn(`      • ${suggestion}`);

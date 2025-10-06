@@ -43,24 +43,13 @@ export const AVAILABLE_MODELS = {
     'claude-opus-4-20250514',
     'claude-sonnet-4-20250514',
     'claude-sonnet-4.5-20250402',
-    'claude-haiku-4-20250402'
+    'claude-haiku-4-20250402',
   ],
-  openai: [
-    'gpt-4o',
-    'gpt-4o-mini',
-    'gpt-4-turbo',
-    'gpt-4',
-    'gpt-3.5-turbo'
-  ],
-  google: [
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
-    'gemini-1.0-pro'
-  ],
+  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
+  google: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro'],
   zai: [
-    'zai-default' // Z.AI models - will be populated from their API
-  ]
+    'zai-default', // Z.AI models - will be populated from their API
+  ],
 } as const;
 
 // Project configuration from viztrtr-config.json

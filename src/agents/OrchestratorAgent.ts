@@ -12,7 +12,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { DesignSpec, Recommendation, Changes, FileChange } from '../core/types';
 import { ControlPanelAgent } from './specialized/ControlPanelAgent';
 import { TeleprompterAgent } from './specialized/TeleprompterAgent';
-import { discoverComponentFiles, summarizeDiscovery, DiscoveredFile } from '../utils/file-discovery';
+import {
+  discoverComponentFiles,
+  summarizeDiscovery,
+  DiscoveredFile,
+} from '../utils/file-discovery';
 
 interface RoutingDecision {
   agent: 'ControlPanelAgent' | 'TeleprompterAgent' | 'skip';
@@ -83,7 +87,7 @@ export class OrchestratorAgent {
 
     console.log(`   📋 Routing Plan:`);
     console.log(`      Strategy: ${routingPlan.strategy}`);
-    routingPlan.decisions.forEach((decision) => {
+    routingPlan.decisions.forEach(decision => {
       if (decision.agent !== 'skip') {
         console.log(
           `      → ${decision.agent}: ${decision.recommendations.length} items (${decision.priority} priority)`
@@ -144,14 +148,14 @@ export class OrchestratorAgent {
       });
 
       // Extract thinking blocks
-      const thinkingBlocks = response.content.filter((block) => block.type === 'thinking');
+      const thinkingBlocks = response.content.filter(block => block.type === 'thinking');
       if (thinkingBlocks.length > 0) {
         console.log('   💭 Orchestrator is thinking strategically...');
       }
 
       // Extract text content
-      const textBlocks = response.content.filter((block) => block.type === 'text');
-      const fullText = textBlocks.map((block) => (block as any).text).join('\n');
+      const textBlocks = response.content.filter(block => block.type === 'text');
+      const fullText = textBlocks.map(block => (block as any).text).join('\n');
 
       // Parse JSON
       const jsonMatch =
@@ -182,7 +186,10 @@ export class OrchestratorAgent {
     });
 
     const fileList = Array.from(filesByDir.entries())
-      .map(([dir, files]) => `   ${dir}/: ${files.slice(0, 5).join(', ')}${files.length > 5 ? ` (+ ${files.length - 5} more)` : ''}`)
+      .map(
+        ([dir, files]) =>
+          `   ${dir}/: ${files.slice(0, 5).join(', ')}${files.length > 5 ? ` (+ ${files.length - 5} more)` : ''}`
+      )
       .join('\n');
 
     return `You are the ORCHESTRATOR AGENT for VIZTRTR's multi-agent UI improvement system.

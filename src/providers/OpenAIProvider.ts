@@ -17,14 +17,14 @@ export class OpenAIProvider extends ModelProvider {
     'gpt-4o-mini': { input: 0.15, output: 0.6 },
     'gpt-4-turbo': { input: 10.0, output: 30.0 },
     'gpt-4': { input: 30.0, output: 60.0 },
-    'gpt-3.5-turbo': { input: 0.5, output: 1.5 }
+    'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
   };
 
   constructor(config: ModelConfig, apiKey: string, baseUrl?: string) {
     super(config, apiKey, baseUrl);
     this.client = new OpenAI({
       apiKey,
-      ...(baseUrl && { baseURL: baseUrl })
+      ...(baseUrl && { baseURL: baseUrl }),
     });
   }
 
@@ -35,7 +35,7 @@ export class OpenAIProvider extends ModelProvider {
     if (request.systemPrompt) {
       messages.push({
         role: 'system',
-        content: request.systemPrompt
+        content: request.systemPrompt,
       });
     }
 
@@ -48,8 +48,8 @@ export class OpenAIProvider extends ModelProvider {
         userContent.push({
           type: 'image_url',
           image_url: {
-            url: `data:image/png;base64,${image}`
-          }
+            url: `data:image/png;base64,${image}`,
+          },
         });
       }
     }
@@ -57,19 +57,19 @@ export class OpenAIProvider extends ModelProvider {
     // Add text prompt
     userContent.push({
       type: 'text',
-      text: request.userPrompt
+      text: request.userPrompt,
     });
 
     messages.push({
       role: 'user',
-      content: userContent
+      content: userContent,
     });
 
     const response = await this.client.chat.completions.create({
       model: this.config.model,
       messages,
       max_tokens: request.maxTokens || this.config.maxTokens || 4096,
-      temperature: request.temperature ?? this.config.temperature ?? 1.0
+      temperature: request.temperature ?? this.config.temperature ?? 1.0,
     });
 
     const content = response.choices[0]?.message?.content || '';
@@ -83,11 +83,11 @@ export class OpenAIProvider extends ModelProvider {
         outputTokens: usage.completion_tokens,
         totalCost: this.calculateCost({
           inputTokens: usage.prompt_tokens,
-          outputTokens: usage.completion_tokens
-        })
+          outputTokens: usage.completion_tokens,
+        }),
       },
       model: response.model,
-      provider: 'openai'
+      provider: 'openai',
     };
   }
 
@@ -101,7 +101,7 @@ export class OpenAIProvider extends ModelProvider {
     const response = await this.complete({
       systemPrompt: 'You are an expert UI/UX designer and analyst.',
       userPrompt: prompt,
-      images: [screenshot.data]
+      images: [screenshot.data],
     });
 
     return this.parseDesignSpec(response.content);
@@ -117,7 +117,7 @@ export class OpenAIProvider extends ModelProvider {
     const response = await this.complete({
       systemPrompt: 'You are an expert UI/UX evaluator.',
       userPrompt: prompt,
-      images: [screenshot.data]
+      images: [screenshot.data],
     });
 
     return this.parseEvaluation(response.content);
@@ -214,7 +214,7 @@ Return a JSON object with:
         currentIssues: parsed.currentIssues || [],
         recommendations: parsed.recommendations || [],
         prioritizedChanges: parsed.recommendations || [],
-        estimatedNewScore: parsed.estimatedNewScore || 0
+        estimatedNewScore: parsed.estimatedNewScore || 0,
       };
     } catch (error) {
       console.error('Failed to parse design spec:', error);
@@ -225,7 +225,7 @@ Return a JSON object with:
         currentIssues: [],
         recommendations: [],
         prioritizedChanges: [],
-        estimatedNewScore: 5.0
+        estimatedNewScore: 5.0,
       };
     }
   }
@@ -248,7 +248,7 @@ Return a JSON object with:
         strengths: parsed.strengths || [],
         weaknesses: parsed.weaknesses || [],
         summary: parsed.summary || '',
-        priorityImprovements: []
+        priorityImprovements: [],
       };
     } catch (error) {
       console.error('Failed to parse evaluation:', error);
@@ -264,13 +264,13 @@ Return a JSON object with:
           component_design: 5,
           animation_interaction: 5,
           accessibility: 5,
-          overall_aesthetic: 5
+          overall_aesthetic: 5,
         },
         dimensions: {},
         strengths: [],
         weaknesses: [],
         summary: 'Failed to evaluate',
-        priorityImprovements: []
+        priorityImprovements: [],
       };
     }
   }

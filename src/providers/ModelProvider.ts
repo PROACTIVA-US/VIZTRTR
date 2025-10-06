@@ -6,6 +6,10 @@
  */
 
 import type { Screenshot, DesignSpec, EvaluationResult, ModelConfig } from '../core/types';
+import { AnthropicProvider } from './AnthropicProvider';
+import { OpenAIProvider } from './OpenAIProvider';
+import { GoogleProvider } from './GoogleProvider';
+import { ZAIProvider } from './ZAIProvider';
 
 export interface CompletionRequest {
   systemPrompt: string;
@@ -60,10 +64,7 @@ export abstract class ModelProvider {
   /**
    * Implementation: Generate code changes from design spec
    */
-  abstract implementChanges(
-    spec: DesignSpec,
-    projectPath: string
-  ): Promise<any>;
+  abstract implementChanges(spec: DesignSpec, projectPath: string): Promise<any>;
 
   /**
    * Evaluation: Score a design
@@ -88,7 +89,11 @@ export abstract class ModelProvider {
   /**
    * Calculate cost for a completion
    */
-  calculateCost(usage: { inputTokens: number; outputTokens: number; thinkingTokens?: number }): number {
+  calculateCost(usage: {
+    inputTokens: number;
+    outputTokens: number;
+    thinkingTokens?: number;
+  }): number {
     const costs = this.getCostPer1M();
     let total = 0;
     total += (usage.inputTokens / 1_000_000) * costs.input;
@@ -117,29 +122,13 @@ export class ModelProviderFactory {
   ): ModelProvider {
     switch (config.provider) {
       case 'anthropic':
-        return new (require('./AnthropicProvider').AnthropicProvider)(
-          config,
-          credentials.apiKey,
-          credentials.baseUrl
-        );
+        return new AnthropicProvider(config, credentials.apiKey, credentials.baseUrl);
       case 'openai':
-        return new (require('./OpenAIProvider').OpenAIProvider)(
-          config,
-          credentials.apiKey,
-          credentials.baseUrl
-        );
+        return new OpenAIProvider(config, credentials.apiKey, credentials.baseUrl);
       case 'google':
-        return new (require('./GoogleProvider').GoogleProvider)(
-          config,
-          credentials.apiKey,
-          credentials.baseUrl
-        );
+        return new GoogleProvider(config, credentials.apiKey, credentials.baseUrl);
       case 'zai':
-        return new (require('./ZAIProvider').ZAIProvider)(
-          config,
-          credentials.apiKey,
-          credentials.baseUrl
-        );
+        return new ZAIProvider(config, credentials.apiKey, credentials.baseUrl);
       default:
         throw new Error(`Unsupported provider: ${config.provider}`);
     }

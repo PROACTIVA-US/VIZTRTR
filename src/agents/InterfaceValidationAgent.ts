@@ -195,9 +195,10 @@ Be precise about:
     const valid = !breakingChanges.some(change => change.impact === 'high');
 
     // Generate suggestions for fixing breaking changes
-    const suggestions = breakingChanges.length > 0
-      ? await this.generateFixSuggestions(breakingChanges, dependents)
-      : [];
+    const suggestions =
+      breakingChanges.length > 0
+        ? await this.generateFixSuggestions(breakingChanges, dependents)
+        : [];
 
     return {
       valid,
@@ -373,4 +374,3 @@ Return ONLY breaking changes. If there are none, return empty array: []`;
     };
   }
 }
-

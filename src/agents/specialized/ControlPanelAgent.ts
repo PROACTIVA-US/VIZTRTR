@@ -15,7 +15,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Recommendation, FileChange, ValidationResult } from '../../core/types';
 import { validateFileChanges, formatValidationResult } from '../../core/validation';
-import { discoverComponentFiles, DiscoveredFile, summarizeDiscovery } from '../../utils/file-discovery';
+import {
+  discoverComponentFiles,
+  DiscoveredFile,
+  summarizeDiscovery,
+} from '../../utils/file-discovery';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -38,10 +42,7 @@ export class ControlPanelAgent {
   /**
    * Implement changes for control panel components
    */
-  async implement(
-    recommendations: Recommendation[],
-    projectPath: string
-  ): Promise<FileChange[]> {
+  async implement(recommendations: Recommendation[], projectPath: string): Promise<FileChange[]> {
     console.log(`   🎛️  ControlPanelAgent processing ${recommendations.length} recommendations...`);
 
     // Discover component files in the project
@@ -70,7 +71,9 @@ export class ControlPanelAgent {
 
     // Log validation stats
     if (this.validationStats.total > 0) {
-      console.log(`   📊 Validation: ${this.validationStats.passed}/${this.validationStats.total} passed`);
+      console.log(
+        `   📊 Validation: ${this.validationStats.passed}/${this.validationStats.total} passed`
+      );
     }
 
     return changes;
@@ -99,11 +102,12 @@ export class ControlPanelAgent {
       });
 
       // Extract implementation
-      const textBlocks = response.content.filter((block) => block.type === 'text');
-      const fullText = textBlocks.map((block) => (block as any).text).join('\n');
+      const textBlocks = response.content.filter(block => block.type === 'text');
+      const fullText = textBlocks.map(block => (block as any).text).join('\n');
 
       // Parse JSON response
-      const jsonMatch = fullText.match(/```json\s*([\s\S]*?)\s*```/) || fullText.match(/\{[\s\S]*?\n\}/);
+      const jsonMatch =
+        fullText.match(/```json\s*([\s\S]*?)\s*```/) || fullText.match(/\{[\s\S]*?\n\}/);
 
       if (!jsonMatch) {
         console.warn('   ⚠️  Could not parse implementation response');
@@ -120,7 +124,12 @@ export class ControlPanelAgent {
       const discoveredFile = this.discoveredFiles.find(f => f.path === normalizedPath);
       if (!discoveredFile) {
         console.warn(`   ⚠️  File not found in discovered files: ${normalizedPath}`);
-        console.warn(`   💡 Available files: ${this.discoveredFiles.slice(0, 5).map(f => f.path).join(', ')}...`);
+        console.warn(
+          `   💡 Available files: ${this.discoveredFiles
+            .slice(0, 5)
+            .map(f => f.path)
+            .join(', ')}...`
+        );
         return null;
       }
 
@@ -193,12 +202,15 @@ export class ControlPanelAgent {
 
   private buildImplementationPrompt(recommendation: Recommendation, projectPath: string): string {
     // Group files by directory for better organization
-    const filesByDir = this.discoveredFiles.reduce((acc, file) => {
-      const dir = path.dirname(file.path);
-      if (!acc[dir]) acc[dir] = [];
-      acc[dir].push(file.name);
-      return acc;
-    }, {} as Record<string, string[]>);
+    const filesByDir = this.discoveredFiles.reduce(
+      (acc, file) => {
+        const dir = path.dirname(file.path);
+        if (!acc[dir]) acc[dir] = [];
+        acc[dir].push(file.name);
+        return acc;
+      },
+      {} as Record<string, string[]>
+    );
 
     const fileList = Object.entries(filesByDir)
       .map(([dir, files]) => {
@@ -341,7 +353,9 @@ Think carefully about which file needs modification, then implement the change.`
 
     // Default to true for general web UI improvements
     // Only exclude if it's clearly not relevant
-    return relevantKeywords.some((keyword) => text.includes(keyword)) ||
-           recommendation.dimension !== 'animation'; // Most things relevant except pure animation
+    return (
+      relevantKeywords.some(keyword => text.includes(keyword)) ||
+      recommendation.dimension !== 'animation'
+    ); // Most things relevant except pure animation
   }
 }

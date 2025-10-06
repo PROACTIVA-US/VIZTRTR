@@ -8,19 +8,19 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 export interface DiscoveredFile {
-  path: string;           // Relative path from project root
-  absolutePath: string;   // Absolute path on filesystem
-  name: string;           // File name
-  extension: string;      // File extension (.tsx, .ts, etc)
-  sizeBytes: number;      // File size in bytes
-  content?: string;       // File content (if loaded)
+  path: string; // Relative path from project root
+  absolutePath: string; // Absolute path on filesystem
+  name: string; // File name
+  extension: string; // File extension (.tsx, .ts, etc)
+  sizeBytes: number; // File size in bytes
+  content?: string; // File content (if loaded)
 }
 
 export interface FileDiscoveryOptions {
-  extensions?: string[];  // File extensions to include (default: ['.tsx', '.ts', '.jsx', ''])
-  maxDepth?: number;      // Maximum directory depth (default: 10)
+  extensions?: string[]; // File extensions to include (default: ['.tsx', '.ts', '.jsx', ''])
+  maxDepth?: number; // Maximum directory depth (default: 10)
   excludeDirs?: string[]; // Directories to exclude (default: node_modules, dist, build)
-  maxFileSize?: number;   // Maximum file size in bytes (default: 100KB)
+  maxFileSize?: number; // Maximum file size in bytes (default: 100KB)
   includeContent?: boolean; // Load file contents (default: false)
 }
 
@@ -112,12 +112,12 @@ export async function discoverComponentFiles(
   return allFiles.filter(file => {
     const name = file.name.toLowerCase();
     const isComponent =
-      /^[A-Z]/.test(file.name) ||           // PascalCase
-      name.includes('component') ||          // Has "component" in name
-      name.includes('page') ||               // Page components
-      name.includes('view') ||               // View components
-      file.path.includes('components') ||    // In components dir
-      file.path.includes('pages');           // In pages dir
+      /^[A-Z]/.test(file.name) || // PascalCase
+      name.includes('component') || // Has "component" in name
+      name.includes('page') || // Page components
+      name.includes('view') || // View components
+      file.path.includes('components') || // In components dir
+      file.path.includes('pages'); // In pages dir
 
     return isComponent;
   });
@@ -133,9 +133,7 @@ export async function findFilesByPattern(
 ): Promise<DiscoveredFile[]> {
   const allFiles = await discoverFiles(projectPath, options);
 
-  return allFiles.filter(file =>
-    pattern.test(file.path) || pattern.test(file.name)
-  );
+  return allFiles.filter(file => pattern.test(file.path) || pattern.test(file.name));
 }
 
 /**
@@ -155,10 +153,13 @@ export async function discoverFilesWithContent(
  * Get a summary of discovered files
  */
 export function summarizeDiscovery(files: DiscoveredFile[]): string {
-  const byExtension = files.reduce((acc, file) => {
-    acc[file.extension] = (acc[file.extension] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const byExtension = files.reduce(
+    (acc, file) => {
+      acc[file.extension] = (acc[file.extension] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   const totalSize = files.reduce((sum, file) => sum + file.sizeBytes, 0);
 

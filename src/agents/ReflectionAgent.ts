@@ -103,12 +103,12 @@ Your task is to **think deeply** about what just happened and provide strategic 
 - Top Recommendations:
 ${designSpec.prioritizedChanges
   .slice(0, 3)
-  .map((r) => `  • ${r.title} (${r.dimension})`)
+  .map(r => `  • ${r.title} (${r.dimension})`)
   .join('\n')}
 
 **IMPLEMENTATION:**
 - Files Modified: ${changes.files.length}
-- Modified Files: ${changes.files.map((f) => f.path).join(', ')}
+- Modified Files: ${changes.files.map(f => f.path).join(', ')}
 - Summary: ${changes.summary}
 
 **VERIFICATION:**
@@ -187,14 +187,14 @@ Return your reflection as JSON:
 
   private parseReflectionResponse(response: Anthropic.Message): ReflectionResult {
     // Extract thinking blocks for logging
-    const thinkingBlocks = response.content.filter((block) => block.type === 'thinking');
+    const thinkingBlocks = response.content.filter(block => block.type === 'thinking');
     if (thinkingBlocks.length > 0) {
       console.log('   💭 Agent thinking detected, processing insights...');
     }
 
     // Extract text content
-    const textBlocks = response.content.filter((block) => block.type === 'text');
-    const fullText = textBlocks.map((block) => (block as any).text).join('\n');
+    const textBlocks = response.content.filter(block => block.type === 'text');
+    const fullText = textBlocks.map(block => (block as any).text).join('\n');
 
     // Try to extract JSON
     const jsonMatch = fullText.match(/```json\s*([\s\S]*?)\s*```/) || fullText.match(/\{[\s\S]*\}/);
@@ -204,8 +204,12 @@ Return your reflection as JSON:
         const jsonText = jsonMatch[1] || jsonMatch[0];
         const result = JSON.parse(jsonText);
 
-        console.log(`   ${result.shouldContinue ? '✅' : '⚠️ '} Continue: ${result.shouldContinue}`);
-        console.log(`   ${result.shouldRollback ? '⚠️ ' : '✅'} Rollback: ${result.shouldRollback}`);
+        console.log(
+          `   ${result.shouldContinue ? '✅' : '⚠️ '} Continue: ${result.shouldContinue}`
+        );
+        console.log(
+          `   ${result.shouldRollback ? '⚠️ ' : '✅'} Rollback: ${result.shouldRollback}`
+        );
         console.log(`   📝 Lessons learned: ${result.lessonsLearned.length}`);
 
         return result;

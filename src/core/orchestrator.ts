@@ -92,19 +92,28 @@ export class VIZTRTROrchestrator {
 
       // Validate required BackendConfig fields
       const backend = projectConfig.backend;
-      if (!backend.url || !backend.devCommand || !backend.workingDirectory || !backend.healthCheckPath) {
+      if (
+        !backend.url ||
+        !backend.devCommand ||
+        !backend.workingDirectory ||
+        !backend.healthCheckPath
+      ) {
         throw new Error(
           'Backend config missing required fields. Required: url, devCommand, workingDirectory, healthCheckPath'
         );
       }
 
-      this.backendManager = new BackendServerManager(backend as BackendConfig, { verbose: this.config.verbose });
+      this.backendManager = new BackendServerManager(backend as BackendConfig, {
+        verbose: this.config.verbose,
+      });
 
       try {
         await this.backendManager.start();
       } catch (error) {
         console.error('❌ Failed to start backend server:', error);
-        throw new Error(`Backend server failed to start: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+          `Backend server failed to start: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -185,7 +194,10 @@ export class VIZTRTROrchestrator {
 
     for (const configPath of possiblePaths) {
       try {
-        const exists = await fs.access(configPath).then(() => true).catch(() => false);
+        const exists = await fs
+          .access(configPath)
+          .then(() => true)
+          .catch(() => false);
         if (exists) {
           const content = await fs.readFile(configPath, 'utf-8');
           const config = JSON.parse(content);
@@ -194,7 +206,9 @@ export class VIZTRTROrchestrator {
         }
       } catch (error) {
         if (this.config.verbose) {
-          console.log(`Config not found at ${configPath}: ${error instanceof Error ? error.message : String(error)}`);
+          console.log(
+            `Config not found at ${configPath}: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
         // Continue to next path
       }
@@ -388,8 +402,12 @@ export class VIZTRTROrchestrator {
     console.log('💾 Step 9: Updating iteration memory...');
 
     // Record attempts
-    const status = verification.success && scoreDelta > 0 ? 'success' :
-                   verification.success && scoreDelta === 0 ? 'no_effect' : 'failed';
+    const status =
+      verification.success && scoreDelta > 0
+        ? 'success'
+        : verification.success && scoreDelta === 0
+          ? 'no_effect'
+          : 'failed';
 
     for (const rec of designSpec.prioritizedChanges) {
       this.memory.recordAttempt(
@@ -438,7 +456,7 @@ export class VIZTRTROrchestrator {
       evaluation,
       scoreDelta,
       targetReached: evaluation.targetReached,
-      hybridScore
+      hybridScore,
     };
   }
 
@@ -554,13 +572,17 @@ ${report.iterations
 
 - **Score:** ${iter.evaluation.compositeScore.toFixed(1)}/10
 - **Delta:** ${iter.scoreDelta > 0 ? '+' : ''}${iter.scoreDelta.toFixed(1)}
-${iter.hybridScore ? `- **Hybrid Breakdown:**
+${
+  iter.hybridScore
+    ? `- **Hybrid Breakdown:**
   - Vision: ${iter.hybridScore.visionScore.toFixed(1)}/10 (60%)
   - Metrics: ${iter.hybridScore.metricsScore.toFixed(1)}/10 (40%)
   - Confidence: ${(iter.hybridScore.confidence * 100).toFixed(0)}%
   - Performance: ${iter.hybridScore.metricsBreakdown?.performance.toFixed(1)}/10
   - Accessibility: ${iter.hybridScore.metricsBreakdown?.accessibility.toFixed(1)}/10
-  - Best Practices: ${iter.hybridScore.metricsBreakdown?.bestPractices.toFixed(1)}/10` : ''}
+  - Best Practices: ${iter.hybridScore.metricsBreakdown?.bestPractices.toFixed(1)}/10`
+    : ''
+}
 - **Before:** [screenshot](./iteration_${idx}/before.png)
 - **After:** [screenshot](./iteration_${idx}/after.png)
 - **Spec:** [design_spec.json](./iteration_${idx}/design_spec.json)

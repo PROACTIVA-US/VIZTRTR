@@ -4,7 +4,10 @@
  * Prevents over-engineering by enforcing surgical, incremental changes
  */
 
-import { InterfaceValidationAgent, CrossFileValidationResult } from '../agents/InterfaceValidationAgent';
+import {
+  InterfaceValidationAgent,
+  CrossFileValidationResult,
+} from '../agents/InterfaceValidationAgent';
 
 export interface ValidationResult {
   valid: boolean;
@@ -38,9 +41,9 @@ const DEFAULT_CONSTRAINTS: ChangeConstraints = {
   preserveImports: true,
   requireDiffFormat: false,
   effortBasedLineLimits: {
-    low: 40,      // effort 1-2: simple CSS/style changes
-    medium: 80,   // effort 3-4: component refactors
-    high: 150,    // effort 5+: complex features
+    low: 40, // effort 1-2: simple CSS/style changes
+    medium: 80, // effort 3-4: component refactors
+    high: 150, // effort 5+: complex features
   },
 };
 
@@ -66,14 +69,14 @@ export function validateFileChanges(
   if (lineDelta > config.maxLineDelta) {
     violations.push(
       `Line delta (${lineDelta}) exceeds maximum (${config.maxLineDelta}). ` +
-      `Changed ${lineDelta} lines, but should change at most ${config.maxLineDelta} lines.`
+        `Changed ${lineDelta} lines, but should change at most ${config.maxLineDelta} lines.`
     );
   }
 
   if (lineGrowthPercent > config.maxGrowthPercent) {
     violations.push(
       `File grew by ${(lineGrowthPercent * 100).toFixed(1)}%, exceeds maximum ${(config.maxGrowthPercent * 100).toFixed(0)}%. ` +
-      `Original: ${originalLines} lines, Modified: ${modifiedLines} lines.`
+        `Original: ${originalLines} lines, Modified: ${modifiedLines} lines.`
     );
   }
 
@@ -92,7 +95,7 @@ export function validateFileChanges(
     if (lineDelta > maxLinesForEffort) {
       violations.push(
         `Effort score ${effortScore} allows max ${maxLinesForEffort} lines changed, but ${lineDelta} lines were changed. ` +
-        `Make more targeted changes.`
+          `Make more targeted changes.`
       );
     }
   }
@@ -107,18 +110,20 @@ export function validateFileChanges(
     if (originalExportInfo.hasDefault !== modifiedExportInfo.hasDefault) {
       violations.push(
         `Export type changed: ${originalExportInfo.hasDefault ? 'had default export' : 'had no default export'} → ` +
-        `${modifiedExportInfo.hasDefault ? 'now has default export' : 'now has no default export'}. ` +
-        `Changing default export status breaks imports.`
+          `${modifiedExportInfo.hasDefault ? 'now has default export' : 'now has no default export'}. ` +
+          `Changing default export status breaks imports.`
       );
       exportsChanged = true;
     }
 
     // Check if named exports were removed (breaking change)
-    const removedExports = originalExportInfo.named.filter(exp => !modifiedExportInfo.named.includes(exp));
+    const removedExports = originalExportInfo.named.filter(
+      exp => !modifiedExportInfo.named.includes(exp)
+    );
     if (removedExports.length > 0) {
       violations.push(
         `Named exports removed: [${removedExports.join(', ')}]. ` +
-        `Removing exports is a breaking change.`
+          `Removing exports is a breaking change.`
       );
       exportsChanged = true;
     }
@@ -145,7 +150,7 @@ export function validateFileChanges(
       if (stillUsed.length > 0) {
         violations.push(
           `Import statements removed but still referenced: ${stillUsed.join(', ')}. ` +
-          `Cannot remove imports that are still in use.`
+            `Cannot remove imports that are still in use.`
         );
         importsChanged = true;
       }
@@ -217,7 +222,12 @@ export function analyzeExports(code: string): { hasDefault: boolean; named: stri
       if (match[1]) {
         // Handle export { a, b, c } syntax
         if (match[0].includes('{')) {
-          const exportList = match[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
+          const exportList = match[1].split(',').map(s =>
+            s
+              .trim()
+              .split(/\s+as\s+/)[0]
+              .trim()
+          );
           named.push(...exportList);
         } else {
           named.push(match[1].trim());
@@ -248,7 +258,8 @@ export function extractImports(code: string): string[] {
   const imports: string[] = [];
 
   // Match import statements
-  const importPattern = /import\s+(?:(?:\{[^}]+\}|\w+|\*\s+as\s+\w+)(?:\s*,\s*(?:\{[^}]+\}|\w+))*\s+from\s+)?['"]([^'"]+)['"]/g;
+  const importPattern =
+    /import\s+(?:(?:\{[^}]+\}|\w+|\*\s+as\s+\w+)(?:\s*,\s*(?:\{[^}]+\}|\w+))*\s+from\s+)?['"]([^'"]+)['"]/g;
 
   const matches = code.matchAll(importPattern);
   for (const match of matches) {
