@@ -203,6 +203,41 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       // Common patterns: vite (5173), next (3000), create-react-app (3000)
       const candidatePorts: number[] = [];
 
+      // Try to read vite.config.ts/js for custom port
+      let vitePort: number | null = null;
+      const viteConfigPaths = [
+        path.join(projectPath, 'vite.config.ts'),
+        path.join(projectPath, 'vite.config.js'),
+      ];
+
+      for (const configPath of viteConfigPaths) {
+        try {
+          if (fs.existsSync(configPath)) {
+            const viteConfig = fs.readFileSync(configPath, 'utf-8');
+            const portMatch = viteConfig.match(/port:\s*(\d+)/);
+            if (portMatch) {
+              vitePort = parseInt(portMatch[1], 10);
+              console.log(`[URL Detection] Found vite port in config: ${vitePort}`);
+              break;
+            }
+          }
+        } catch (error) {
+          // Config file read failed, continue
+        }
+      }
+
+      // Prioritize vite.config port if found
+      if (vitePort) {
+        candidatePorts.push(vitePort);
+      }
+
+      // Then check script for explicit port flags
+      const portMatch = devScript.match(/(?:--port|-p)\s+(\d+)/);
+      if (portMatch) {
+        candidatePorts.push(parseInt(portMatch[1], 10));
+      }
+
+      // Then default ports based on framework
       if (devScript.includes('vite')) {
         candidatePorts.push(5173);
       } else if (devScript.includes('next')) {
@@ -211,14 +246,8 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
         candidatePorts.push(3000); // Default
       }
 
-      // Try to parse --port or -p flag
-      const portMatch = devScript.match(/(?:--port|-p)\s+(\d+)/);
-      if (portMatch) {
-        candidatePorts.unshift(parseInt(portMatch[1], 10)); // Prioritize explicit port
-      }
-
-      // Also check common alternative ports
-      candidatePorts.push(5174, 3001, 4000, 8080);
+      // Also check common alternative ports (but prioritize detected ports)
+      candidatePorts.push(5001, 5174, 3001, 4000, 8080);
 
       // Test each port to see if server is actually running AND matches the project
       const testUrl = async (port: number): Promise<{ url: string; match: boolean } | null> => {
