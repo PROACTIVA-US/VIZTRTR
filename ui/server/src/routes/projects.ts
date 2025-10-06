@@ -700,11 +700,18 @@ Your role:
       }
 
       // Prevent running analysis on VIZTRTR's own frontend
-      if (project.frontendUrl.includes(':5173')) {
-        return res.status(400).json({
-          error: 'Cannot run analysis on VIZTRTR UI itself (port 5173)',
-          suggestion: 'Please ensure your project is running on a different port',
-        });
+      try {
+        const projectUrl = new URL(project.frontendUrl);
+        const VIZTRTR_UI_PORT = process.env.VITE_PORT || '5173';
+
+        if (projectUrl.port === VIZTRTR_UI_PORT) {
+          return res.status(400).json({
+            error: `Cannot run analysis on VIZTRTR UI itself (port ${VIZTRTR_UI_PORT})`,
+            suggestion: 'Please ensure your project is running on a different port',
+          });
+        }
+      } catch (error) {
+        // Invalid URL format - let it fail later in the process
       }
 
       // Create run record

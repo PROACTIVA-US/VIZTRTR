@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { Project } from '../types';
 
+interface ComponentSpec {
+  purpose?: string;
+  userStories?: string[];
+  designPriorities?: string[];
+  focusAreas?: string[];
+  stateManagement?: Record<string, unknown>;
+  interactions?: Record<string, unknown>;
+}
+
 interface ProductSpec {
   projectId: string;
   version: number;
@@ -9,8 +18,8 @@ interface ProductSpec {
   lastUpdated: string;
   productVision: string;
   targetUsers: string[];
-  components: Record<string, any>;
-  globalConstraints?: any;
+  components: Record<string, ComponentSpec>;
+  globalConstraints?: Record<string, unknown>;
   originalPRD?: string;
 }
 
@@ -405,7 +414,7 @@ export default function ProjectDetailPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Components</h3>
                   <div className="grid md:grid-cols-2 gap-3">
-                    {Object.entries(productSpec.components).map(([name, comp]: [string, any]) => (
+                    {Object.entries(productSpec.components).map(([name, comp]) => (
                       <div
                         key={name}
                         className="bg-slate-800/50 p-3 rounded border border-slate-700"
