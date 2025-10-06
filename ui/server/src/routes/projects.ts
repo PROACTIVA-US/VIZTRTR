@@ -699,6 +699,21 @@ Your role:
         return res.status(404).json({ error: 'Project not found' });
       }
 
+      // Prevent running analysis on VIZTRTR's own frontend
+      try {
+        const projectUrl = new URL(project.frontendUrl);
+        const VIZTRTR_UI_PORT = process.env.VITE_PORT || '5173';
+
+        if (projectUrl.port === VIZTRTR_UI_PORT) {
+          return res.status(400).json({
+            error: `Cannot run analysis on VIZTRTR UI itself (port ${VIZTRTR_UI_PORT})`,
+            suggestion: 'Please ensure your project is running on a different port',
+          });
+        }
+      } catch (error) {
+        // Invalid URL format - let it fail later in the process
+      }
+
       // Create run record
       const run = db.createRun(project.id, project.maxIterations);
 

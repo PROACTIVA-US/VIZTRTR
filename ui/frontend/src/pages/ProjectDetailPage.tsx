@@ -2,38 +2,25 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { Project } from '../types';
 
+interface ComponentSpec {
+  purpose?: string;
+  userStories?: string[];
+  designPriorities?: string[];
+  focusAreas?: string[];
+  stateManagement?: Record<string, unknown>;
+  interactions?: Record<string, unknown>;
+}
+
 interface ProductSpec {
   projectId: string;
-  productName: string;
-  version: string;
-  generatedAt: string;
+  version: number;
+  createdAt: string;
   lastUpdated: string;
-  overview: {
-    purpose: string;
-    targetUsers: string[];
-    keyFeatures: string[];
-  };
-  technicalRequirements: {
-    framework: string;
-    components: string[];
-    dependencies: string[];
-  };
-  uiuxGuidelines: {
-    designPrinciples: string[];
-    colorScheme: any;
-    typography: any;
-    spacing: any;
-  };
-  routes: Array<{
-    path: string;
-    label: string;
-    priority: 'high' | 'medium' | 'low';
-    description: string;
-  }>;
-  accessibility: {
-    wcagLevel: string;
-    requirements: string[];
-  };
+  productVision: string;
+  targetUsers: string[];
+  components: Record<string, ComponentSpec>;
+  globalConstraints?: Record<string, unknown>;
+  originalPRD?: string;
 }
 
 interface UploadedDocument {
@@ -298,11 +285,11 @@ export default function ProjectDetailPage() {
             <dl className="space-y-3 text-sm">
               <div>
                 <dt className="text-slate-400">Project Path</dt>
-                <dd className="text-white font-mono text-xs">{project.projectPath}</dd>
+                <dd className="text-white font-mono text-xs break-all">{project.projectPath}</dd>
               </div>
               <div>
                 <dt className="text-slate-400">Frontend URL</dt>
-                <dd className="text-white">{project.frontendUrl}</dd>
+                <dd className="text-white break-all">{project.frontendUrl}</dd>
               </div>
               <div>
                 <dt className="text-slate-400">Target Score</dt>
@@ -333,22 +320,12 @@ export default function ProjectDetailPage() {
           {productSpec && (
             <div className="card md:col-span-2">
               <h2 className="text-xl font-bold mb-4">Product Overview</h2>
-              <p className="text-slate-300 mb-4">{productSpec.overview.purpose}</p>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-400 mb-2">Key Features</h3>
-                  <ul className="text-sm space-y-1">
-                    {productSpec.overview.keyFeatures.map((feature, i) => (
-                      <li key={i} className="text-slate-300">
-                        • {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <p className="text-slate-300 mb-4">{productSpec.productVision}</p>
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-semibold text-sm text-slate-400 mb-2">Target Users</h3>
                   <ul className="text-sm space-y-1">
-                    {productSpec.overview.targetUsers.map((user, i) => (
+                    {productSpec.targetUsers.map((user, i) => (
                       <li key={i} className="text-slate-300">
                         • {user}
                       </li>
@@ -356,13 +333,15 @@ export default function ProjectDetailPage() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm text-slate-400 mb-2">Routes</h3>
+                  <h3 className="font-semibold text-sm text-slate-400 mb-2">Components</h3>
                   <ul className="text-sm space-y-1">
-                    {productSpec.routes.slice(0, 5).map((route, i) => (
-                      <li key={i} className="text-slate-300">
-                        • {route.label}
-                      </li>
-                    ))}
+                    {Object.keys(productSpec.components)
+                      .slice(0, 5)
+                      .map((comp, i) => (
+                        <li key={i} className="text-slate-300">
+                          • {comp}
+                        </li>
+                      ))}
                   </ul>
                 </div>
               </div>
@@ -419,40 +398,29 @@ export default function ProjectDetailPage() {
             ) : (
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold mb-2">Overview</h3>
-                  <p className="text-sm text-slate-300">{productSpec.overview.purpose}</p>
+                  <h3 className="font-semibold mb-2">Product Vision</h3>
+                  <p className="text-sm text-slate-300">{productSpec.productVision}</p>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">Design Principles</h3>
+                  <h3 className="font-semibold mb-2">Target Users</h3>
                   <ul className="text-sm text-slate-300 space-y-1">
-                    {productSpec.uiuxGuidelines.designPrinciples.map((principle, i) => (
-                      <li key={i}>• {principle}</li>
+                    {productSpec.targetUsers.map((user, i) => (
+                      <li key={i}>• {user}</li>
                     ))}
                   </ul>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">Routes & Sections</h3>
+                  <h3 className="font-semibold mb-2">Components</h3>
                   <div className="grid md:grid-cols-2 gap-3">
-                    {productSpec.routes.map((route, i) => (
-                      <div key={i} className="bg-slate-800/50 p-3 rounded border border-slate-700">
-                        <div className="flex items-center justify-between mb-1">
-                          <code className="text-xs text-blue-400">{route.path}</code>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded ${
-                              route.priority === 'high'
-                                ? 'bg-red-500/20 text-red-300'
-                                : route.priority === 'medium'
-                                  ? 'bg-yellow-500/20 text-yellow-300'
-                                  : 'bg-slate-500/20 text-slate-300'
-                            }`}
-                          >
-                            {route.priority}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-300">{route.label}</p>
-                        <p className="text-xs text-slate-500 mt-1">{route.description}</p>
+                    {Object.entries(productSpec.components).map(([name, comp]) => (
+                      <div
+                        key={name}
+                        className="bg-slate-800/50 p-3 rounded border border-slate-700"
+                      >
+                        <h4 className="text-sm font-semibold text-blue-400 mb-1">{name}</h4>
+                        <p className="text-xs text-slate-400">{comp.purpose || 'No description'}</p>
                       </div>
                     ))}
                   </div>
