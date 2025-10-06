@@ -7,6 +7,8 @@ import {
   ResultsPanel,
 } from '../components';
 import { useBuildStore } from '../store/buildStore';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 export default function BuilderPage() {
   const { buildState, evaluation, setPrompt, evaluatePrompt } = useBuildStore();
@@ -25,71 +27,8 @@ export default function BuilderPage() {
   const showResults = buildState === 'completed';
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      {/* Header with VIZTRTR branding */}
-      <header className="relative border-b border-slate-800 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-900/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
-            {/* Logo */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 blur-xl opacity-30 animate-pulse" />
-              <div className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-3 rounded-xl">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                VIZTRTR
-              </h1>
-              <p className="text-sm text-slate-400 mt-1">
-                AI-Powered UI Builder with Autonomous Agents
-              </p>
-            </div>
-          </div>
-
-          {/* Build state indicator */}
-          {buildState && (
-            <div className="mt-4 flex items-center gap-2 text-sm">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  buildState === 'completed'
-                    ? 'bg-green-500'
-                    : buildState === 'error'
-                    ? 'bg-red-500'
-                    : 'bg-blue-500 animate-pulse'
-                }`}
-              />
-              <span className="text-slate-300 capitalize">
-                {buildState === 'initializing' && 'Initializing build...'}
-                {buildState === 'planning' && 'Architect planning structure...'}
-                {buildState === 'designing' && 'Designer creating layout...'}
-                {buildState === 'engineering' && 'Engineer writing code...'}
-                {buildState === 'testing' && 'Tester validating quality...'}
-                {buildState === 'refining' && 'VIZTRTR improving UI...'}
-                {buildState === 'completed' && 'Build completed successfully!'}
-                {buildState === 'error' && 'Build encountered an error'}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Gradient accent line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50" />
-      </header>
+    <div className="min-h-screen bg-slate-900 flex flex-col">
+      <Header />
 
       {/* Main content area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -103,10 +42,12 @@ export default function BuilderPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <PromptInput onSubmit={(prompt) => {
-                setPrompt(prompt);
-                evaluatePrompt();
-              }} />
+              <PromptInput
+                onSubmit={prompt => {
+                  setPrompt(prompt);
+                  evaluatePrompt();
+                }}
+              />
             </motion.div>
           )}
 
@@ -194,16 +135,10 @@ export default function BuilderPage() {
               >
                 GitHub
               </a>
-              <a
-                href="/docs"
-                className="hover:text-slate-300 transition-colors"
-              >
+              <a href="/docs" className="hover:text-slate-300 transition-colors">
                 Documentation
               </a>
-              <a
-                href="/about"
-                className="hover:text-slate-300 transition-colors"
-              >
+              <a href="/about" className="hover:text-slate-300 transition-colors">
                 About
               </a>
             </div>
@@ -234,6 +169,7 @@ export default function BuilderPage() {
           animation-delay: 4s;
         }
       `}</style>
+      <Footer />
     </div>
   );
 }
