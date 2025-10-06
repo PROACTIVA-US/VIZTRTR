@@ -1,27 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import type { Project } from '../types';
-
-interface ComponentSpec {
-  purpose?: string;
-  userStories?: string[];
-  designPriorities?: string[];
-  focusAreas?: string[];
-  stateManagement?: Record<string, unknown>;
-  interactions?: Record<string, unknown>;
-}
-
-interface ProductSpec {
-  projectId: string;
-  version: number;
-  createdAt: string;
-  lastUpdated: string;
-  productVision: string;
-  targetUsers: string[];
-  components: Record<string, ComponentSpec>;
-  globalConstraints?: Record<string, unknown>;
-  originalPRD?: string;
-}
+import type { Project, ProductSpec } from '../types';
 
 interface UploadedDocument {
   id: string;

@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FileBrowser from './FileBrowser';
+import type { ProductSpec } from '../types';
 
 interface ProjectOnboardingProps {
   projectId: number;
@@ -22,34 +23,6 @@ type Step =
   | 'spec-edit'
   | 'frontend-verify'
   | 'complete';
-
-interface ProductSpec {
-  projectId: string;
-  productName: string;
-  version: string;
-  overview: {
-    purpose: string;
-    targetUsers: string[];
-    keyFeatures: string[];
-  };
-  technicalRequirements: {
-    framework: string;
-    components: string[];
-    dependencies: string[];
-  };
-  uiuxGuidelines: {
-    designPrinciples: string[];
-    colorScheme: any;
-    typography: any;
-    spacing: any;
-  };
-  routes: Array<{
-    path: string;
-    label: string;
-    priority: 'high' | 'medium' | 'low';
-    description: string;
-  }>;
-}
 
 export default function ProjectOnboarding({
   projectId,
