@@ -113,3 +113,25 @@ export interface EvaluatePromptRequest {
   prompt: string;
   type: 'prompt' | 'prd';
 }
+
+// Product Specification types
+export interface ComponentSpec {
+  purpose?: string;
+  userStories?: string[];
+  designPriorities?: string[];
+  focusAreas?: string[];
+  stateManagement?: Record<string, unknown>;
+  interactions?: Record<string, unknown>;
+}
+
+export interface ProductSpec {
+  projectId: string;
+  version: number;
+  createdAt: string;
+  lastUpdated: string;
+  productVision: string;
+  targetUsers: string[];
+  components: Record<string, ComponentSpec>;
+  globalConstraints?: Record<string, unknown>;
+  originalPRD?: string;
+}
