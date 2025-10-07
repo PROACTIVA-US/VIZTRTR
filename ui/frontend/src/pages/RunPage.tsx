@@ -244,7 +244,7 @@ export default function RunPage() {
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
               <span>
-                Iteration {run.currentIteration} of {run.maxIterations}
+                Iteration {run.currentIteration + 1} of {run.maxIterations}
               </span>
               <span>{progress.toFixed(0)}%</span>
             </div>

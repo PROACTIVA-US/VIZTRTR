@@ -34,7 +34,7 @@ export function LiveBuildView() {
   if (!buildState) {
     return null;
   }
-  const currentIterationData = iterations.find((it) => it.iteration === currentIteration);
+  const currentIterationData = iterations.find(it => it.iteration === currentIteration);
   const maxIterations = 5; // Default max iterations
 
   // Calculate overall composite score
@@ -69,7 +69,9 @@ export function LiveBuildView() {
           </h2>
           {buildState !== 'completed' && buildState !== 'error' && (
             <div className="flex items-center gap-2 text-sm text-slate-400">
-              <span>Iteration {currentIteration} of {maxIterations}</span>
+              <span>
+                Iteration {currentIteration + 1} of {maxIterations}
+              </span>
             </div>
           )}
         </div>
@@ -103,9 +105,10 @@ export function LiveBuildView() {
 
           <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
             <AnimatePresence mode="popLayout">
-              {activityLog.map((entry) => {
+              {activityLog.map(entry => {
                 const agentColor = agentColors[entry.agentId] || agentColors.system;
-                const statusIcon = entry.type === 'success' ? '✓' : entry.type === 'error' ? '✗' : '●';
+                const statusIcon =
+                  entry.type === 'success' ? '✓' : entry.type === 'error' ? '✗' : '●';
 
                 return (
                   <motion.div
@@ -122,10 +125,7 @@ export function LiveBuildView() {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: agentColor }}
-                        >
+                        <span className="text-sm font-medium" style={{ color: agentColor }}>
                           {entry.agentName}
                         </span>
                         <span className="text-xs text-slate-500">
@@ -139,8 +139,8 @@ export function LiveBuildView() {
                         entry.type === 'success'
                           ? 'text-green-400'
                           : entry.type === 'error'
-                          ? 'text-red-400'
-                          : 'text-blue-400'
+                            ? 'text-red-400'
+                            : 'text-blue-400'
                       }`}
                     >
                       {statusIcon}
@@ -162,9 +162,7 @@ export function LiveBuildView() {
               animate={{ opacity: 1, scale: 1 }}
               className="bg-slate-800 rounded-lg p-6"
             >
-              <h3 className="text-lg font-semibold text-slate-100 mb-4">
-                Screenshot Preview
-              </h3>
+              <h3 className="text-lg font-semibold text-slate-100 mb-4">Screenshot Preview</h3>
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Before */}
@@ -204,22 +202,13 @@ export function LiveBuildView() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-slate-800 rounded-lg p-6"
           >
-            <h3 className="text-lg font-semibold text-slate-100 mb-4">
-              Overall Quality Score
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-100 mb-4">Overall Quality Score</h3>
 
             <div className="flex items-center justify-center">
               <div className="relative w-40 h-40">
                 {/* Background circle */}
                 <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="70"
-                    stroke="#1e293b"
-                    strokeWidth="12"
-                    fill="none"
-                  />
+                  <circle cx="80" cy="80" r="70" stroke="#1e293b" strokeWidth="12" fill="none" />
                   {/* Progress circle */}
                   <motion.circle
                     cx="80"
@@ -272,15 +261,12 @@ export function LiveBuildView() {
           transition={{ delay: 0.3 }}
           className="bg-slate-800 rounded-lg p-6"
         >
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">
-            Quality Dimensions
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">Quality Dimensions</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {currentIterationData.scores.map((dimension, idx) => {
               const isHighest =
-                dimension.score ===
-                Math.max(...currentIterationData.scores.map((d) => d.score));
+                dimension.score === Math.max(...currentIterationData.scores.map(d => d.score));
 
               return (
                 <motion.div
@@ -311,8 +297,8 @@ export function LiveBuildView() {
                           dimension.score >= 8.5
                             ? '#22c55e'
                             : dimension.score >= 7.0
-                            ? '#3b82f6'
-                            : '#f59e0b',
+                              ? '#3b82f6'
+                              : '#f59e0b',
                       }}
                       initial={{ width: 0 }}
                       animate={{ width: `${(dimension.score / 10) * 100}%` }}
@@ -336,7 +322,7 @@ export function LiveBuildView() {
         <h3 className="text-lg font-semibold text-slate-100 mb-4">Agent Status</h3>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {agents.map((agent) => {
+          {agents.map(agent => {
             const agentColor = agentColors[agent.id] || agentColors.system;
 
             return (
@@ -344,10 +330,7 @@ export function LiveBuildView() {
                 key={agent.id}
                 className="flex flex-col items-center gap-2 p-4 rounded-lg bg-slate-700/50 relative"
                 style={{
-                  boxShadow:
-                    agent.status === 'active'
-                      ? `0 0 20px ${agentColor}40`
-                      : undefined,
+                  boxShadow: agent.status === 'active' ? `0 0 20px ${agentColor}40` : undefined,
                 }}
               >
                 {/* Icon */}
@@ -369,9 +352,7 @@ export function LiveBuildView() {
                 </motion.div>
 
                 {/* Name */}
-                <div className="text-sm font-medium text-slate-100 text-center">
-                  {agent.name}
-                </div>
+                <div className="text-sm font-medium text-slate-100 text-center">{agent.name}</div>
 
                 {/* Status indicator */}
                 <div className="flex items-center gap-2">
@@ -382,10 +363,10 @@ export function LiveBuildView() {
                         agent.status === 'active'
                           ? '#10b981'
                           : agent.status === 'completed'
-                          ? '#22c55e'
-                          : agent.status === 'error'
-                          ? '#ef4444'
-                          : '#6b7280',
+                            ? '#22c55e'
+                            : agent.status === 'error'
+                              ? '#ef4444'
+                              : '#6b7280',
                     }}
                     animate={
                       agent.status === 'active'
@@ -399,9 +380,7 @@ export function LiveBuildView() {
                       repeat: agent.status === 'active' ? Infinity : 0,
                     }}
                   />
-                  <span className="text-xs text-slate-400 capitalize">
-                    {agent.status}
-                  </span>
+                  <span className="text-xs text-slate-400 capitalize">{agent.status}</span>
                 </div>
 
                 {/* Completed checkmark */}
@@ -412,12 +391,7 @@ export function LiveBuildView() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
