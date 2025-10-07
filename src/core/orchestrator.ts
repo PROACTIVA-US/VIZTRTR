@@ -14,7 +14,7 @@ import {
   EvaluationResult,
 } from './types';
 import { ClaudeOpusVisionPlugin } from '../plugins/vision-claude';
-// import { HybridScoringAgent } from '../agents/HybridScoringAgent'; // TODO: Fix MCP SDK imports
+import { HybridScoringAgent } from '../agents/HybridScoringAgent';
 import { PuppeteerCapturePlugin } from '../plugins/capture-puppeteer';
 import { IterationMemoryManager } from '../memory/IterationMemoryManager';
 import { VerificationAgent } from '../agents/VerificationAgent';
@@ -36,7 +36,7 @@ export class VIZTRTROrchestrator {
   private reflectionAgent: ReflectionAgent;
   private filterAgent: RecommendationFilterAgent;
   private humanLoopAgent: HumanLoopAgent;
-  // private hybridScoringAgent: HybridScoringAgent | null = null; // TODO: Fix MCP SDK imports
+  private hybridScoringAgent: HybridScoringAgent | null = null;
   private backendManager: BackendServerManager | null = null;
   private iterations: IterationResult[] = [];
   private startTime: Date | null = null;
@@ -57,16 +57,15 @@ export class VIZTRTROrchestrator {
     this.humanLoopAgent = new HumanLoopAgent(config.humanLoop);
 
     // Initialize hybrid scoring if enabled
-    // TODO: Re-enable when MCP SDK imports are fixed
-    // if (config.useChromeDevTools) {
-    //   const visionWeight = config.scoringWeights?.vision ?? 0.6;
-    //   const metricsWeight = config.scoringWeights?.metrics ?? 0.4;
-    //   this.hybridScoringAgent = new HybridScoringAgent(
-    //     config.anthropicApiKey!,
-    //     visionWeight,
-    //     metricsWeight
-    //   );
-    // }
+    if (config.useChromeDevTools) {
+      const visionWeight = config.scoringWeights?.vision ?? 0.6;
+      const metricsWeight = config.scoringWeights?.metrics ?? 0.4;
+      this.hybridScoringAgent = new HybridScoringAgent(
+        config.anthropicApiKey!,
+        visionWeight,
+        metricsWeight
+      );
+    }
 
     // Ensure output directory exists
     this.ensureOutputDir();
@@ -92,19 +91,28 @@ export class VIZTRTROrchestrator {
 
       // Validate required BackendConfig fields
       const backend = projectConfig.backend;
-      if (!backend.url || !backend.devCommand || !backend.workingDirectory || !backend.healthCheckPath) {
+      if (
+        !backend.url ||
+        !backend.devCommand ||
+        !backend.workingDirectory ||
+        !backend.healthCheckPath
+      ) {
         throw new Error(
           'Backend config missing required fields. Required: url, devCommand, workingDirectory, healthCheckPath'
         );
       }
 
-      this.backendManager = new BackendServerManager(backend as BackendConfig, { verbose: this.config.verbose });
+      this.backendManager = new BackendServerManager(backend as BackendConfig, {
+        verbose: this.config.verbose,
+      });
 
       try {
         await this.backendManager.start();
       } catch (error) {
         console.error('❌ Failed to start backend server:', error);
-        throw new Error(`Backend server failed to start: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+          `Backend server failed to start: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -185,7 +193,10 @@ export class VIZTRTROrchestrator {
 
     for (const configPath of possiblePaths) {
       try {
-        const exists = await fs.access(configPath).then(() => true).catch(() => false);
+        const exists = await fs
+          .access(configPath)
+          .then(() => true)
+          .catch(() => false);
         if (exists) {
           const content = await fs.readFile(configPath, 'utf-8');
           const config = JSON.parse(content);
@@ -194,7 +205,9 @@ export class VIZTRTROrchestrator {
         }
       } catch (error) {
         if (this.config.verbose) {
-          console.log(`Config not found at ${configPath}: ${error instanceof Error ? error.message : String(error)}`);
+          console.log(
+            `Config not found at ${configPath}: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
         // Continue to next path
       }
@@ -335,27 +348,28 @@ export class VIZTRTROrchestrator {
     const evaluation = await this.evaluate(afterScreenshot);
 
     // Hybrid scoring (if enabled)
-    // TODO: Fix MCP SDK imports before re-enabling hybrid scoring
     let hybridScore;
-    // if (this.hybridScoringAgent) {
-    //   console.log('🔬 Running hybrid scoring analysis...');
-    //   const result = await this.hybridScoringAgent.score(afterScreenshot, this.config.frontendUrl);
-    //   hybridScore = {
-    //     compositeScore: result.compositeScore,
-    //     visionScore: result.visionScore,
-    //     metricsScore: result.metricsScore,
-    //     confidence: result.confidence,
-    //     metricsBreakdown: {
-    //       performance: result.metrics?.performance || 0,
-    //       accessibility: result.metrics?.accessibility || 0,
-    //       bestPractices: result.metrics?.bestPractices || 0
-    //     }
-    //   };
-    //   console.log(`   Hybrid Score: ${result.compositeScore.toFixed(1)}/10 (confidence: ${(result.confidence * 100).toFixed(0)}%)`);
+    if (this.hybridScoringAgent) {
+      console.log('🔬 Running hybrid scoring analysis...');
+      const result = await this.hybridScoringAgent.score(afterScreenshot, this.config.frontendUrl);
+      hybridScore = {
+        compositeScore: result.compositeScore,
+        visionScore: result.visionScore,
+        metricsScore: result.metricsScore,
+        confidence: result.confidence,
+        metricsBreakdown: {
+          performance: result.metrics?.performance || 0,
+          accessibility: result.metrics?.accessibility || 0,
+          bestPractices: result.metrics?.bestPractices || 0,
+        },
+      };
+      console.log(
+        `   Hybrid Score: ${result.compositeScore.toFixed(1)}/10 (confidence: ${(result.confidence * 100).toFixed(0)}%)`
+      );
 
-    //   // Use hybrid composite score as the primary evaluation score
-    //   evaluation.compositeScore = result.compositeScore;
-    // }
+      // Use hybrid composite score as the primary evaluation score
+      evaluation.compositeScore = result.compositeScore;
+    }
 
     // Save evaluation
     const evalPath = path.join(iterationDir, 'evaluation.json');
@@ -388,8 +402,12 @@ export class VIZTRTROrchestrator {
     console.log('💾 Step 9: Updating iteration memory...');
 
     // Record attempts
-    const status = verification.success && scoreDelta > 0 ? 'success' :
-                   verification.success && scoreDelta === 0 ? 'no_effect' : 'failed';
+    const status =
+      verification.success && scoreDelta > 0
+        ? 'success'
+        : verification.success && scoreDelta === 0
+          ? 'no_effect'
+          : 'failed';
 
     for (const rec of designSpec.prioritizedChanges) {
       this.memory.recordAttempt(
@@ -438,7 +456,7 @@ export class VIZTRTROrchestrator {
       evaluation,
       scoreDelta,
       targetReached: evaluation.targetReached,
-      hybridScore
+      hybridScore,
     };
   }
 
@@ -554,13 +572,17 @@ ${report.iterations
 
 - **Score:** ${iter.evaluation.compositeScore.toFixed(1)}/10
 - **Delta:** ${iter.scoreDelta > 0 ? '+' : ''}${iter.scoreDelta.toFixed(1)}
-${iter.hybridScore ? `- **Hybrid Breakdown:**
+${
+  iter.hybridScore
+    ? `- **Hybrid Breakdown:**
   - Vision: ${iter.hybridScore.visionScore.toFixed(1)}/10 (60%)
   - Metrics: ${iter.hybridScore.metricsScore.toFixed(1)}/10 (40%)
   - Confidence: ${(iter.hybridScore.confidence * 100).toFixed(0)}%
   - Performance: ${iter.hybridScore.metricsBreakdown?.performance.toFixed(1)}/10
   - Accessibility: ${iter.hybridScore.metricsBreakdown?.accessibility.toFixed(1)}/10
-  - Best Practices: ${iter.hybridScore.metricsBreakdown?.bestPractices.toFixed(1)}/10` : ''}
+  - Best Practices: ${iter.hybridScore.metricsBreakdown?.bestPractices.toFixed(1)}/10`
+    : ''
+}
 - **Before:** [screenshot](./iteration_${idx}/before.png)
 - **After:** [screenshot](./iteration_${idx}/after.png)
 - **Spec:** [design_spec.json](./iteration_${idx}/design_spec.json)
@@ -601,9 +623,8 @@ ${report.iterations[report.bestIteration]?.designSpec.recommendations
 
   private async cleanup() {
     await this.capturePlugin.close();
-    // TODO: Fix MCP SDK imports before re-enabling hybrid scoring cleanup
-    // if (this.hybridScoringAgent) {
-    //   await this.hybridScoringAgent.dispose();
-    // }
+    if (this.hybridScoringAgent) {
+      await this.hybridScoringAgent.dispose();
+    }
   }
 }
