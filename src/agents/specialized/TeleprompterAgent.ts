@@ -16,7 +16,11 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Recommendation, FileChange } from '../../core/types';
-import { discoverComponentFiles, DiscoveredFile, summarizeDiscovery } from '../../utils/file-discovery';
+import {
+  discoverComponentFiles,
+  DiscoveredFile,
+  summarizeDiscovery,
+} from '../../utils/file-discovery';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -34,13 +38,8 @@ export class TeleprompterAgent {
   /**
    * Implement changes for teleprompter components
    */
-  async implement(
-    recommendations: Recommendation[],
-    projectPath: string
-  ): Promise<FileChange[]> {
-    console.log(
-      `   🎤 TeleprompterAgent processing ${recommendations.length} recommendations...`
-    );
+  async implement(recommendations: Recommendation[], projectPath: string): Promise<FileChange[]> {
+    console.log(`   🎤 TeleprompterAgent processing ${recommendations.length} recommendations...`);
 
     // Discover component files in the project
     console.log(`   🔍 Discovering component files for teleprompter views...`);
@@ -91,8 +90,8 @@ export class TeleprompterAgent {
       });
 
       // Extract implementation
-      const textBlocks = response.content.filter((block) => block.type === 'text');
-      const fullText = textBlocks.map((block) => (block as any).text).join('\n');
+      const textBlocks = response.content.filter(block => block.type === 'text');
+      const fullText = textBlocks.map(block => (block as any).text).join('\n');
 
       // Parse JSON response
       const jsonMatch =
@@ -113,7 +112,12 @@ export class TeleprompterAgent {
       const discoveredFile = this.discoveredFiles.find(f => f.path === normalizedPath);
       if (!discoveredFile) {
         console.warn(`   ⚠️  File not found in discovered files: ${normalizedPath}`);
-        console.warn(`   💡 Available files: ${this.discoveredFiles.slice(0, 5).map(f => f.path).join(', ')}...`);
+        console.warn(
+          `   💡 Available files: ${this.discoveredFiles
+            .slice(0, 5)
+            .map(f => f.path)
+            .join(', ')}...`
+        );
         return null;
       }
 
@@ -145,6 +149,10 @@ export class TeleprompterAgent {
       // Write new content
       await fs.writeFile(fullPath, implementation.newCode);
 
+      // Wait for file to stabilize (Vite HMR, linters, formatters)
+      console.log(`   ⏳ Waiting 3s for file stabilization (HMR, linters)...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       console.log(`   ✅ Modified: ${implementation.filePath}`);
 
       return {
@@ -160,17 +168,17 @@ export class TeleprompterAgent {
     }
   }
 
-  private buildImplementationPrompt(
-    recommendation: Recommendation,
-    projectPath: string
-  ): string {
+  private buildImplementationPrompt(recommendation: Recommendation, projectPath: string): string {
     // Group files by directory for better organization
-    const filesByDir = this.discoveredFiles.reduce((acc, file) => {
-      const dir = path.dirname(file.path);
-      if (!acc[dir]) acc[dir] = [];
-      acc[dir].push(file.name);
-      return acc;
-    }, {} as Record<string, string[]>);
+    const filesByDir = this.discoveredFiles.reduce(
+      (acc, file) => {
+        const dir = path.dirname(file.path);
+        if (!acc[dir]) acc[dir] = [];
+        acc[dir].push(file.name);
+        return acc;
+      },
+      {} as Record<string, string[]>
+    );
 
     const fileList = Object.entries(filesByDir)
       .map(([dir, files]) => {
@@ -269,6 +277,6 @@ Think carefully about stage performance needs, then implement the change.`;
     ];
 
     const text = `${recommendation.title} ${recommendation.description}`.toLowerCase();
-    return relevantKeywords.some((keyword) => text.includes(keyword));
+    return relevantKeywords.some(keyword => text.includes(keyword));
   }
 }
