@@ -227,9 +227,35 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
         }
       }
 
-      // Prioritize vite.config port if found
+      // If we found a port in vite.config, return it immediately - it's the most reliable
       if (vitePort) {
-        candidatePorts.push(vitePort);
+        console.log(`[URL Detection] Found port in vite.config: ${vitePort}, using it directly`);
+        const configuredUrl = `http://localhost:${vitePort}`;
+
+        // Still check if it's running, but use the configured port regardless
+        try {
+          const response = await fetch(configuredUrl, {
+            method: 'HEAD',
+            signal: AbortSignal.timeout(2000),
+          });
+          return res.json({
+            url: configuredUrl,
+            verified: response.ok,
+            matched: true,
+            source: 'vite.config',
+            message: response.ok
+              ? 'Port from vite.config, server is running'
+              : 'Port from vite.config, server not running yet',
+          });
+        } catch {
+          return res.json({
+            url: configuredUrl,
+            verified: false,
+            matched: true,
+            source: 'vite.config',
+            message: 'Port from vite.config, server not running yet',
+          });
+        }
       }
 
       // Then check script for explicit port flags
@@ -853,7 +879,7 @@ Your role:
    */
   router.get('/:id/server/status', async (req, res) => {
     try {
-      const projectId = parseInt(req.params.id, 10);
+      const projectId = req.params.id;
       const project = db.getProject(projectId);
 
       if (!project) {
@@ -872,6 +898,78 @@ Your role:
       console.error('[API] Error checking server status:', error);
       res.status(500).json({
         error: 'Failed to check server status',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  /**
+   * POST /api/projects/detect-port
+   * Detect the port configured for a project
+   */
+  router.post('/detect-port', async (req, res) => {
+    try {
+      const { projectPath } = req.body;
+
+      if (!projectPath) {
+        return res.status(400).json({ error: 'projectPath is required' });
+      }
+
+      // Check if project path exists
+      if (!fs.existsSync(projectPath)) {
+        return res.status(404).json({ error: 'Project path not found' });
+      }
+
+      // Read package.json to get dev script
+      const packageJsonPath = path.join(projectPath, 'package.json');
+      if (!fs.existsSync(packageJsonPath)) {
+        return res.status(404).json({ error: 'package.json not found in project' });
+      }
+
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      const devScript = packageJson.scripts?.dev || '';
+
+      // Detect port from vite.config or script
+      let detectedPort: number | null = null;
+
+      // Check vite.config files
+      const viteConfigPaths = [
+        path.join(projectPath, 'vite.config.ts'),
+        path.join(projectPath, 'vite.config.js'),
+      ];
+
+      for (const configPath of viteConfigPaths) {
+        if (fs.existsSync(configPath)) {
+          const config = fs.readFileSync(configPath, 'utf-8');
+          const portMatch = config.match(/port:\s*(\d+)/);
+          if (portMatch) {
+            detectedPort = parseInt(portMatch[1], 10);
+            break;
+          }
+        }
+      }
+
+      // Check dev script for port flag
+      if (!detectedPort) {
+        const scriptPortMatch = devScript.match(/--port[= ](\d+)/);
+        if (scriptPortMatch) {
+          detectedPort = parseInt(scriptPortMatch[1], 10);
+        }
+      }
+
+      // Default to 5173 (Vite default) if not found
+      const port = detectedPort || 5173;
+
+      res.json({
+        port,
+        url: `http://localhost:${port}`,
+        detected: !!detectedPort,
+        source: detectedPort ? 'config' : 'default',
+      });
+    } catch (error) {
+      console.error('[API] Error detecting port:', error);
+      res.status(500).json({
+        error: 'Failed to detect port',
         details: error instanceof Error ? error.message : 'Unknown error',
       });
     }

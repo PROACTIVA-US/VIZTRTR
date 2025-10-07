@@ -10,6 +10,8 @@ export default function RunPage() {
   const [retrying, setRetrying] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<any>(null);
+  const [startingServer, setStartingServer] = useState(false);
+  const [serverStatus, setServerStatus] = useState<{ running: boolean; url?: string } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -127,6 +129,34 @@ export default function RunPage() {
     }
   };
 
+  const handleStartServer = async () => {
+    if (!run?.projectId) return;
+    setStartingServer(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/projects/${run.projectId}/server/start`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to start server');
+      }
+
+      const data = await res.json();
+      setServerStatus({ running: true, url: data.url });
+      alert(`Server started successfully at ${data.url}. You can now retry the run.`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to start server');
+    } finally {
+      setStartingServer(false);
+    }
+  };
+
+  const isConnectionError =
+    run?.error?.includes('ERR_CONNECTION_REFUSED') ||
+    run?.error?.includes('Failed to fetch') ||
+    run?.error?.includes('ECONNREFUSED');
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
@@ -153,7 +183,26 @@ export default function RunPage() {
                     {run.error}
                   </div>
                 )}
+                {isConnectionError && (
+                  <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded text-sm text-blue-300 mb-4">
+                    <p className="font-semibold mb-2">🔌 Connection Error Detected</p>
+                    <p className="text-xs text-slate-400">
+                      {run.projectId
+                        ? "The project's frontend server is not running. Start it below to continue."
+                        : 'This run is missing a project association. Create a new run from the Projects page to use the auto-start feature.'}
+                    </p>
+                  </div>
+                )}
                 <div className="flex gap-3">
+                  {isConnectionError && run.projectId && (
+                    <button
+                      onClick={handleStartServer}
+                      disabled={startingServer}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      {startingServer ? '⏳ Starting Server...' : '▶️ Start Project Server'}
+                    </button>
+                  )}
                   <button
                     onClick={handleRetry}
                     disabled={retrying}
@@ -172,7 +221,8 @@ export default function RunPage() {
             </div>
           </div>
           <div className="text-xs text-slate-500 pt-3 border-t border-slate-700">
-            Started: {new Date(run.startedAt).toLocaleString()} • Failed: {run.completedAt && new Date(run.completedAt).toLocaleString()}
+            Started: {new Date(run.startedAt).toLocaleString()} • Failed:{' '}
+            {run.completedAt && new Date(run.completedAt).toLocaleString()}
           </div>
         </div>
       ) : (
@@ -193,7 +243,9 @@ export default function RunPage() {
           {/* Progress Bar */}
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
-              <span>Iteration {run.currentIteration} of {run.maxIterations}</span>
+              <span>
+                Iteration {run.currentIteration} of {run.maxIterations}
+              </span>
               <span>{progress.toFixed(0)}%</span>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-3">
@@ -241,10 +293,11 @@ export default function RunPage() {
           <div className="text-center py-6">
             <div className="text-4xl mb-3">🎉</div>
             <h2 className="text-xl font-semibold mb-2">Run Completed!</h2>
-            <p className="text-slate-400 mb-6">
-              Your UI improvements are ready to review.
-            </p>
-            <button onClick={handleViewResults} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all">
+            <p className="text-slate-400 mb-6">Your UI improvements are ready to review.</p>
+            <button
+              onClick={handleViewResults}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all"
+            >
               View Results
             </button>
           </div>
@@ -259,7 +312,10 @@ export default function RunPage() {
               <div>
                 <h2 className="text-xl font-semibold mb-2">📊 Run Results</h2>
                 <p className="text-sm text-slate-400">
-                  Final score: <span className="text-green-400 font-bold text-lg">{results.finalScore?.toFixed(1) || 'N/A'}/10</span>
+                  Final score:{' '}
+                  <span className="text-green-400 font-bold text-lg">
+                    {results.finalScore?.toFixed(1) || 'N/A'}/10
+                  </span>
                 </p>
               </div>
               <button
@@ -272,7 +328,9 @@ export default function RunPage() {
 
             {results.iterations && results.iterations.length > 0 && (
               <div className="space-y-6">
-                <h3 className="font-semibold text-slate-300">Iterations ({results.iterations.length})</h3>
+                <h3 className="font-semibold text-slate-300">
+                  Iterations ({results.iterations.length})
+                </h3>
                 {results.iterations.map((iter: any, idx: number) => (
                   <div key={idx} className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="flex justify-between items-start mb-3">
@@ -297,7 +355,7 @@ export default function RunPage() {
                           src={`http://localhost:3001/outputs/${runId}/iteration_${idx}/before.png`}
                           alt={`Iteration ${idx} - Before`}
                           className="w-full rounded border border-slate-600 hover:scale-105 transition-transform cursor-pointer"
-                          onClick={(e) => window.open((e.target as HTMLImageElement).src, '_blank')}
+                          onClick={e => window.open((e.target as HTMLImageElement).src, '_blank')}
                         />
                       </div>
                       <div>
@@ -306,7 +364,7 @@ export default function RunPage() {
                           src={`http://localhost:3001/outputs/${runId}/iteration_${idx}/after.png`}
                           alt={`Iteration ${idx} - After`}
                           className="w-full rounded border border-slate-600 hover:scale-105 transition-transform cursor-pointer"
-                          onClick={(e) => window.open((e.target as HTMLImageElement).src, '_blank')}
+                          onClick={e => window.open((e.target as HTMLImageElement).src, '_blank')}
                         />
                       </div>
                     </div>
@@ -318,12 +376,19 @@ export default function RunPage() {
                           View Score Breakdown
                         </summary>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                          {Object.entries(iter.evaluation.scores).map(([key, value]: [string, any]) => (
-                            <div key={key} className="flex justify-between bg-slate-900/30 p-2 rounded">
-                              <span className="text-slate-400">{key}:</span>
-                              <span className="text-slate-200 font-semibold">{value.toFixed(1)}</span>
-                            </div>
-                          ))}
+                          {Object.entries(iter.evaluation.scores).map(
+                            ([key, value]: [string, any]) => (
+                              <div
+                                key={key}
+                                className="flex justify-between bg-slate-900/30 p-2 rounded"
+                              >
+                                <span className="text-slate-400">{key}:</span>
+                                <span className="text-slate-200 font-semibold">
+                                  {value.toFixed(1)}
+                                </span>
+                              </div>
+                            )
+                          )}
                         </div>
                       </details>
                     )}

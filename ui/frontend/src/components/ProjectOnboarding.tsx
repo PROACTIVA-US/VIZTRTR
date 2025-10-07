@@ -51,6 +51,7 @@ export default function ProjectOnboarding({
   const [startingServer, setStartingServer] = useState(false);
   const [stoppingServer, setStoppingServer] = useState(false);
   const [serverStartOutput, setServerStartOutput] = useState('');
+  const [detectedUrl, setDetectedUrl] = useState('');
 
   const handleFileButtonClick = () => {
     setShowFileBrowser(true);
@@ -142,8 +143,9 @@ export default function ProjectOnboarding({
 
         if (urlRes.ok) {
           const urlData = await urlRes.json();
-          const detectedUrl = urlData.url || 'http://localhost:3000';
-          setFrontendUrl(detectedUrl);
+          const detected = urlData.url || 'http://localhost:3000';
+          setDetectedUrl(detected);
+          setFrontendUrl(detected);
 
           // Show warnings based on verification status
           if (!urlData.verified) {
@@ -310,6 +312,7 @@ export default function ProjectOnboarding({
   };
 
   const handleComplete = () => {
+    onComplete();
     navigate('/projects');
   };
 
@@ -812,17 +815,30 @@ export default function ProjectOnboarding({
 
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Frontend URL</label>
+              {detectedUrl && (
+                <div className="mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-300">
+                  🔍 Auto-detected from project configuration:{' '}
+                  <code className="text-blue-400">{detectedUrl}</code>
+                </div>
+              )}
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={frontendUrl}
                   onChange={e => setFrontendUrl(e.target.value)}
                   className="flex-1 bg-slate-900 text-white px-4 py-3 rounded border border-slate-700 focus:border-blue-500 focus:outline-none"
+                  placeholder="http://localhost:5173"
                 />
                 <button onClick={checkServerStatus} className="btn-secondary">
                   Check Status
                 </button>
               </div>
+              {detectedUrl && frontendUrl !== detectedUrl && (
+                <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-300">
+                  ⚠️ Warning: You've changed the URL from the auto-detected value. Make sure this is
+                  correct!
+                </div>
+              )}
               {serverRunning !== null && (
                 <div className="mt-2 flex items-center justify-between">
                   <div

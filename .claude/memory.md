@@ -1,8 +1,8 @@
 # VIZTRTR Project Memory
 
-**Last Updated: 2025-10-04 12:46:53
+**Last Updated: 2025-10-06 21:00:00**
 **Project:** VIZTRTR - Visual Iteration Orchestrator
-**Repository:\*\* <https://github.com/PROACTIVA-US/VIZTRTR.git>
+**Repository:** <https://github.com/PROACTIVA-US/VIZTRTR.git>
 
 ---
 
@@ -340,6 +340,55 @@ npm run test:performia
 - **Next steps:**
   - Consider adding automatic server restart mechanism
   - Monitor error patterns in production to improve troubleshooting tips
+
+### October 06, 2025 - Backend Process Management & Port Auto-Detection
+
+- Branch: main
+- Status: ✅ Complete
+- **What was accomplished:**
+  1. ✅ Implemented backend server process manager system
+     - Created `ServerProcessManager` class to manage backend server lifecycle
+     - Added manager server on port 3002 with REST API for server control
+     - Supports start, stop, restart operations with graceful shutdown
+     - PID tracking and process health monitoring
+  2. ✅ Enhanced SystemStatus component with backend control
+     - Detects connection errors automatically
+     - Shows "Start Backend" button when offline, "Restart Backend" when online
+     - Communicates with manager server (port 3002) to control backend (port 3001)
+     - Real-time status polling every 10 seconds
+  3. ✅ Fixed port auto-detection for project frontends
+     - Fixed `/api/projects/detect-url` to prioritize vite.config port over running servers
+     - Now correctly detects port 5001 for Performia, port 5173 for VIZTRTR
+     - Returns configured port immediately when found in vite.config
+     - Added visual indicators showing auto-detected URL with override warnings
+  4. ✅ Enhanced RunPage with server management
+     - Detects connection errors (ERR_CONNECTION_REFUSED, etc.)
+     - Shows "Start Project Server" button for failed runs with connection errors
+     - Handles runs with missing project associations gracefully
+- **Files created:**
+  - `ui/server/src/services/serverProcessManager.ts` - Server lifecycle management
+  - `ui/server/src/manager.ts` - Manager server entry point (port 3002)
+  - `ui/server/MANAGER_README.md` - Manager documentation
+  - `ui/USAGE.md` - Complete usage guide
+- **Files modified:**
+  - `ui/server/package.json:8` - Added `manager` script
+  - `ui/frontend/src/components/SystemStatus.tsx:72-150` - Backend control via manager
+  - `ui/frontend/src/pages/RunPage.tsx:13-157` - Server management for failed runs
+  - `ui/server/src/routes/projects.ts:230-259,880-950` - Fixed port detection, added detect-port endpoint
+  - `ui/frontend/src/components/ProjectOnboarding.tsx:54,147-148,818-839` - Auto-detection UI improvements
+- **Key improvements:**
+  - Users can now start/restart backend from UI without terminal access
+  - Port auto-detection correctly reads project configuration (vite.config)
+  - Clear visual feedback when URL is auto-detected vs manually overridden
+  - Failed runs now offer one-click server start for connection errors
+- **Architecture:**
+  - Manager Server (3002) → Controls → Backend Server (3001)
+  - Frontend (5173) → Monitors → Backend (3001) via /health endpoint
+  - Frontend → Controls → Manager (3002) for start/stop/restart
+- **Next steps:**
+  - Consider PM2 or systemd for production deployments
+  - Add authentication for manager endpoints in production
+  - Monitor server start/stop patterns to optimize defaults
 
 ### October 03, 2025 - Migration to unified session system v3.0
 

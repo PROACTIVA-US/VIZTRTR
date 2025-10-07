@@ -72,61 +72,73 @@ export default function SystemStatus() {
   const handleRestart = async () => {
     setIsRestarting(true);
     try {
-      // Call restart endpoint
-      const res = await fetch('http://localhost:3001/api/restart-server', {
+      const isOffline = status.backend.status === 'offline';
+      const endpoint = isOffline ? 'start' : 'restart';
+
+      // Call manager server (port 3002) to start/restart backend
+      const res = await fetch(`http://localhost:3002/api/server/${endpoint}`, {
         method: 'POST',
       });
 
       if (res.ok) {
-        // Server is restarting, wait a bit then start polling
-        setStatus({
-          backend: {
-            status: 'offline',
-            message: 'Server is restarting... Please wait.',
-          },
-        });
+        const result = await res.json();
 
-        // Poll for server to come back online
-        let attempts = 0;
-        const maxAttempts = 20; // 20 seconds
-        const pollInterval = setInterval(async () => {
-          attempts++;
+        if (result.success) {
+          // Server is starting/restarting
+          setStatus({
+            backend: {
+              status: 'offline',
+              message: isOffline
+                ? 'Server is starting... Please wait.'
+                : 'Server is restarting... Please wait.',
+            },
+          });
 
-          try {
-            const healthRes = await fetch('http://localhost:3001/health', {
-              signal: AbortSignal.timeout(2000),
-            });
+          // Poll for server to come back online
+          let attempts = 0;
+          const maxAttempts = 30; // 30 seconds
+          const pollInterval = setInterval(async () => {
+            attempts++;
 
-            if (healthRes.ok) {
+            try {
+              const healthRes = await fetch('http://localhost:3001/health', {
+                signal: AbortSignal.timeout(2000),
+              });
+
+              if (healthRes.ok) {
+                clearInterval(pollInterval);
+                setIsRestarting(false);
+                setShowDetails(false);
+                // Health check will update status
+              }
+            } catch (e) {
+              // Still starting/restarting
+            }
+
+            if (attempts >= maxAttempts) {
               clearInterval(pollInterval);
               setIsRestarting(false);
-              setShowDetails(false);
-              // Health check will update status
+              setStatus({
+                backend: {
+                  status: 'error',
+                  message: 'Timeout waiting for server. Check manager logs.',
+                },
+              });
             }
-          } catch (e) {
-            // Still restarting
-          }
-
-          if (attempts >= maxAttempts) {
-            clearInterval(pollInterval);
-            setIsRestarting(false);
-            setStatus({
-              backend: {
-                status: 'error',
-                message: 'Restart timeout. Please check server manually.',
-              },
-            });
-          }
-        }, 1000);
+          }, 1000);
+        } else {
+          throw new Error(result.message || 'Failed to start/restart server');
+        }
       } else {
-        throw new Error('Failed to trigger restart');
+        throw new Error('Manager server not responding. Is it running?');
       }
     } catch (error) {
       console.error('Restart failed:', error);
       setStatus({
         backend: {
           status: 'error',
-          message: error instanceof Error ? error.message : 'Restart failed',
+          message:
+            error instanceof Error ? error.message : isOffline ? 'Start failed' : 'Restart failed',
         },
       });
       setIsRestarting(false);
@@ -281,8 +293,10 @@ export default function SystemStatus() {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         />
                       </svg>
-                      Restarting...
+                      {status.backend.status === 'offline' ? 'Starting...' : 'Restarting...'}
                     </span>
+                  ) : status.backend.status === 'offline' ? (
+                    'Start Backend'
                   ) : (
                     'Restart Backend'
                   )}
