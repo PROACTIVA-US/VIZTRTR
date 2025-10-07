@@ -5,7 +5,10 @@
  * and converts them into actionable scores
  */
 
-import { createChromeDevToolsClient, type ChromeDevToolsClientConfig } from './chromeDevToolsClient';
+import {
+  createChromeDevToolsClient,
+  type ChromeDevToolsClientConfig,
+} from './chromeDevToolsClient';
 
 export interface MetricsScores {
   performance: number; // 0-10
@@ -75,17 +78,10 @@ export class MetricsAnalyzer {
     );
 
     // Score Best Practices (network, console errors, etc.)
-    const bestPracticesScore = this.scoreBestPractices(
-      metrics.network,
-      metrics.console
-    );
+    const bestPracticesScore = this.scoreBestPractices(metrics.network, metrics.console);
 
     // Weighted composite: Performance 40%, Accessibility 40%, Best Practices 20%
-    const composite = (
-      performanceScore * 0.4 +
-      a11yScore * 0.4 +
-      bestPracticesScore * 0.2
-    );
+    const composite = performanceScore * 0.4 + a11yScore * 0.4 + bestPracticesScore * 0.2;
 
     // Generate insights and recommendations
     const insights = this.generateInsights(metrics);
@@ -101,34 +97,34 @@ export class MetricsAnalyzer {
           lcp: {
             value: metrics.performance.coreWebVitals.lcp,
             score: lcpScore,
-            threshold: this.getLCPThreshold(metrics.performance.coreWebVitals.lcp)
+            threshold: this.getLCPThreshold(metrics.performance.coreWebVitals.lcp),
           },
           fid: {
             value: metrics.performance.coreWebVitals.fid || 0,
             score: fidScore,
-            threshold: this.getFIDThreshold(metrics.performance.coreWebVitals.fid || 0)
+            threshold: this.getFIDThreshold(metrics.performance.coreWebVitals.fid || 0),
           },
           cls: {
             value: metrics.performance.coreWebVitals.cls,
             score: clsScore,
-            threshold: this.getCLSThreshold(metrics.performance.coreWebVitals.cls)
-          }
+            threshold: this.getCLSThreshold(metrics.performance.coreWebVitals.cls),
+          },
         },
         accessibility: {
           violations: metrics.accessibility.violations.length,
           warnings: metrics.accessibility.warnings.length,
           contrastIssues: metrics.accessibility.contrastIssues.length,
-          score: a11yScore
+          score: a11yScore,
         },
         performance: {
           fcp: metrics.performance.metrics.firstContentfulPaint,
           tti: metrics.performance.metrics.timeToInteractive,
           tbt: metrics.performance.metrics.totalBlockingTime,
-          score: performanceScore
-        }
+          score: performanceScore,
+        },
       },
       insights,
-      recommendations
+      recommendations,
     };
   }
 
@@ -261,7 +257,8 @@ export class MetricsAnalyzer {
 
     // Network insights
     const totalSize = metrics.network.reduce((sum: number, r: any) => sum + r.size, 0);
-    if (totalSize > 3000000) { // > 3MB
+    if (totalSize > 3000000) {
+      // > 3MB
       insights.push('⚠ Total page size exceeds 3MB');
     }
 
@@ -288,7 +285,9 @@ export class MetricsAnalyzer {
     // Accessibility recommendations
     const violations = metrics.accessibility.violations;
     if (violations.length > 0) {
-      recommendations.push(`Fix ${violations.length} accessibility violations for WCAG 2.2 AA compliance`);
+      recommendations.push(
+        `Fix ${violations.length} accessibility violations for WCAG 2.2 AA compliance`
+      );
     }
 
     // Network recommendations

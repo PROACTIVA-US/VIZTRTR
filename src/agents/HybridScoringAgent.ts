@@ -47,18 +47,14 @@ export class HybridScoringAgent {
   private visionWeight: number;
   private metricsWeight: number;
 
-  constructor(
-    anthropicApiKey: string,
-    visionWeight: number = 0.6,
-    metricsWeight: number = 0.4
-  ) {
+  constructor(anthropicApiKey: string, visionWeight: number = 0.6, metricsWeight: number = 0.4) {
     this.visionPlugin = new ClaudeOpusVisionPlugin(anthropicApiKey);
     this.metricsAnalyzer = new MetricsAnalyzer();
     this.visionWeight = visionWeight;
     this.metricsWeight = metricsWeight;
 
     // Validate weights
-    if (Math.abs((visionWeight + metricsWeight) - 1.0) > 0.01) {
+    if (Math.abs(visionWeight + metricsWeight - 1.0) > 0.01) {
       throw new Error('Vision and metrics weights must sum to 1.0');
     }
   }
@@ -72,7 +68,7 @@ export class HybridScoringAgent {
     // Parallel execution for speed
     const [visionAnalysis, metricsScores] = await Promise.all([
       this.getVisionScore(screenshot),
-      this.getMetricsScore(url)
+      this.getMetricsScore(url),
     ]);
 
     // Calculate weighted composite score
@@ -81,23 +77,23 @@ export class HybridScoringAgent {
     const compositeScore = visionWeighted + metricsWeighted;
 
     // Calculate confidence based on agreement between scores
-    const confidence = this.calculateConfidence(
-      visionAnalysis.score,
-      metricsScores.composite
-    );
+    const confidence = this.calculateConfidence(visionAnalysis.score, metricsScores.composite);
 
     // Merge insights
     const insights = this.mergeInsights(visionAnalysis, metricsScores);
 
     // Generate hybrid recommendations
-    const recommendations = this.generateRecommendations(
-      visionAnalysis,
-      metricsScores
-    );
+    const recommendations = this.generateRecommendations(visionAnalysis, metricsScores);
 
-    console.log(`   Vision Score: ${visionAnalysis.score.toFixed(1)}/10 (${(this.visionWeight * 100).toFixed(0)}%)`);
-    console.log(`   Metrics Score: ${metricsScores.composite.toFixed(1)}/10 (${(this.metricsWeight * 100).toFixed(0)}%)`);
-    console.log(`   Composite: ${compositeScore.toFixed(1)}/10 (confidence: ${(confidence * 100).toFixed(0)}%)`);
+    console.log(
+      `   Vision Score: ${visionAnalysis.score.toFixed(1)}/10 (${(this.visionWeight * 100).toFixed(0)}%)`
+    );
+    console.log(
+      `   Metrics Score: ${metricsScores.composite.toFixed(1)}/10 (${(this.metricsWeight * 100).toFixed(0)}%)`
+    );
+    console.log(
+      `   Composite: ${compositeScore.toFixed(1)}/10 (confidence: ${(confidence * 100).toFixed(0)}%)`
+    );
 
     return {
       compositeScore,
@@ -110,7 +106,7 @@ export class HybridScoringAgent {
           weight: this.visionWeight,
           weightedScore: visionWeighted,
           strengths: visionAnalysis.strengths,
-          weaknesses: visionAnalysis.weaknesses
+          weaknesses: visionAnalysis.weaknesses,
         },
         metrics: {
           score: metricsScores.composite,
@@ -118,12 +114,12 @@ export class HybridScoringAgent {
           weightedScore: metricsWeighted,
           performance: metricsScores.performance,
           accessibility: metricsScores.accessibility,
-          bestPractices: metricsScores.bestPractices
-        }
+          bestPractices: metricsScores.bestPractices,
+        },
       },
       insights,
       recommendations,
-      metrics: metricsScores
+      metrics: metricsScores,
     };
   }
 
@@ -145,7 +141,7 @@ export class HybridScoringAgent {
         .map(i => `${i.dimension}: No critical issues`),
       weaknesses: designSpec.currentIssues
         .filter(i => i.severity === 'critical')
-        .map(i => `${i.dimension}: ${i.description}`)
+        .map(i => `${i.dimension}: ${i.description}`),
     };
   }
 
@@ -169,7 +165,7 @@ export class HybridScoringAgent {
 
     // Each point of difference reduces confidence by 10%
     // Max difference of 10 points = 0% confidence
-    const confidence = Math.max(0, 1.0 - (difference / 10));
+    const confidence = Math.max(0, 1.0 - difference / 10);
 
     return confidence;
   }
@@ -238,7 +234,7 @@ export class HybridScoringAgent {
         source: 'vision',
         priority: 'high',
         description: weakness,
-        impact: 8
+        impact: 8,
       });
     });
 
@@ -248,21 +244,22 @@ export class HybridScoringAgent {
         source: 'metrics',
         priority: this.categorizePriority(rec),
         description: rec,
-        impact: this.estimateImpact(rec)
+        impact: this.estimateImpact(rec),
       });
     });
 
     // Hybrid recommendations (when both sources agree)
     if (metrics.breakdown.accessibility.violations > 0 && vision.weaknesses.length > 0) {
-      const hasA11yWeakness = vision.weaknesses.some(w =>
-        w.toLowerCase().includes('accessibility') || w.toLowerCase().includes('contrast')
+      const hasA11yWeakness = vision.weaknesses.some(
+        w => w.toLowerCase().includes('accessibility') || w.toLowerCase().includes('contrast')
       );
       if (hasA11yWeakness) {
         recommendations.push({
           source: 'hybrid',
           priority: 'high',
-          description: 'Critical accessibility issues confirmed by both visual and technical analysis',
-          impact: 10
+          description:
+            'Critical accessibility issues confirmed by both visual and technical analysis',
+          impact: 10,
         });
       }
     }

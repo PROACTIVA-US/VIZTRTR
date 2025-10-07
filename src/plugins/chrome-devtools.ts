@@ -8,12 +8,7 @@
  * - Console messages (errors, warnings)
  */
 
-import type {
-  VIZTRTRPlugin,
-  ScreenshotConfig,
-  Screenshot,
-  VIZTRTRConfig
-} from '../core/types';
+import type { VIZTRTRPlugin, ScreenshotConfig, Screenshot, VIZTRTRConfig } from '../core/types';
 
 export interface PerformanceTrace {
   insights: PerformanceInsight[];
@@ -145,7 +140,7 @@ export class ChromeDevToolsPlugin implements VIZTRTRPlugin {
           ? `${this.config.chromeDevToolsConfig.viewport.width}x${this.config.chromeDevToolsConfig.viewport.height}`
           : '1280x720',
         isolated: this.config.chromeDevToolsConfig?.isolated ?? true,
-        channel: this.config.chromeDevToolsConfig?.channel ?? 'stable'
+        channel: this.config.chromeDevToolsConfig?.channel ?? 'stable',
       });
       await this.client.connect();
     }
@@ -173,14 +168,14 @@ export class ChromeDevToolsPlugin implements VIZTRTRPlugin {
 
     const base64Data = await client.takeScreenshot({
       fullPage: screenshotConfig.fullPage ?? true,
-      format: 'png'
+      format: 'png',
     });
 
     return {
       data: base64Data,
       width: screenshotConfig.width || 1280,
       height: screenshotConfig.height || 720,
-      format: 'png'
+      format: 'png',
     };
   }
 

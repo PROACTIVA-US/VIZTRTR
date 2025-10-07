@@ -5,14 +5,14 @@
  * and provides high-level methods for UI/UX analysis
  */
 
-import { Client } from '@modelcontextprotocol/sdk/dist/cjs/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/dist/cjs/client/stdio.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type {
   PerformanceTrace,
   AccessibilitySnapshot,
   NetworkRequest,
   ConsoleMessage,
-  ChromeDevToolsMetrics
+  ChromeDevToolsMetrics,
 } from '../plugins/chrome-devtools';
 
 export interface ChromeDevToolsClientConfig {
@@ -33,15 +33,18 @@ export class ChromeDevToolsClient {
       headless: config.headless ?? false,
       viewport: config.viewport ?? '1280x720',
       isolated: config.isolated ?? true,
-      channel: config.channel ?? 'stable'
+      channel: config.channel ?? 'stable',
     };
 
-    this.client = new Client({
-      name: 'viztrtr-chrome-client',
-      version: '1.0.0'
-    }, {
-      capabilities: {}
-    });
+    this.client = new Client(
+      {
+        name: 'viztrtr-chrome-client',
+        version: '1.0.0',
+      },
+      {
+        capabilities: {},
+      }
+    );
   }
 
   /**
@@ -70,7 +73,7 @@ export class ChromeDevToolsClient {
 
     this.transport = new StdioClientTransport({
       command: 'npx',
-      args
+      args,
     });
 
     await this.client.connect(this.transport);
@@ -100,8 +103,8 @@ export class ChromeDevToolsClient {
       name: 'navigate_page',
       arguments: {
         url,
-        ...(timeout && { timeout })
-      }
+        ...(timeout && { timeout }),
+      },
     });
   }
 
@@ -120,8 +123,8 @@ export class ChromeDevToolsClient {
       arguments: {
         fullPage: options?.fullPage ?? true,
         format: options?.format ?? 'png',
-        ...(options?.quality && { quality: options.quality })
-      }
+        ...(options?.quality && { quality: options.quality }),
+      },
     });
 
     // The screenshot is returned as base64 in the tool result
@@ -148,8 +151,8 @@ export class ChromeDevToolsClient {
       name: 'performance_start_trace',
       arguments: {
         reload,
-        autoStop: true
-      }
+        autoStop: true,
+      },
     });
 
     // Wait for trace to complete (autoStop handles this)
@@ -158,7 +161,7 @@ export class ChromeDevToolsClient {
     // Stop trace and get results
     const result = await this.client.callTool({
       name: 'performance_stop_trace',
-      arguments: {}
+      arguments: {},
     });
 
     // Parse the performance trace result
@@ -177,7 +180,7 @@ export class ChromeDevToolsClient {
     // Take DOM snapshot
     const snapshotResult = await this.client.callTool({
       name: 'take_snapshot',
-      arguments: {}
+      arguments: {},
     });
 
     // Evaluate script to extract accessibility data
@@ -258,8 +261,8 @@ export class ChromeDevToolsClient {
     const a11yResult = await this.client.callTool({
       name: 'evaluate_script',
       arguments: {
-        function: a11yScript
-      }
+        function: a11yScript,
+      },
     });
 
     return this.parseAccessibilitySnapshot(a11yResult);
@@ -280,7 +283,7 @@ export class ChromeDevToolsClient {
     // Get network requests
     const result = await this.client.callTool({
       name: 'list_network_requests',
-      arguments: {}
+      arguments: {},
     });
 
     return this.parseNetworkRequests(result);
@@ -301,7 +304,7 @@ export class ChromeDevToolsClient {
     // Get console messages
     const result = await this.client.callTool({
       name: 'list_console_messages',
-      arguments: {}
+      arguments: {},
     });
 
     return this.parseConsoleMessages(result);
@@ -318,7 +321,7 @@ export class ChromeDevToolsClient {
       this.captureAccessibilitySnapshot(url),
       this.captureNetworkRequests(url),
       this.captureConsoleMessages(url),
-      this.takeScreenshot({ fullPage: true })
+      this.takeScreenshot({ fullPage: true }),
     ]);
 
     return {
@@ -330,8 +333,8 @@ export class ChromeDevToolsClient {
         data: screenshot,
         width: parseInt(this.config.viewport!.split('x')[0]),
         height: parseInt(this.config.viewport!.split('x')[1]),
-        format: 'png'
-      }
+        format: 'png',
+      },
     };
   }
 
@@ -371,15 +374,15 @@ export class ChromeDevToolsClient {
         fid: extractMetric(textContent, /FID:\s*(\d+\.?\d*)/i),
         cls: extractMetric(textContent, /CLS:\s*(\d+\.?\d*)/i),
         inp: extractMetric(textContent, /INP:\s*(\d+\.?\d*)/i),
-        ttfb: extractMetric(textContent, /TTFB:\s*(\d+\.?\d*)/i)
+        ttfb: extractMetric(textContent, /TTFB:\s*(\d+\.?\d*)/i),
       },
       metrics: {
         firstContentfulPaint: extractMetric(textContent, /FCP:\s*(\d+\.?\d*)/i),
         speedIndex: extractMetric(textContent, /Speed Index:\s*(\d+\.?\d*)/i),
         totalBlockingTime: extractMetric(textContent, /TBT:\s*(\d+\.?\d*)/i),
-        timeToInteractive: extractMetric(textContent, /TTI:\s*(\d+\.?\d*)/i)
+        timeToInteractive: extractMetric(textContent, /TTI:\s*(\d+\.?\d*)/i),
       },
-      rawTrace: textContent // Store the raw markdown
+      rawTrace: textContent, // Store the raw markdown
     };
   }
 
@@ -400,8 +403,8 @@ export class ChromeDevToolsClient {
         totalElements: 0,
         elementsWithARIA: 0,
         elementsWithAlt: 0,
-        keyboardNavigable: 0
-      }
+        keyboardNavigable: 0,
+      },
     };
   }
 
@@ -425,9 +428,9 @@ export class ChromeDevToolsClient {
         tcp: req.timing?.tcp,
         tls: req.timing?.tls,
         request: req.timing?.request,
-        response: req.timing?.response
+        response: req.timing?.response,
       },
-      headers: req.headers
+      headers: req.headers,
     }));
   }
 
@@ -443,7 +446,7 @@ export class ChromeDevToolsClient {
       text: msg.text,
       timestamp: msg.timestamp || Date.now(),
       source: msg.source,
-      stackTrace: msg.stackTrace
+      stackTrace: msg.stackTrace,
     }));
   }
 }
@@ -451,6 +454,8 @@ export class ChromeDevToolsClient {
 /**
  * Create Chrome DevTools client instance
  */
-export function createChromeDevToolsClient(config?: ChromeDevToolsClientConfig): ChromeDevToolsClient {
+export function createChromeDevToolsClient(
+  config?: ChromeDevToolsClientConfig
+): ChromeDevToolsClient {
   return new ChromeDevToolsClient(config);
 }
