@@ -1,6 +1,6 @@
 # VIZTRTR Project Memory
 
-**Last Updated: 2025-10-06 21:00:00**
+**Last Updated: 2025-10-07 01:30:51
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:** <https://github.com/PROACTIVA-US/VIZTRTR.git>
 
@@ -389,6 +389,41 @@ npm run test:performia
   - Consider PM2 or systemd for production deployments
   - Add authentication for manager endpoints in production
   - Monitor server start/stop patterns to optimize defaults
+
+### October 07, 2025 - Code Quality & UI Polish
+
+- Branch: main
+- Status: ✅ Complete - 2 commits pushed
+- **What was accomplished:**
+  1. ✅ Fixed UI iteration counter display
+     - Changed from 0-based to 1-based iteration numbering
+     - Updated `LiveBuildView.tsx` and `RunPage.tsx`
+     - Now shows "Iteration 1 of 5" instead of "Iteration 0 of 5"
+     - Better user experience with accurate progress indicators
+  2. ✅ Added file stabilization delays in specialized agents
+     - Added 3-second wait after file writes in `ControlPanelAgent.ts`
+     - Added 3-second wait after file writes in `TeleprompterAgent.ts`
+     - Prevents race conditions with Vite HMR, linters, and formatters
+     - Ensures file system stabilization before proceeding
+  3. ✅ Improved gitignore for server processes
+     - Created `ui/server/.gitignore` with `*.pid` pattern
+     - Removed `.server.pid` from git tracking
+     - Cleaner repository without process tracking files
+- **Commits:**
+  - `1f06aa8` - fix: display 1-based iteration numbers in UI
+  - `e27d981` - feat: add file stabilization delay after agent writes
+- **Key improvements:**
+  - Better UX with accurate iteration progress display
+  - More reliable agent file modifications (no HMR race conditions)
+  - Cleaner git history without PID files
+- **Engineering decisions:**
+  - Split commits logically: UI fixes separate from agent improvements
+  - Used conventional commit format for clear changelog
+  - Added `.gitignore` in same commit as UI fixes (cleanup bundled together)
+- **Next steps:**
+  - Test hybrid scoring system with recent improvements
+  - Monitor agent file stabilization in production runs
+  - Consider making stabilization delay configurable if needed
 
 ### October 03, 2025 - Migration to unified session system v3.0
 
