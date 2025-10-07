@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import type { Project, ProductSpec } from '../types';
+import type { Project, ProductSpec } from '../../../shared/types';
 
 interface UploadedDocument {
   id: string;
@@ -304,7 +304,7 @@ export default function ProjectDetailPage() {
                 <div>
                   <h3 className="font-semibold text-sm text-slate-400 mb-2">Target Users</h3>
                   <ul className="text-sm space-y-1">
-                    {productSpec.targetUsers.map((user, i) => (
+                    {productSpec.targetUsers.map((user: string, i: number) => (
                       <li key={i} className="text-slate-300">
                         • {user}
                       </li>
@@ -384,7 +384,7 @@ export default function ProjectDetailPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Target Users</h3>
                   <ul className="text-sm text-slate-300 space-y-1">
-                    {productSpec.targetUsers.map((user, i) => (
+                    {productSpec.targetUsers.map((user: string, i: number) => (
                       <li key={i}>• {user}</li>
                     ))}
                   </ul>
@@ -393,7 +393,7 @@ export default function ProjectDetailPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Components</h3>
                   <div className="grid md:grid-cols-2 gap-3">
-                    {Object.entries(productSpec.components).map(([name, comp]) => (
+                    {Object.entries(productSpec.components).map(([name, comp]: [string, any]) => (
                       <div
                         key={name}
                         className="bg-slate-800/50 p-3 rounded border border-slate-700"

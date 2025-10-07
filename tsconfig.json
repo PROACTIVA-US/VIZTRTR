@@ -14,11 +14,22 @@
     "sourceMap": true,
     "moduleResolution": "node"
   },
-  "include": ["src/**/*", "examples/**/*"],
+  "include": [
+    "src/core/**/*",
+    "src/plugins/**/*",
+    "src/agents/**/*",
+    "src/memory/**/*",
+    "src/services/**/*",
+    "src/tools/**/*",
+    "src/utils/**/*",
+    "examples/**/*"
+  ],
   "exclude": [
     "node_modules",
     "dist",
     "**/*.skip.ts",
-    "ui/**/*"
+    "ui/**/*",
+    "src/components/**/*",
+    "src/pages/**/*"
   ]
 }

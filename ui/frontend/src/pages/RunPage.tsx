@@ -11,7 +11,9 @@ export default function RunPage() {
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [startingServer, setStartingServer] = useState(false);
-  const [serverStatus, setServerStatus] = useState<{ running: boolean; url?: string } | null>(null);
+  const [_serverStatus, setServerStatus] = useState<{ running: boolean; url?: string } | null>(
+    null
+  );
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FileBrowser from './FileBrowser';
-import type { ProductSpec } from '../types';
+import type { ProductSpec } from '../../../shared/types';
 
 interface ProjectOnboardingProps {
   projectId: number;
@@ -34,7 +34,7 @@ export default function ProjectOnboarding({
   const [step, setStep] = useState<Step>('prd-upload');
   const [prdMethod, setPrdMethod] = useState<'text' | 'file' | null>(null);
   const [prdText, setPrdText] = useState('');
-  const [analyzing, setAnalyzing] = useState(false);
+  const [_analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
   const [productSpec, setProductSpec] = useState<ProductSpec | null>(null);
   const [specJson, setSpecJson] = useState('');
@@ -288,7 +288,7 @@ export default function ProjectOnboarding({
   };
 
   // Poll server status with exponential backoff
-  const pollServerStatus = async (url: string, maxAttempts = 5) => {
+  const pollServerStatus = async (_url: string, maxAttempts = 5) => {
     for (let i = 0; i < maxAttempts; i++) {
       const delay = Math.min(1000 * Math.pow(2, i), 5000); // 1s, 2s, 4s, 5s, 5s
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -321,7 +321,7 @@ export default function ProjectOnboarding({
 
     const userMsg = chatInput.trim();
     setChatInput('');
-    const newMessages = [...chatMessages, { role: 'user', content: userMsg }];
+    const newMessages = [...chatMessages, { role: 'user' as const, content: userMsg }];
     setChatMessages(newMessages);
 
     try {
