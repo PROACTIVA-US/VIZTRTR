@@ -23,10 +23,7 @@ export interface GrepResult {
 /**
  * Search for patterns in a file and return line hints
  */
-export async function grepFile(
-  filePath: string,
-  patterns: string | string[]
-): Promise<GrepResult> {
+export async function grepFile(filePath: string, patterns: string | string[]): Promise<GrepResult> {
   const patternArray = Array.isArray(patterns) ? patterns : [patterns];
   const content = await fs.readFile(filePath, 'utf-8');
   const lines = content.split('\n');
@@ -111,10 +108,7 @@ export function extractClassNames(line: string): string[] {
 /**
  * Search for specific className patterns (e.g., text-sm, text-base)
  */
-export async function findClassNames(
-  filePath: string,
-  classNames: string[]
-): Promise<LineHint[]> {
+export async function findClassNames(filePath: string, classNames: string[]): Promise<LineHint[]> {
   const content = await fs.readFile(filePath, 'utf-8');
   const lines = content.split('\n');
   const matches: LineHint[] = [];
@@ -148,6 +142,11 @@ export async function generateLineHintsForRecommendation(
 ): Promise<string> {
   // Extract patterns from recommendation based on dimension
   const patterns: string[] = [];
+
+  // Safety check: dimension and description must be defined
+  if (!dimension || !description) {
+    return '';
+  }
 
   // Typography recommendations often involve className changes
   if (dimension.toLowerCase().includes('typography')) {
