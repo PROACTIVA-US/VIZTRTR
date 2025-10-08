@@ -14,6 +14,7 @@ import {
   DiscoveredFile,
   summarizeDiscovery,
 } from '../../utils/file-discovery';
+import { generateLineHintsForRecommendation } from '../../utils/line-hint-generator';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -77,8 +78,8 @@ export class ControlPanelAgentV2 {
     try {
       console.log(`\n   🎨 Implementing: ${recommendation.title}`);
 
-      // Build prompt for tool-based implementation
-      const prompt = this.buildToolPrompt(recommendation, projectPath);
+      // Build prompt for tool-based implementation (with line hints optimization)
+      const prompt = await this.buildToolPrompt(recommendation, projectPath);
 
       // Initial request with tools
       let messages: Anthropic.MessageParam[] = [
@@ -228,7 +229,10 @@ export class ControlPanelAgentV2 {
     }
   }
 
-  private buildToolPrompt(recommendation: Recommendation, projectPath: string): string {
+  private async buildToolPrompt(
+    recommendation: Recommendation,
+    projectPath: string
+  ): Promise<string> {
     // Group files by directory
     const filesByDir = this.discoveredFiles.reduce(
       (acc, file) => {
@@ -247,6 +251,21 @@ export class ControlPanelAgentV2 {
         return `- ${dir}/ → ${fileStr}${more}`;
       })
       .join('\n');
+
+    // Generate line hints for all discovered files (OPTIMIZATION)
+    let lineHints = '';
+    for (const file of this.discoveredFiles.slice(0, 5)) {
+      // Limit to first 5 files for performance
+      const hints = await generateLineHintsForRecommendation(
+        file.absolutePath,
+        recommendation.dimension,
+        recommendation.description
+      );
+      if (hints) {
+        lineHints += hints;
+        break; // Stop after first file with matches
+      }
+    }
 
     return `You are a specialist CONTROL PANEL AGENT with access to MICRO-CHANGE TOOLS.
 
@@ -281,12 +300,14 @@ You CANNOT rewrite entire files or make large structural changes.
 
 **AVAILABLE FILES IN PROJECT:**
 ${fileList}
+${lineHints}
 
 **YOUR TASK:**
 1. Analyze the recommendation and identify which file needs modification
-2. Identify the specific lines that need to change
+2. ${lineHints ? 'USE THE LINE HINTS ABOVE - exact line numbers are provided!' : 'Identify the specific lines that need to change'}
 3. Use the micro-change tools to make surgical edits
 4. Make 1-3 tool calls maximum (keep changes minimal)
+5. ${lineHints ? 'IMPORTANT: Start with the exact line numbers from the hints to minimize search attempts' : ''}
 
 **DESIGN CRITERIA FOR CONTROL PANELS:**
 - Desktop sizing: 32-48px buttons, 0.875-1.125rem text

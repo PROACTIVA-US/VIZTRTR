@@ -11,6 +11,7 @@
 VIZTRTR already has a strong multi-agent foundation with 9 existing agents. This proposal outlines strategic enhancements and new agents to expand capabilities, improve automation, and enhance the user experience.
 
 **Current Agents:**
+
 - ✅ **OrchestratorAgent** - Strategic coordinator with routing logic
 - ✅ **ReflectionAgent** - Analyzes outcomes and records to memory
 - ✅ **VerificationAgent** - Validates changes
@@ -30,10 +31,12 @@ VIZTRTR already has a strong multi-agent foundation with 9 existing agents. This
 **Purpose:** Intelligent PRD analysis with conversational refinement
 
 **Current Implementation:**
+
 - Backend: `ui/server/src/services/prdAnalyzer.ts` (functional, manual)
 - Frontend: Chat interface with history (`ProjectOnboarding.tsx:414-466`)
 
 **Enhancement Proposal:**
+
 - Upgrade to agentic system with tools:
   - `analyze_prd` - Parse and structure PRD content
   - `extract_requirements` - Pull out technical requirements
@@ -42,6 +45,7 @@ VIZTRTR already has a strong multi-agent foundation with 9 existing agents. This
   - `refine_spec` - Interactive refinement based on feedback
 
 **Benefits:**
+
 - More accurate requirement extraction
 - Better handling of ambiguous PRDs
 - Iterative refinement through conversation
@@ -50,6 +54,7 @@ VIZTRTR already has a strong multi-agent foundation with 9 existing agents. This
 **Model Recommendation:** Claude Sonnet 4 with extended thinking (2000 token budget)
 
 **Implementation Path:**
+
 ```typescript
 // ui/server/src/agents/PRDAnalyzerAgent.ts
 export class PRDAnalyzerAgent {
@@ -70,18 +75,21 @@ export class PRDAnalyzerAgent {
 **Purpose:** Automated code quality checks and improvements
 
 **Tools:**
+
 - `analyze_code_quality` - ESLint, Prettier, type checking
 - `suggest_improvements` - Code smell detection
 - `auto_fix` - Safe automatic fixes
 - `generate_tests` - Test generation for new code
 
 **Use Cases:**
+
 - Pre-commit quality checks
 - Automated code review
 - Test coverage improvement
 - Technical debt identification
 
 **Integration Points:**
+
 - Git hooks (lefthook)
 - CI/CD pipeline
 - Real-time feedback in UI
@@ -89,6 +97,7 @@ export class PRDAnalyzerAgent {
 **Model Recommendation:** Claude Sonnet 4
 
 **Benefits:**
+
 - Reduces manual code review time
 - Catches issues before CI
 - Improves codebase consistency
@@ -101,17 +110,20 @@ export class PRDAnalyzerAgent {
 **Purpose:** Ensure design consistency across UI changes
 
 **Tools:**
+
 - `extract_design_tokens` - Parse colors, spacing, typography
 - `validate_consistency` - Check against design system
 - `suggest_alternatives` - Recommend system-compliant alternatives
 - `generate_components` - Create new components following patterns
 
 **Current Gap:**
+
 - Manual design review
 - Inconsistent component patterns
 - No automated design system enforcement
 
 **Benefits:**
+
 - Enforces design consistency
 - Reduces design debt
 - Speeds up UI development
@@ -126,12 +138,14 @@ export class PRDAnalyzerAgent {
 **Purpose:** Identify and fix performance bottlenecks
 
 **Tools:**
+
 - `analyze_bundle_size` - Check for bloat
 - `detect_render_issues` - React re-render analysis
 - `suggest_optimizations` - Code splitting, lazy loading, memoization
 - `benchmark_changes` - Performance impact assessment
 
 **Integration:**
+
 - Runs after implementation changes
 - Provides performance metrics
 - Suggests specific optimizations
@@ -139,6 +153,7 @@ export class PRDAnalyzerAgent {
 **Model Recommendation:** Claude Sonnet 4
 
 **Benefits:**
+
 - Proactive performance monitoring
 - Catches regressions early
 - Educates team on best practices
@@ -150,12 +165,14 @@ export class PRDAnalyzerAgent {
 **Purpose:** Ensure WCAG AA/AAA compliance
 
 **Tools:**
+
 - `audit_accessibility` - ARIA, keyboard nav, screen reader
 - `suggest_fixes` - Specific accessibility improvements
 - `validate_contrast` - Color contrast checks
 - `generate_aria_labels` - Smart ARIA label generation
 
 **Why Critical:**
+
 - Accessibility is highest-weighted dimension (1.3×)
 - Legal compliance requirements
 - Inclusivity mission
@@ -163,6 +180,7 @@ export class PRDAnalyzerAgent {
 **Model Recommendation:** Claude Opus 4 (vision for UI analysis)
 
 **Benefits:**
+
 - Automated WCAG compliance
 - Reduces manual auditing
 - Prevents accessibility regressions
@@ -174,12 +192,14 @@ export class PRDAnalyzerAgent {
 **Purpose:** Generate and maintain documentation
 
 **Tools:**
+
 - `generate_api_docs` - TypeScript → API documentation
 - `update_changelog` - Parse commits → changelog
 - `create_tutorials` - Code → step-by-step guides
 - `maintain_readme` - Keep README current
 
 **Benefits:**
+
 - Always up-to-date docs
 - Reduces documentation burden
 - Improves onboarding
@@ -193,22 +213,26 @@ export class PRDAnalyzerAgent {
 **Purpose:** Intelligent error handling and recovery
 
 **Current Implementation:**
+
 - Basic error handling in `ProjectOnboarding.tsx:analyzing-error`
 - Manual troubleshooting tips
 
 **Enhancement:**
+
 - Analyze error patterns
 - Suggest specific fixes
 - Auto-retry with adjusted parameters
 - Learn from previous errors
 
 **Tools:**
+
 - `analyze_error` - Parse error messages
 - `suggest_solution` - Context-aware fixes
 - `auto_recover` - Safe automatic recovery
 - `escalate_to_human` - When to involve user
 
 **Benefits:**
+
 - Reduces user frustration
 - Faster error resolution
 - Better UX during failures
@@ -222,22 +246,26 @@ export class PRDAnalyzerAgent {
 **Purpose:** Smart project analysis and configuration
 
 **Current Implementation:**
+
 - Manual project detection in `ui/server/src/routes/projects.ts`
 - Basic package.json parsing
 
 **Enhancement:**
+
 - Deep project analysis (framework, dependencies, patterns)
 - Auto-detect frontend tech stack
 - Intelligent URL detection (already partially implemented)
 - Generate optimal VIZTRTR configuration
 
 **Tools:**
+
 - `analyze_project_structure` - File tree analysis
 - `detect_frameworks` - React, Vue, Angular, etc.
 - `recommend_config` - Optimal VIZTRTR settings
 - `validate_setup` - Check prerequisites
 
 **Benefits:**
+
 - Faster project onboarding
 - Smarter defaults
 - Reduced configuration errors
@@ -283,6 +311,7 @@ export class PRDAnalyzerAgent {
 ### Tool Sharing Strategy
 
 **Shared Tools Library:**
+
 - File system operations
 - Git operations
 - Code analysis (ESLint, TSC)
@@ -290,6 +319,7 @@ export class PRDAnalyzerAgent {
 - Build tools
 
 **Agent-Specific Tools:**
+
 - Each agent has specialized domain tools
 - Tools are composable and reusable
 
@@ -298,16 +328,19 @@ export class PRDAnalyzerAgent {
 ## 📊 Priority Roadmap
 
 ### Phase 1: Immediate Wins (1-2 weeks)
+
 1. ✅ **PRD Analyzer Agent** - Biggest UX impact
 2. ✅ **Accessibility Champion Agent** - Mission-critical
 3. ✅ **Code Quality Agent** - Daily developer benefit
 
 ### Phase 2: Foundation Strengthening (2-4 weeks)
+
 4. **Error Recovery Agent** - Improved reliability
 5. **Project Discovery Agent** - Better onboarding
 6. **Design System Agent** - Consistency enforcement
 
 ### Phase 3: Advanced Features (4-8 weeks)
+
 7. **Performance Optimization Agent** - Speed improvements
 8. **Documentation Agent** - Long-term maintenance
 9. **Enhanced Orchestrator** - Multi-agent coordination improvements
@@ -380,6 +413,7 @@ export class [Name]Agent {
 - **Total Estimated:** ~$160/month
 
 **Cost-Saving Strategies:**
+
 - Cache repeated analyses
 - Batch similar operations
 - Use cheaper models for simple tasks
@@ -417,8 +451,8 @@ export class [Name]Agent {
 
 ## 📚 Resources
 
-- **Anthropic Docs:** https://docs.anthropic.com/
-- **Agent SDK:** https://github.com/anthropics/anthropic-sdk-typescript
+- **Anthropic Docs:** <https://docs.anthropic.com/>
+- **Agent SDK:** <https://github.com/anthropics/anthropic-sdk-typescript>
 - **Current Agents:** `/src/agents/`
 - **VIZTRTR Architecture:** `/CLAUDE.md`
 

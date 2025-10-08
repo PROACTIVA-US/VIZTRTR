@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-10-08T21:59:31.995Z",
+  "url": "http://localhost:5001",
+  "totalTests": 7,
+  "successful": 7,
+  "failed": 0,
+  "results": [
+    {
+      "name": "01-default-viewport",
+      "success": true,
+      "path": "/Users/danielconnolly/Projects/VIZTRTR/screenshot-debug-output/01-default-viewport.png"
+    },
+    {
+      "name": "02-with-delay-1s",
+      "success": true,
+      "path": "/Users/danielconnolly/Projects/VIZTRTR/screenshot-debug-output/02-with-delay-1s.png"
+    },
+    {
+      "name": "03-with-delay-3s",
+      "success": true,
+      "path": "/Users/danielconnolly/Projects/VIZTRTR/screenshot-debug-output/03-with-delay-3s.png"
+    },
+    {
+      "name": "04-wait-for-root",
+      "success": true,
+      "path": "/Users/danielconnolly/Projects/VIZTRTR/screenshot-debug-output/04-wait-for-root.png"
+    },
+    {
+      "name": "05-full-page",
+      "success": true,
+      "path": "/Users/danielconnolly/Projects/VIZTRTR/screenshot-debug-output/05-full-page.png"
+    },
+    {
+      "name": "06-smaller-viewport",
+      "success": true,
+      "path": "/Users/danielconnolly/Projects/VIZTRTR/screenshot-debug-output/06-smaller-viewport.png"
+    },
+    {
+      "name": "07-wait-domcontentloaded",
+      "success": true,
+      "path": "/Users/danielconnolly/Projects/VIZTRTR/screenshot-debug-output/07-wait-domcontentloaded.png"
+    }
+  ]
+}
