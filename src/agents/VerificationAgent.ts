@@ -69,7 +69,7 @@ export class VerificationAgent {
       console.log('   ✅ Verification passed');
     } else {
       console.log('   ❌ Verification failed:');
-      result.errors.forEach((err) => console.log(`      - ${err}`));
+      result.errors.forEach(err => console.log(`      - ${err}`));
     }
 
     return result;
@@ -114,7 +114,7 @@ export class VerificationAgent {
 
       const { stdout, stderr } = await execAsync('npm run build', {
         cwd: this.projectPath,
-        timeout: 60000, // 60 second timeout
+        timeout: 180000, // 3 minute timeout for larger projects
       });
 
       // Check for TypeScript errors
@@ -145,19 +145,19 @@ export class VerificationAgent {
     const errors: string[] = [];
 
     // Listen for console errors
-    page.on('console', (msg) => {
+    page.on('console', msg => {
       if (msg.type() === 'error') {
         errors.push(msg.text());
       }
     });
 
     // Listen for page errors
-    page.on('pageerror', (error) => {
+    page.on('pageerror', error => {
       errors.push(error.message);
     });
 
     // Wait a bit for any errors to surface
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     return errors;
   }
