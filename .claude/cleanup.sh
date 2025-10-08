@@ -59,17 +59,9 @@ if [ -f "$CLAUDE_MD" ]; then
   fi
 fi
 
-# Update timestamps in memory.md and STATUS.md if they exist
-TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-if [ -f "$CLAUDE_DIR/memory.md" ]; then
-  sed -i.bak "s/Last Updated:.*/Last Updated: $TIMESTAMP/" "$CLAUDE_DIR/memory.md" 2>/dev/null || true
-  rm -f "$CLAUDE_DIR/memory.md.bak"
-fi
-
-if [ -f "$PROJECT_ROOT/docs/STATUS.md" ]; then
-  sed -i.bak "s/Last Updated:.*/Last Updated: $TIMESTAMP/" "$PROJECT_ROOT/docs/STATUS.md" 2>/dev/null || true
-  rm -f "$PROJECT_ROOT/docs/STATUS.md.bak"
-fi
+# Note: We do NOT update timestamps in memory.md here
+# memory.md timestamps should only be updated during session documentation,
+# not during cleanup. Cleanup script should only remove temp files.
 
 # Remove empty directories (except protected ones)
 find "$PROJECT_ROOT" -type d -empty \
