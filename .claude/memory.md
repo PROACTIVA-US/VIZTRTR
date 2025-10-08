@@ -1,6 +1,6 @@
 # VIZTRTR Project Memory
 
-**Last Updated: 2025-10-07 01:30:51
+**Last Updated: 2025-10-07 21:10:54
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:** <https://github.com/PROACTIVA-US/VIZTRTR.git>
 
@@ -424,6 +424,61 @@ npm run test:performia
   - Test hybrid scoring system with recent improvements
   - Monitor agent file stabilization in production runs
   - Consider making stabilization delay configurable if needed
+
+### October 08, 2025 - Hybrid Scoring System Improvement Sprint
+
+- Branch: fix/typescript-errors-and-hybrid-scoring
+- Status: ⚠️ **Partial Success** - Critical findings documented
+- **What was accomplished:**
+  1. ✅ **Sprint 1: Critical Fixes (100% build success achieved)**
+     - Fixed React import bug: Added React 17+ JSX transform rules to ControlPanelAgent
+     - Prevented external dependency imports (@mui/material, etc.)
+     - Strengthened micro-change enforcement with explicit examples
+     - Reduced validation limits: 40→10 (low), 80→25 (medium), 150→50 (high)
+     - **Result:** 100% build success, 50% overall success (2/4 changes deployed)
+  2. ✅ **Sprint 2: Dynamic Growth Limits**
+     - Implemented file-size-based growth calculation (tiny files 100%, large files 30%)
+     - Validation now adapts: <30 lines=100%, 30-50=75%, 50-100=50%, >100=30%
+     - **Result:** Technical implementation flawless, but agent behavior regressed
+  3. ✅ **Sprint 3: CSS-Only Mode**
+     - Added detection for visual changes (typography, color, layout, etc.)
+     - Created CSS-only prompt mode forbidding structural changes
+     - **Result:** Mode activates correctly but agent ignores constraints completely
+  4. ✅ **Root Cause Discovery**
+     - Identified fundamental limitation: Claude Sonnet 4.5 does not follow "surgical change" instructions
+     - Agent rewrites entire components (25-139 lines) despite "change 1-3 className only"
+     - Prompt engineering proven ineffective for constraining agent behavior
+- **Test Results:**
+  - Sprint 1: 100% build, 50% validation, 50% success ✅
+  - Sprint 2: 100% build, 0% validation, 0% success ❌ (regression)
+  - Sprint 3: 0% build, 20% validation, 0% success ❌ (regression)
+- **Files created:**
+  - `IMPROVEMENT_PLAN.md` - Comprehensive 3-sprint improvement plan
+  - `SPRINT_1_RESULTS.md` - Detailed Sprint 1 success documentation
+  - `SPRINT_2_3_RESULTS.md` - Sprint 2+3 analysis with architectural recommendations
+  - `examples/hybrid-scoring-test.ts` - Test script with health checks
+- **Files modified:**
+  - `src/agents/specialized/ControlPanelAgent.ts` - React rules, dependency rules, CSS-only mode
+  - `src/core/validation.ts` - Dynamic growth limits, reduced effort-based limits
+  - `ui/frontend/src/components/Header.tsx` - Modified by agent during testing
+- **Key learnings:**
+  1. Prompt engineering has hard limits - cannot override model behavior patterns
+  2. Pre-implementation validation as gatekeeper leads to 0% success when agent misbehaves
+  3. Claude Sonnet 4.5 treats every change as "rewrite to implement feature" regardless of constraints
+  4. Need architectural solution: constrained tools or multi-agent workflow
+- **Recommendations documented:**
+  - **Immediate:** Revert to Sprint 1 state (restore 40/80/150 limits)
+  - **Short-term:** Implement "build-first" validation strategy (accept if builds)
+  - **Medium-term:** Constrained tool approach (`updateClassName`, `updateStyles` tools)
+  - **Alternative:** Multi-agent workflow (Planner → Editor → Validator)
+- **Next steps:**
+  - Revert validation limits to Sprint 1 success state
+  - Implement build-first validation (remove size pre-checks)
+  - Consider constrained tool architecture (force micro-changes via API)
+- **Engineering decisions:**
+  - Documented all findings comprehensively for future reference
+  - Created detailed sprint reports instead of abandoning work
+  - Identified that model limitations require architectural solutions, not prompt fixes
 
 ### October 03, 2025 - Migration to unified session system v3.0
 

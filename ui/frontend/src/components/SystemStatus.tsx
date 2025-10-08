@@ -71,8 +71,8 @@ export default function SystemStatus() {
 
   const handleRestart = async () => {
     setIsRestarting(true);
+    const isOffline = status.backend.status === 'offline';
     try {
-      const isOffline = status.backend.status === 'offline';
       const endpoint = isOffline ? 'start' : 'restart';
 
       // Call manager server (port 3002) to start/restart backend

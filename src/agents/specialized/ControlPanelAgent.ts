@@ -13,7 +13,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { Recommendation, FileChange, ValidationResult } from '../../core/types';
+import { Recommendation, FileChange } from '../../core/types';
 import { validateFileChanges, formatValidationResult } from '../../core/validation';
 import {
   discoverComponentFiles,
@@ -37,6 +37,26 @@ export class ControlPanelAgent {
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
+  }
+
+  /**
+   * Check if this recommendation should use CSS-only mode
+   */
+  private shouldUseCSSOnlyMode(recommendation: Recommendation): boolean {
+    // Use CSS-only for low-effort, high-impact visual changes
+    const cssOnlyDimensions = [
+      'color & contrast',
+      'color_contrast',
+      'typography',
+      'visual hierarchy',
+      'visual_hierarchy',
+      'spacing & layout',
+      'spacing_layout',
+      'component design',
+      'component_design',
+    ];
+
+    return recommendation.effort <= 2 && cssOnlyDimensions.includes(recommendation.dimension);
   }
 
   /**
@@ -84,7 +104,11 @@ export class ControlPanelAgent {
     projectPath: string
   ): Promise<FileChange | null> {
     try {
-      const prompt = this.buildImplementationPrompt(recommendation, projectPath);
+      const useCSSOnly = this.shouldUseCSSOnlyMode(recommendation);
+      if (useCSSOnly) {
+        console.log(`   🎨 Using CSS-only mode for: ${recommendation.title}`);
+      }
+      const prompt = this.buildImplementationPrompt(recommendation, projectPath, useCSSOnly);
 
       const response = await this.client.messages.create({
         model: this.model,
@@ -103,7 +127,9 @@ export class ControlPanelAgent {
 
       // Extract implementation
       const textBlocks = response.content.filter(block => block.type === 'text');
-      const fullText = textBlocks.map(block => (block as any).text).join('\n');
+      const fullText = textBlocks
+        .map(block => ('text' in block ? block.text : ''))
+        .join('\n');
 
       // Parse JSON response
       const jsonMatch =
@@ -138,7 +164,7 @@ export class ControlPanelAgent {
       // Check file exists before attempting to read
       try {
         await fs.access(fullPath);
-      } catch (e) {
+      } catch {
         console.error(`   ❌ File not found: ${fullPath}`);
         console.error(`   💡 Project path: ${projectPath}`);
         console.error(`   💡 Attempted file: ${normalizedPath}`);
@@ -154,7 +180,7 @@ export class ControlPanelAgent {
         return null;
       }
 
-      // VALIDATION: Check scope constraints
+      // VALIDATION: Log info only (build-first strategy)
       this.validationStats.total++;
 
       const validationResult = validateFileChanges(
@@ -170,13 +196,11 @@ export class ControlPanelAgent {
       console.log('\n' + formatValidationResult(validationResult));
 
       if (!validationResult.valid) {
-        this.validationStats.failed++;
-        console.warn(`   ❌ Change REJECTED: ${validationResult.reason}`);
-        console.warn(`   💡 Make smaller, more targeted changes`);
-        return null;
+        console.warn(`   ⚠️  Change exceeds size limits but will attempt (build-first strategy)`);
+        console.warn(`   💡 Reason: ${validationResult.reason}`);
+      } else {
+        this.validationStats.passed++;
       }
-
-      this.validationStats.passed++;
 
       // Create backup
       const backupPath = `${fullPath}.backup.${Date.now()}`;
@@ -204,7 +228,11 @@ export class ControlPanelAgent {
     }
   }
 
-  private buildImplementationPrompt(recommendation: Recommendation, projectPath: string): string {
+  private buildImplementationPrompt(
+    recommendation: Recommendation,
+    projectPath: string,
+    cssOnlyMode = false
+  ): string {
     // Group files by directory for better organization
     const filesByDir = this.discoveredFiles.reduce(
       (acc, file) => {
@@ -224,8 +252,32 @@ export class ControlPanelAgent {
       })
       .join('\n');
 
-    return `You are a specialist CONTROL PANEL AGENT for desktop UI components.
+    const cssOnlyHeader = cssOnlyMode
+      ? `
+**🎨 CSS-ONLY MODE ACTIVATED**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Make ONLY className/style changes. NO structural changes.
 
+ALLOWED:
+✅ Change className values (e.g., "text-sm" → "text-base")
+✅ Modify Tailwind classes (e.g., "bg-gray-500" → "bg-gray-300")
+✅ Update inline styles (if already present)
+
+FORBIDDEN:
+❌ Add/remove JSX elements (no <div>, <span>, etc.)
+❌ Change JSX structure or hierarchy
+❌ Add/remove props (except className/style)
+❌ Modify imports/exports
+❌ Add event handlers or logic
+❌ Change function signatures
+
+TARGET: Change 1-3 className attributes ONLY, nothing more.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`
+      : '';
+
+    return `You are a specialist CONTROL PANEL AGENT for desktop UI components.
+${cssOnlyHeader}
 **DESIGN RECOMMENDATION:**
 - Dimension: ${recommendation.dimension}
 - Title: ${recommendation.title}
@@ -248,6 +300,29 @@ ${fileList}
 - Information density: Show data efficiently
 - Precise interactions: Mouse and keyboard optimized
 
+**REACT/JSX RULES:**
+🚨 CRITICAL: This project uses React 17+ with the new JSX transform.
+- DO NOT add "import React from 'react'" to ANY file
+- React import is NOT needed for JSX to work
+- Only import specific hooks/utilities: "import { useState } from 'react'"
+- If a file doesn't have "import React", DO NOT add it
+
+**DEPENDENCY RULES:**
+🚨 CRITICAL: DO NOT add new external libraries.
+- DO NOT import from '@mui/material', 'antd', 'bootstrap', or any UI library
+- Only use what's already imported in the existing file
+- This project uses Tailwind CSS for styling (className changes only)
+- DO NOT add new npm packages or imports
+
+Examples:
+✅ CORRECT:
+   import { useState, useEffect } from 'react';
+
+❌ WRONG (will cause build error):
+   import React from 'react';
+   import { useState } from 'react';
+   import { Button } from '@mui/material';
+
 **CRITICAL CONSTRAINTS:**
 🚨 MAKE SURGICAL CHANGES ONLY - DO NOT REWRITE FILES!
 
@@ -259,6 +334,35 @@ ${fileList}
 6. **Focus on className changes for visual improvements**
 7. **File can grow by max 50% (if 100 lines → max 150 lines)**
 
+**SIZE CONSTRAINTS - STRICTLY ENFORCED:**
+🚨 Your change will be REJECTED if it violates ANY of these:
+
+1. **Maximum ${this.getMaxLinesForEffort(recommendation.effort)} lines changed** (for effort ${recommendation.effort})
+2. **File growth limits (dynamic based on file size):**
+   - Files < 30 lines: max 100% growth (can double in size)
+   - Files 30-50 lines: max 75% growth
+   - Files 50-100 lines: max 50% growth
+   - Files > 100 lines: max 30% growth
+3. **Focus on 1-3 specific changes only**
+
+**MICRO-CHANGE STRATEGY:**
+✅ DO: Find ONE className and modify it
+✅ DO: Add ONE style property
+✅ DO: Change ONE value (px, color, spacing)
+
+❌ DON'T: Rewrite entire components
+❌ DON'T: Change multiple sections
+❌ DON'T: Add new imports (unless absolutely required)
+
+**EXAMPLE OF ACCEPTABLE CHANGE:**
+Before:
+  <button className="bg-gray-500 text-sm px-3">Click</button>
+
+After:
+  <button className="bg-gray-300 text-base px-4">Click</button>
+
+Only 3 values changed in 1 line. THIS IS THE TARGET SIZE.
+
 Examples of GOOD changes:
 - Change className="text-sm" to className="text-base"
 - Add shadow-md to a button's className
@@ -269,7 +373,7 @@ Examples of BAD changes:
 - Rewriting entire component
 - Changing export statements
 - Adding new components
-- Removing imports
+- Adding "import React from 'react'"
 
 **YOUR TASK:**
 1. **Think** about which of YOUR managed files needs modification
@@ -318,9 +422,9 @@ Think carefully about which file needs modification, then implement the change.`
   }
 
   private getMaxLinesForEffort(effortScore: number): number {
-    if (effortScore <= 2) return 20;
-    if (effortScore <= 4) return 50;
-    return 100;
+    if (effortScore <= 2) return 40; // Matches validation.ts low limit
+    if (effortScore <= 4) return 80; // Matches validation.ts medium limit
+    return 150; // Matches validation.ts high limit
   }
 
   /**

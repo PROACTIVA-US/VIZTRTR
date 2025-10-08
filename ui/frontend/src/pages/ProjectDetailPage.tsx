@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import type { Project, ProductSpec } from '../types';
+import type { Project, ProductSpec, ComponentSpec } from '../../../shared/types';
 
 interface UploadedDocument {
   id: string;
@@ -304,7 +304,7 @@ export default function ProjectDetailPage() {
                 <div>
                   <h3 className="font-semibold text-sm text-slate-400 mb-2">Target Users</h3>
                   <ul className="text-sm space-y-1">
-                    {productSpec.targetUsers.map((user, i) => (
+                    {productSpec.targetUsers.map((user: string, i: number) => (
                       <li key={i} className="text-slate-300">
                         • {user}
                       </li>
@@ -384,7 +384,7 @@ export default function ProjectDetailPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Target Users</h3>
                   <ul className="text-sm text-slate-300 space-y-1">
-                    {productSpec.targetUsers.map((user, i) => (
+                    {productSpec.targetUsers.map((user: string, i: number) => (
                       <li key={i}>• {user}</li>
                     ))}
                   </ul>
@@ -393,15 +393,19 @@ export default function ProjectDetailPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Components</h3>
                   <div className="grid md:grid-cols-2 gap-3">
-                    {Object.entries(productSpec.components).map(([name, comp]) => (
-                      <div
-                        key={name}
-                        className="bg-slate-800/50 p-3 rounded border border-slate-700"
-                      >
-                        <h4 className="text-sm font-semibold text-blue-400 mb-1">{name}</h4>
-                        <p className="text-xs text-slate-400">{comp.purpose || 'No description'}</p>
-                      </div>
-                    ))}
+                    {Object.entries(productSpec.components).map(
+                      ([name, comp]: [string, ComponentSpec]) => (
+                        <div
+                          key={name}
+                          className="bg-slate-800/50 p-3 rounded border border-slate-700"
+                        >
+                          <h4 className="text-sm font-semibold text-blue-400 mb-1">{name}</h4>
+                          <p className="text-xs text-slate-400">
+                            {comp.purpose || 'No description'}
+                          </p>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
 
