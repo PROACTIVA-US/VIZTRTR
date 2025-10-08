@@ -1,6 +1,6 @@
 # VIZTRTR Project Memory
 
-**Last Updated: 2025-10-07 23:26:42
+**Last Updated: 2025-10-07 23:48:56
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:** <https://github.com/PROACTIVA-US/VIZTRTR.git>
 
@@ -521,6 +521,50 @@ npm run test:performia
   - Fix skipped tests (Issue #18)
   - Implement constrained tools (Issue #19 - 3 week plan)
   - Track metrics: success rate, lines changed, build success
+
+### October 07, 2025 - Phase 3: V1 vs V2 Comparison & Validation (Issue #19)
+
+- Branch: main
+- Status: ✅ Complete - Commit 47e6075
+- **What was accomplished:**
+  1. ✅ Created comprehensive V1 vs V2 comparison test
+     - Same recommendation tested on both agents
+     - Button typography improvement (text-sm → text-base)
+     - Quantitative metrics + qualitative analysis
+  2. ✅ **Validated constrained tools architecture**
+     - **96% reduction in lines changed** (50 → 2 lines)
+     - V1: Rewrote entire file (50 lines changed)
+     - V2: Made 2 surgical changes (2 lines changed)
+  3. ✅ Documented comprehensive findings
+     - Full results analysis in docs/V1_V2_COMPARISON_RESULTS.md
+     - Raw metrics in v1-v2-comparison-results.json
+     - Production recommendations
+- **Test Results:**
+  - V1 (Build-First): 1 file rewrite, 50 lines changed, validation failed
+  - V2 (Constrained Tools): 2 atomic changes, 2 lines changed, validation passed
+  - **Success Rate:** 3/4 criteria met (tool search optimization needed)
+- **Key Metrics:**
+  - ✅ Lines changed: 96% reduction (50 → 2)
+  - ✅ Build success: 100% (both versions)
+  - ✅ Validation: V2 passed (hard limits), V1 failed (soft limits)
+  - ❌ Tool calls: 12 attempts (target: 2-3, needs optimization)
+  - ⏱️ Execution time: V2 2× slower (47s vs 23s, acceptable tradeoff)
+- **Key Findings:**
+  1. **Hard constraints work** - Tools prevent rewrites physically
+  2. **Code review improvement** - 2-line diffs vs 50-line rewrites
+  3. **Predictable behavior** - Agent constrained by API, not prompts
+  4. **Tradeoff accepted** - 2× time justified by 96% diff reduction
+- **Production Recommendations:**
+  - Use V2 as default for micro-changes (className, styles, text)
+  - Use V1 only for large refactors
+  - Optimize V2 tool search (cache file content, provide line hints)
+  - Expand V2 tool set (updatePropValue, addAriaAttribute, etc.)
+- **Files created:**
+  - `docs/V1_V2_COMPARISON_RESULTS.md` - Full analysis
+  - `examples/v1-v2-comparison-test.ts` - Comparison script
+  - `v1-v2-comparison-results.json` - Raw metrics
+- **Commit:** `47e6075 - feat: Phase 3 - V1 vs V2 comparison with 96% reduction`
+- **Status:** Issue #19 COMPLETE (Phase 3 of 3)
 
 ### October 07, 2025 - Phase 2: ControlPanelAgentV2 Integration (Issue #19)
 
