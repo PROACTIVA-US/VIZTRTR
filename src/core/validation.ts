@@ -33,16 +33,27 @@ export interface ChangeConstraints {
 
 const DEFAULT_CONSTRAINTS: ChangeConstraints = {
   maxLineDelta: 100,
-  maxGrowthPercent: 0.5, // 50% max growth
+  maxGrowthPercent: 0.5, // 50% max growth (overridden by dynamic calculation)
   preserveExports: true,
   preserveImports: true,
   requireDiffFormat: false,
   effortBasedLineLimits: {
-    low: 40,      // effort 1-2: simple CSS/style changes
-    medium: 80,   // effort 3-4: component refactors
-    high: 150,    // effort 5+: complex features
+    low: 10,      // effort 1-2: micro CSS/style changes (REDUCED from 40)
+    medium: 25,   // effort 3-4: component refactors (REDUCED from 80)
+    high: 50,     // effort 5+: complex features (REDUCED from 150)
   },
 };
+
+/**
+ * Calculate dynamic growth limit based on file size
+ * Smaller files can grow more, larger files should be more conservative
+ */
+function calculateMaxGrowth(originalLines: number): number {
+  if (originalLines < 30) return 1.0;   // 100% growth for tiny files
+  if (originalLines < 50) return 0.75;  // 75% growth for small files
+  if (originalLines < 100) return 0.5;  // 50% growth for medium files
+  return 0.3;                            // 30% growth for large files
+}
 
 /**
  * Validate file changes against scope constraints
@@ -70,9 +81,14 @@ export function validateFileChanges(
     );
   }
 
-  if (lineGrowthPercent > config.maxGrowthPercent) {
+  // Use dynamic growth limit based on file size (unless overridden in constraints)
+  const maxGrowthPercent = constraints.maxGrowthPercent !== undefined
+    ? config.maxGrowthPercent
+    : calculateMaxGrowth(originalLines);
+
+  if (lineGrowthPercent > maxGrowthPercent) {
     violations.push(
-      `File grew by ${(lineGrowthPercent * 100).toFixed(1)}%, exceeds maximum ${(config.maxGrowthPercent * 100).toFixed(0)}%. ` +
+      `File grew by ${(lineGrowthPercent * 100).toFixed(1)}%, exceeds maximum ${(maxGrowthPercent * 100).toFixed(0)}% for files with ${originalLines} lines. ` +
       `Original: ${originalLines} lines, Modified: ${modifiedLines} lines.`
     );
   }
