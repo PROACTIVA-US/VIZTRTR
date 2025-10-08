@@ -12,7 +12,7 @@ async function testChromeDevTools() {
   const client = createChromeDevToolsClient({
     headless: false,
     viewport: '1280x720',
-    isolated: true
+    isolated: true,
   });
 
   try {
@@ -31,11 +31,11 @@ async function testChromeDevTools() {
     console.log('⚡ Test 3: Capturing performance metrics...');
     const perfTrace = await client.capturePerformanceTrace(testUrl);
     console.log('Performance Metrics:');
-    console.log(`  - LCP: ${perfTrace.coreWebVitals.LCP}ms`);
-    console.log(`  - FID: ${perfTrace.coreWebVitals.FID}ms`);
-    console.log(`  - CLS: ${perfTrace.coreWebVitals.CLS}`);
-    console.log(`  - FCP: ${perfTrace.firstContentfulPaint}ms`);
-    console.log(`  - TTI: ${perfTrace.timeToInteractive}ms`);
+    console.log(`  - LCP: ${perfTrace.coreWebVitals.lcp}ms`);
+    console.log(`  - FID: ${perfTrace.coreWebVitals.fid}ms`);
+    console.log(`  - CLS: ${perfTrace.coreWebVitals.cls}`);
+    console.log(`  - FCP: ${perfTrace.metrics.firstContentfulPaint}ms`);
+    console.log(`  - TTI: ${perfTrace.metrics.timeToInteractive}ms`);
     console.log('✅ Performance capture successful\n');
 
     // Test 4: Accessibility Snapshot
@@ -48,7 +48,7 @@ async function testChromeDevTools() {
     if (a11ySnapshot.violations.length > 0) {
       console.log('\n  Top Violations:');
       a11ySnapshot.violations.slice(0, 3).forEach((v, i) => {
-        console.log(`    ${i + 1}. ${v.type}: ${v.description}`);
+        console.log(`    ${i + 1}. ${v.type}: ${v.message}`);
       });
     }
     console.log('✅ Accessibility capture successful\n');
@@ -60,7 +60,8 @@ async function testChromeDevTools() {
     console.log(`  - Total Requests: ${networkRequests.length}`);
     const totalSize = networkRequests.reduce((sum, r) => sum + r.size, 0);
     console.log(`  - Total Size: ${(totalSize / 1024).toFixed(2)} KB`);
-    const avgTime = networkRequests.reduce((sum, r) => sum + r.timing.duration, 0) / networkRequests.length;
+    const avgTime =
+      networkRequests.reduce((sum, r) => sum + r.timing.duration, 0) / networkRequests.length;
     console.log(`  - Avg Request Time: ${avgTime.toFixed(2)}ms`);
     console.log('✅ Network capture successful\n');
 
@@ -69,8 +70,8 @@ async function testChromeDevTools() {
     const consoleMessages = await client.captureConsoleMessages(testUrl);
     console.log('Console Activity:');
     console.log(`  - Total Messages: ${consoleMessages.length}`);
-    const errors = consoleMessages.filter(m => m.level === 'error');
-    const warnings = consoleMessages.filter(m => m.level === 'warning');
+    const errors = consoleMessages.filter(m => m.type === 'error');
+    const warnings = consoleMessages.filter(m => m.type === 'warn');
     console.log(`  - Errors: ${errors.length}`);
     console.log(`  - Warnings: ${warnings.length}`);
     if (errors.length > 0) {
@@ -85,7 +86,7 @@ async function testChromeDevTools() {
     console.log('📸 Test 7: Taking screenshot...');
     const screenshot = await client.takeScreenshot({
       fullPage: true,
-      format: 'png'
+      format: 'png',
     });
     console.log(`  - Screenshot captured: ${screenshot.length} characters (base64)`);
     console.log('✅ Screenshot capture successful\n');
@@ -95,15 +96,15 @@ async function testChromeDevTools() {
     const allMetrics = await client.captureAllMetrics(testUrl);
     console.log('Complete Metrics:');
     console.log('  Performance:');
-    console.log(`    - LCP: ${allMetrics.performance.coreWebVitals.LCP}ms`);
-    console.log(`    - CLS: ${allMetrics.performance.coreWebVitals.CLS}`);
+    console.log(`    - LCP: ${allMetrics.performance.coreWebVitals.lcp}ms`);
+    console.log(`    - CLS: ${allMetrics.performance.coreWebVitals.cls}`);
     console.log('  Accessibility:');
     console.log(`    - Violations: ${allMetrics.accessibility.violations.length}`);
     console.log(`    - Contrast Issues: ${allMetrics.accessibility.contrastIssues.length}`);
     console.log('  Network:');
     console.log(`    - Requests: ${allMetrics.network.length}`);
     console.log('  Console:');
-    console.log(`    - Errors: ${allMetrics.console.filter(m => m.level === 'error').length}`);
+    console.log(`    - Errors: ${allMetrics.console.filter(m => m.type === 'error').length}`);
     console.log('✅ All metrics captured successfully\n');
 
     // Disconnect
@@ -121,7 +122,6 @@ async function testChromeDevTools() {
     console.log('  - Console Monitoring: ✅');
     console.log('  - Screenshot: ✅');
     console.log('  - Combined Metrics: ✅');
-
   } catch (error) {
     console.error('❌ Test failed:', error);
     process.exit(1);
