@@ -10,9 +10,14 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { DesignSpec, Recommendation, Changes, FileChange } from '../core/types';
-import { ControlPanelAgent } from './specialized/ControlPanelAgent';
+import { ControlPanelAgentV2 } from './specialized/ControlPanelAgentV2'; // V2: PRODUCTION READY ✅
+// import { ControlPanelAgent } from './specialized/ControlPanelAgent'; // V1: DEPRECATED ❌
 import { TeleprompterAgent } from './specialized/TeleprompterAgent';
-import { discoverComponentFiles, summarizeDiscovery, DiscoveredFile } from '../utils/file-discovery';
+import {
+  discoverComponentFiles,
+  summarizeDiscovery,
+  DiscoveredFile,
+} from '../utils/file-discovery';
 
 interface RoutingDecision {
   agent: 'ControlPanelAgent' | 'TeleprompterAgent' | 'skip';
@@ -31,14 +36,15 @@ export class OrchestratorAgent {
   private client: Anthropic;
   private model = 'claude-opus-4-20250514';
 
-  private controlPanelAgent: ControlPanelAgent;
+  private apiKey: string;
   private teleprompterAgent: TeleprompterAgent;
   private discoveredFiles: DiscoveredFile[] = [];
   private fileCache = new Map<string, DiscoveredFile[]>();
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
-    this.controlPanelAgent = new ControlPanelAgent(apiKey);
+    this.apiKey = apiKey;
+    // Note: ControlPanelAgentV2 is instantiated per-request with projectPath
     this.teleprompterAgent = new TeleprompterAgent(apiKey);
   }
 
@@ -83,7 +89,7 @@ export class OrchestratorAgent {
 
     console.log(`   📋 Routing Plan:`);
     console.log(`      Strategy: ${routingPlan.strategy}`);
-    routingPlan.decisions.forEach((decision) => {
+    routingPlan.decisions.forEach(decision => {
       if (decision.agent !== 'skip') {
         console.log(
           `      → ${decision.agent}: ${decision.recommendations.length} items (${decision.priority} priority)`
@@ -98,7 +104,9 @@ export class OrchestratorAgent {
 
     for (const decision of routingPlan.decisions) {
       if (decision.agent === 'ControlPanelAgent' && decision.recommendations.length > 0) {
-        tasks.push(this.controlPanelAgent.implement(decision.recommendations, projectPath));
+        // V2: Instantiate with projectPath (constrained tools architecture)
+        const controlPanelAgentV2 = new ControlPanelAgentV2(this.apiKey, projectPath);
+        tasks.push(controlPanelAgentV2.implement(decision.recommendations, projectPath));
       } else if (decision.agent === 'TeleprompterAgent' && decision.recommendations.length > 0) {
         tasks.push(this.teleprompterAgent.implement(decision.recommendations, projectPath));
       }
@@ -144,14 +152,14 @@ export class OrchestratorAgent {
       });
 
       // Extract thinking blocks
-      const thinkingBlocks = response.content.filter((block) => block.type === 'thinking');
+      const thinkingBlocks = response.content.filter(block => block.type === 'thinking');
       if (thinkingBlocks.length > 0) {
         console.log('   💭 Orchestrator is thinking strategically...');
       }
 
       // Extract text content
-      const textBlocks = response.content.filter((block) => block.type === 'text');
-      const fullText = textBlocks.map((block) => (block as any).text).join('\n');
+      const textBlocks = response.content.filter(block => block.type === 'text');
+      const fullText = textBlocks.map(block => (block as any).text).join('\n');
 
       // Parse JSON
       const jsonMatch =
@@ -182,7 +190,10 @@ export class OrchestratorAgent {
     });
 
     const fileList = Array.from(filesByDir.entries())
-      .map(([dir, files]) => `   ${dir}/: ${files.slice(0, 5).join(', ')}${files.length > 5 ? ` (+ ${files.length - 5} more)` : ''}`)
+      .map(
+        ([dir, files]) =>
+          `   ${dir}/: ${files.slice(0, 5).join(', ')}${files.length > 5 ? ` (+ ${files.length - 5} more)` : ''}`
+      )
       .join('\n');
 
     return `You are the ORCHESTRATOR AGENT for VIZTRTR's multi-agent UI improvement system.
@@ -265,10 +276,12 @@ Think carefully about which changes are feasible, then provide your routing plan
     const teleprompterRecs: Recommendation[] = [];
 
     for (const rec of spec.prioritizedChanges) {
-      if (this.controlPanelAgent.isRelevant(rec)) {
-        controlPanelRecs.push(rec);
-      } else if (this.teleprompterAgent.isRelevant(rec)) {
+      // V2: All web UI recommendations go to ControlPanelAgentV2
+      if (this.teleprompterAgent.isRelevant(rec)) {
         teleprompterRecs.push(rec);
+      } else {
+        // Default to ControlPanelAgentV2 for general UI improvements
+        controlPanelRecs.push(rec);
       }
     }
 

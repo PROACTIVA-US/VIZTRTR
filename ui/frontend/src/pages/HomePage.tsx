@@ -1,130 +1,97 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import ProjectWizard from '../components/ProjectWizard';
-import ProjectOnboarding from '../components/ProjectOnboarding';
-import type { Project } from '../types';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Plus, Zap, GitBranch, Activity } from 'lucide-react';
 
-function HomePage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showWizard, setShowWizard] = useState(false);
-  const [onboardingProject, setOnboardingProject] = useState<{
-    id: number;
-    name: string;
-    path: string;
-  } | null>(null);
-  const navigate = useNavigate();
-
-  const loadProjects = async () => {
-    try {
-      const res = await fetch('http://localhost:3001/api/projects');
-      if (res.ok) {
-        const data = await res.json();
-        setProjects(data);
-      }
-    } catch (error) {
-      console.error('Failed to load projects:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
-  const handleWizardComplete = async (projectId: number) => {
-    setShowWizard(false);
-
-    // Load project details to pass to onboarding
-    try {
-      const res = await fetch(`http://localhost:3001/api/projects/${projectId}`);
-      if (res.ok) {
-        const project = await res.json();
-        setOnboardingProject({
-          id: project.id,
-          name: project.name,
-          path: project.projectPath,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load project:', error);
-      navigate('/projects');
-    }
-  };
-
-  const handleOnboardingComplete = () => {
-    setOnboardingProject(null);
-    navigate('/projects');
-  };
+const HomePage: React.FC = () => {
+  const metrics = [
+    { label: 'Active Projects', value: 3, icon: GitBranch },
+    { label: 'Total Builds', value: 0, icon: Zap },
+    { label: 'Success Rate', value: 0, icon: Activity },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Simple Hero */}
-      <div className="text-center mb-12">
-        <h1 className="text-6xl font-bold mb-6">
-          <span className="text-gradient">Start Analyzing UI</span>
-        </h1>
-        <p className="text-xl text-slate-400 mb-12">
-          Create a new project or continue working on existing ones
-        </p>
-      </div>
-
-      {/* Action Cards */}
-      <div className="grid md:grid-cols-2 gap-6 mb-12">
-        {/* New Project Card */}
-        <button
-          onClick={() => setShowWizard(true)}
-          className="bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-2 border-purple-600/50 rounded-xl p-8 hover:border-purple-500 hover:from-purple-900/60 hover:to-blue-900/60 transition-all transform hover:scale-105 text-left"
-        >
-          <div className="text-5xl mb-4">✨</div>
-          <h2 className="text-2xl font-bold mb-2 text-white">Create New Project</h2>
-          <p className="text-slate-300">
-            Start analyzing a new UI with AI-powered design improvements
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to VIZTRTR</h1>
+          <p className="text-lg text-gray-600 mb-8">
+            Build, test, and deploy AI agents with confidence
           </p>
-        </button>
+          <Link
+            to="/projects/new"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create New Project
+          </Link>
+        </div>
 
-        {/* Open Projects Card */}
-        <Link
-          to="/projects"
-          className="bg-slate-800/60 border-2 border-slate-700 rounded-xl p-8 hover:border-blue-500 hover:bg-slate-800 transition-all transform hover:scale-105 text-left block"
-        >
-          <div className="text-5xl mb-4">📁</div>
-          <h2 className="text-2xl font-bold mb-2 text-white">Open Projects</h2>
-          <p className="text-slate-300">
-            Continue working on your existing projects
-            {!loading && projects.length > 0 && (
-              <span className="block mt-2 text-sm text-blue-400">
-                {projects.length} project{projects.length !== 1 ? 's' : ''} available
-              </span>
-            )}
-          </p>
-        </Link>
+        {/* Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {metrics.map((metric, index) => {
+            const Icon = metric.icon;
+            const isZero = metric.value === 0;
+            return (
+              <div
+                key={index}
+                className={`bg-white rounded-lg shadow-sm p-6 transition-all ${
+                  isZero ? 'opacity-50' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p
+                      className={`text-sm font-medium ${
+                        isZero ? 'text-gray-400' : 'text-gray-600'
+                      }`}
+                    >
+                      {metric.label}
+                    </p>
+                    <p
+                      className={`text-3xl font-bold mt-2 ${
+                        isZero ? 'text-gray-300' : 'text-gray-900'
+                      }`}
+                    >
+                      {metric.value}
+                    </p>
+                  </div>
+                  <Icon className={`w-8 h-8 ${isZero ? 'text-gray-300' : 'text-blue-600'}`} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-sm p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link
+              to="/projects"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+            >
+              <GitBranch className="w-6 h-6 text-blue-600 mr-3" />
+              <div>
+                <h3 className="font-medium text-gray-900">View Projects</h3>
+                <p className="text-sm text-gray-600">Manage your AI agent projects</p>
+              </div>
+            </Link>
+            <Link
+              to="/builder"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+            >
+              <Zap className="w-6 h-6 text-blue-600 mr-3" />
+              <div>
+                <h3 className="font-medium text-gray-900">Agent Builder</h3>
+                <p className="text-sm text-gray-600">Create and configure agents</p>
+              </div>
+            </Link>
+          </div>
+        </div>
       </div>
-
-      {/* Quick Links */}
-      <div className="text-center text-sm text-slate-500">
-        <Link to="/features" className="hover:text-slate-300 transition-colors">
-          Learn about features →
-        </Link>
-      </div>
-
-      {/* Project Wizard Modal */}
-      {showWizard && (
-        <ProjectWizard onClose={() => setShowWizard(false)} onComplete={handleWizardComplete} />
-      )}
-
-      {/* Project Onboarding Flow */}
-      {onboardingProject && (
-        <ProjectOnboarding
-          projectId={onboardingProject.id}
-          projectName={onboardingProject.name}
-          projectPath={onboardingProject.path}
-          onComplete={handleOnboardingComplete}
-        />
-      )}
     </div>
   );
-}
+};
 
 export default HomePage;

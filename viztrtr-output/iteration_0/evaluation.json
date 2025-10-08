@@ -1,0 +1,26 @@
+{
+  "compositeScore": 5.8,
+  "targetScore": 9,
+  "targetReached": false,
+  "scores": {
+    "visual_hierarchy": 0,
+    "typography": 0,
+    "color_contrast": 0,
+    "spacing_layout": 0,
+    "component_design": 0,
+    "animation_interaction": 0,
+    "accessibility": 0,
+    "overall_aesthetic": 0
+  },
+  "dimensions": {},
+  "strengths": [],
+  "weaknesses": [
+    "accessibility: No visible focus indicators on any interactive elements",
+    "color & contrast: Gray text (#6B7280) on dark background likely fails WCAG contrast requirements",
+    "visual hierarchy: All metric cards have equal visual weight despite showing zeros",
+    "typography: Small text sizes (likely 12-14px) for important data",
+    "component design: Inconsistent button styles between quick actions and navigation"
+  ],
+  "summary": "Current score: 5.8/10",
+  "priorityImprovements": []
+}

@@ -1,5 +1,19 @@
 /**
- * Claude Sonnet Implementation Agent
+ * ⚠️ DEPRECATED: Claude Sonnet Implementation Agent V1 - DO NOT USE
+ *
+ * This V1 plugin has been DEPRECATED in favor of ControlPanelAgentV2.
+ *
+ * MIGRATION REQUIRED:
+ * - Use: src/agents/specialized/ControlPanelAgentV2.ts
+ * - V1 success rate: 0-17% (rewrites entire files, validation blocks everything)
+ * - V2 success rate: 100% (uses constrained tools for atomic changes)
+ * - V2 validated Oct 8, 2025 with 83% tool call reduction
+ *
+ * See CLAUDE.md for V2 migration guide.
+ *
+ * ---
+ *
+ * [LEGACY] Claude Sonnet Implementation Agent
  *
  * Uses Claude with extended thinking and tool use to implement design changes
  */

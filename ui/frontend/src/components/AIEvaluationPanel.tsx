@@ -163,7 +163,7 @@ export default function AIEvaluationPanel() {
                     }}
                     className="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center"
                   >
-                    <span className="text-green-400 text-sm">✓</span>
+                    <span className="text-green-400 text-base">✓</span>
                   </motion.div>
                   <span className="text-gray-300">{feature}</span>
                 </motion.div>
@@ -222,10 +222,7 @@ export default function AIEvaluationPanel() {
                   >
                     <div className="flex flex-col items-center text-center">
                       <span className="text-3xl mb-2">{agent.icon}</span>
-                      <span
-                        className="font-medium text-sm mb-1"
-                        style={{ color: agent.color }}
-                      >
+                      <span className="font-medium text-base mb-1" style={{ color: agent.color }}>
                         {agent.name}
                       </span>
                       <span className="text-xs text-gray-400">{agent.role}</span>

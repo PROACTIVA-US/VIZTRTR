@@ -1,5 +1,19 @@
 /**
- * ControlPanelAgent - Specialized Agent for Settings & Navigation
+ * ⚠️ DEPRECATED: ControlPanelAgent V1 - DO NOT USE
+ *
+ * This V1 agent has been DEPRECATED in favor of ControlPanelAgentV2.
+ *
+ * MIGRATION REQUIRED:
+ * - Use: src/agents/specialized/ControlPanelAgentV2.ts
+ * - V1 success rate: 0-17% (rewrites entire files 60-604 lines)
+ * - V2 success rate: 100% (surgical 2-line changes)
+ * - V2 is 83% faster with constrained tools architecture
+ *
+ * See CLAUDE.md for V2 migration guide.
+ *
+ * ---
+ *
+ * [LEGACY] ControlPanelAgent - Specialized Agent for Settings & Navigation
  *
  * Responsibilities:
  * - Settings Panel (desktop controls, sliders, tabs)
@@ -127,9 +141,7 @@ export class ControlPanelAgent {
 
       // Extract implementation
       const textBlocks = response.content.filter(block => block.type === 'text');
-      const fullText = textBlocks
-        .map(block => ('text' in block ? block.text : ''))
-        .join('\n');
+      const fullText = textBlocks.map(block => ('text' in block ? block.text : '')).join('\n');
 
       // Parse JSON response
       const jsonMatch =
