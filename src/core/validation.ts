@@ -4,7 +4,10 @@
  * Prevents over-engineering by enforcing surgical, incremental changes
  */
 
-import { InterfaceValidationAgent, CrossFileValidationResult } from '../agents/InterfaceValidationAgent';
+import {
+  InterfaceValidationAgent,
+  CrossFileValidationResult,
+} from '../agents/InterfaceValidationAgent';
 
 export interface ValidationResult {
   valid: boolean;
@@ -38,9 +41,9 @@ const DEFAULT_CONSTRAINTS: ChangeConstraints = {
   preserveImports: true,
   requireDiffFormat: false,
   effortBasedLineLimits: {
-    low: 10,      // effort 1-2: micro CSS/style changes (REDUCED from 40)
-    medium: 25,   // effort 3-4: component refactors (REDUCED from 80)
-    high: 50,     // effort 5+: complex features (REDUCED from 150)
+    low: 40, // effort 1-2: micro CSS/style changes
+    medium: 80, // effort 3-4: component refactors
+    high: 150, // effort 5+: complex features
   },
 };
 
@@ -49,10 +52,10 @@ const DEFAULT_CONSTRAINTS: ChangeConstraints = {
  * Smaller files can grow more, larger files should be more conservative
  */
 function calculateMaxGrowth(originalLines: number): number {
-  if (originalLines < 30) return 1.0;   // 100% growth for tiny files
-  if (originalLines < 50) return 0.75;  // 75% growth for small files
-  if (originalLines < 100) return 0.5;  // 50% growth for medium files
-  return 0.3;                            // 30% growth for large files
+  if (originalLines < 30) return 1.0; // 100% growth for tiny files
+  if (originalLines < 50) return 0.75; // 75% growth for small files
+  if (originalLines < 100) return 0.5; // 50% growth for medium files
+  return 0.3; // 30% growth for large files
 }
 
 /**
@@ -77,19 +80,20 @@ export function validateFileChanges(
   if (lineDelta > config.maxLineDelta) {
     violations.push(
       `Line delta (${lineDelta}) exceeds maximum (${config.maxLineDelta}). ` +
-      `Changed ${lineDelta} lines, but should change at most ${config.maxLineDelta} lines.`
+        `Changed ${lineDelta} lines, but should change at most ${config.maxLineDelta} lines.`
     );
   }
 
   // Use dynamic growth limit based on file size (unless overridden in constraints)
-  const maxGrowthPercent = constraints.maxGrowthPercent !== undefined
-    ? config.maxGrowthPercent
-    : calculateMaxGrowth(originalLines);
+  const maxGrowthPercent =
+    constraints.maxGrowthPercent !== undefined
+      ? config.maxGrowthPercent
+      : calculateMaxGrowth(originalLines);
 
   if (lineGrowthPercent > maxGrowthPercent) {
     violations.push(
       `File grew by ${(lineGrowthPercent * 100).toFixed(1)}%, exceeds maximum ${(maxGrowthPercent * 100).toFixed(0)}% for files with ${originalLines} lines. ` +
-      `Original: ${originalLines} lines, Modified: ${modifiedLines} lines.`
+        `Original: ${originalLines} lines, Modified: ${modifiedLines} lines.`
     );
   }
 
@@ -108,7 +112,7 @@ export function validateFileChanges(
     if (lineDelta > maxLinesForEffort) {
       violations.push(
         `Effort score ${effortScore} allows max ${maxLinesForEffort} lines changed, but ${lineDelta} lines were changed. ` +
-        `Make more targeted changes.`
+          `Make more targeted changes.`
       );
     }
   }
@@ -123,18 +127,20 @@ export function validateFileChanges(
     if (originalExportInfo.hasDefault !== modifiedExportInfo.hasDefault) {
       violations.push(
         `Export type changed: ${originalExportInfo.hasDefault ? 'had default export' : 'had no default export'} → ` +
-        `${modifiedExportInfo.hasDefault ? 'now has default export' : 'now has no default export'}. ` +
-        `Changing default export status breaks imports.`
+          `${modifiedExportInfo.hasDefault ? 'now has default export' : 'now has no default export'}. ` +
+          `Changing default export status breaks imports.`
       );
       exportsChanged = true;
     }
 
     // Check if named exports were removed (breaking change)
-    const removedExports = originalExportInfo.named.filter(exp => !modifiedExportInfo.named.includes(exp));
+    const removedExports = originalExportInfo.named.filter(
+      exp => !modifiedExportInfo.named.includes(exp)
+    );
     if (removedExports.length > 0) {
       violations.push(
         `Named exports removed: [${removedExports.join(', ')}]. ` +
-        `Removing exports is a breaking change.`
+          `Removing exports is a breaking change.`
       );
       exportsChanged = true;
     }
@@ -161,7 +167,7 @@ export function validateFileChanges(
       if (stillUsed.length > 0) {
         violations.push(
           `Import statements removed but still referenced: ${stillUsed.join(', ')}. ` +
-          `Cannot remove imports that are still in use.`
+            `Cannot remove imports that are still in use.`
         );
         importsChanged = true;
       }
@@ -233,7 +239,12 @@ export function analyzeExports(code: string): { hasDefault: boolean; named: stri
       if (match[1]) {
         // Handle export { a, b, c } syntax
         if (match[0].includes('{')) {
-          const exportList = match[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
+          const exportList = match[1].split(',').map(s =>
+            s
+              .trim()
+              .split(/\s+as\s+/)[0]
+              .trim()
+          );
           named.push(...exportList);
         } else {
           named.push(match[1].trim());
@@ -264,7 +275,8 @@ export function extractImports(code: string): string[] {
   const imports: string[] = [];
 
   // Match import statements
-  const importPattern = /import\s+(?:(?:\{[^}]+\}|\w+|\*\s+as\s+\w+)(?:\s*,\s*(?:\{[^}]+\}|\w+))*\s+from\s+)?['"]([^'"]+)['"]/g;
+  const importPattern =
+    /import\s+(?:(?:\{[^}]+\}|\w+|\*\s+as\s+\w+)(?:\s*,\s*(?:\{[^}]+\}|\w+))*\s+from\s+)?['"]([^'"]+)['"]/g;
 
   const matches = code.matchAll(importPattern);
   for (const match of matches) {

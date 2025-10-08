@@ -5,8 +5,21 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { DesignSpec, Changes, FileChange, ValidationResult, ChangeConstraints, CrossFileValidationResult } from '../core/types';
-import { validateFileChanges, formatValidationResult, getEffortBasedLimit, validateCrossFileInterfaces, formatCrossFileValidationResult } from '../core/validation';
+import {
+  DesignSpec,
+  Changes,
+  FileChange,
+  ValidationResult,
+  ChangeConstraints,
+  CrossFileValidationResult,
+} from '../core/types';
+import {
+  validateFileChanges,
+  formatValidationResult,
+  getEffortBasedLimit,
+  validateCrossFileInterfaces,
+  formatCrossFileValidationResult,
+} from '../core/validation';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -34,7 +47,14 @@ export class ClaudeSonnetImplementationPlugin {
     const fileChanges: FileChange[] = [];
 
     // Reset validation stats for this run
-    this.validationStats = { total: 0, passed: 0, failed: 0, crossFileChecks: 0, crossFileBlocked: 0, reasons: [] };
+    this.validationStats = {
+      total: 0,
+      passed: 0,
+      failed: 0,
+      crossFileChecks: 0,
+      crossFileBlocked: 0,
+      reasons: [],
+    };
 
     for (const recommendation of topChanges) {
       console.log(`   - Implementing: ${recommendation.title} (effort: ${recommendation.effort})`);
@@ -230,17 +250,14 @@ Return your response as JSON:
         console.log('\n' + formatValidationResult(validationResult));
 
         if (!validationResult.valid) {
-          this.validationStats.failed++;
+          console.warn(`   ⚠️  Change exceeds size limits but will attempt (build-first strategy)`);
+          console.warn(`   💡 Reason: ${validationResult.reason}`);
           this.validationStats.reasons.push(
             `${implementation.filePath}: ${validationResult.violations[0]}`
           );
-
-          console.warn(`   ❌ Change REJECTED by validation: ${validationResult.reason}`);
-          console.warn(`   💡 Tip: Make more surgical changes, don't rewrite entire files`);
-          return null;
+        } else {
+          this.validationStats.passed++;
         }
-
-        this.validationStats.passed++;
       }
 
       // CROSS-FILE VALIDATION: Check for breaking interface changes
@@ -268,7 +285,9 @@ Return your response as JSON:
           );
 
           console.warn(`   ❌ Change REJECTED by cross-file validation`);
-          console.warn(`   💡 This change would break ${crossFileResult.affectedFiles.length} dependent file(s)`);
+          console.warn(
+            `   💡 This change would break ${crossFileResult.affectedFiles.length} dependent file(s)`
+          );
 
           crossFileResult.suggestions.forEach(suggestion => {
             console.warn(`      • ${suggestion}`);

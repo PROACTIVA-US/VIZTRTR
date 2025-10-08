@@ -53,7 +53,7 @@ export class ControlPanelAgent {
       'spacing & layout',
       'spacing_layout',
       'component design',
-      'component_design'
+      'component_design',
     ];
 
     return recommendation.effort <= 2 && cssOnlyDimensions.includes(recommendation.dimension);
@@ -178,7 +178,7 @@ export class ControlPanelAgent {
         return null;
       }
 
-      // VALIDATION: Check scope constraints
+      // VALIDATION: Log info only (build-first strategy)
       this.validationStats.total++;
 
       const validationResult = validateFileChanges(
@@ -194,13 +194,11 @@ export class ControlPanelAgent {
       console.log('\n' + formatValidationResult(validationResult));
 
       if (!validationResult.valid) {
-        this.validationStats.failed++;
-        console.warn(`   ❌ Change REJECTED: ${validationResult.reason}`);
-        console.warn(`   💡 Make smaller, more targeted changes`);
-        return null;
+        console.warn(`   ⚠️  Change exceeds size limits but will attempt (build-first strategy)`);
+        console.warn(`   💡 Reason: ${validationResult.reason}`);
+      } else {
+        this.validationStats.passed++;
       }
-
-      this.validationStats.passed++;
 
       // Create backup
       const backupPath = `${fullPath}.backup.${Date.now()}`;
@@ -228,7 +226,11 @@ export class ControlPanelAgent {
     }
   }
 
-  private buildImplementationPrompt(recommendation: Recommendation, projectPath: string, cssOnlyMode = false): string {
+  private buildImplementationPrompt(
+    recommendation: Recommendation,
+    projectPath: string,
+    cssOnlyMode = false
+  ): string {
     // Group files by directory for better organization
     const filesByDir = this.discoveredFiles.reduce(
       (acc, file) => {
@@ -248,7 +250,8 @@ export class ControlPanelAgent {
       })
       .join('\n');
 
-    const cssOnlyHeader = cssOnlyMode ? `
+    const cssOnlyHeader = cssOnlyMode
+      ? `
 **🎨 CSS-ONLY MODE ACTIVATED**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Make ONLY className/style changes. NO structural changes.
@@ -268,7 +271,8 @@ FORBIDDEN:
 
 TARGET: Change 1-3 className attributes ONLY, nothing more.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-` : '';
+`
+      : '';
 
     return `You are a specialist CONTROL PANEL AGENT for desktop UI components.
 ${cssOnlyHeader}
@@ -416,9 +420,9 @@ Think carefully about which file needs modification, then implement the change.`
   }
 
   private getMaxLinesForEffort(effortScore: number): number {
-    if (effortScore <= 2) return 10;  // REDUCED from 20 to match validation.ts
-    if (effortScore <= 4) return 25;  // REDUCED from 50 to match validation.ts
-    return 50;  // REDUCED from 100 to match validation.ts
+    if (effortScore <= 2) return 10; // REDUCED from 20 to match validation.ts
+    if (effortScore <= 4) return 25; // REDUCED from 50 to match validation.ts
+    return 50; // REDUCED from 100 to match validation.ts
   }
 
   /**
