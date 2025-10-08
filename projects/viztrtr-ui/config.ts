@@ -28,7 +28,7 @@ if (!ANTHROPIC_API_KEY) {
 export const config: VIZTRTRConfig = {
   // Project settings
   projectPath: path.resolve(__dirname, '../../ui/frontend'),
-  frontendUrl: 'http://localhost:3000',
+  frontendUrl: 'http://localhost:5173',
   targetScore: 9.0,
   maxIterations: 1,
 

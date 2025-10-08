@@ -4,7 +4,7 @@
  * Tests the MCP client connection and metrics capture
  */
 
-import { createChromeDevToolsClient } from '../../src/services/chromeDevToolsClient.js';
+import { createChromeDevToolsClient } from '../../src/services/chromeDevToolsClient';
 
 async function testChromeDevTools() {
   console.log('🧪 Starting Chrome DevTools MCP Integration Test\n');
