@@ -13,7 +13,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { Recommendation, FileChange, ValidationResult } from '../../core/types';
+import { Recommendation, FileChange } from '../../core/types';
 import { validateFileChanges, formatValidationResult } from '../../core/validation';
 import {
   discoverComponentFiles,
@@ -127,7 +127,9 @@ export class ControlPanelAgent {
 
       // Extract implementation
       const textBlocks = response.content.filter(block => block.type === 'text');
-      const fullText = textBlocks.map(block => (block as any).text).join('\n');
+      const fullText = textBlocks
+        .map(block => ('text' in block ? block.text : ''))
+        .join('\n');
 
       // Parse JSON response
       const jsonMatch =
@@ -162,7 +164,7 @@ export class ControlPanelAgent {
       // Check file exists before attempting to read
       try {
         await fs.access(fullPath);
-      } catch (e) {
+      } catch {
         console.error(`   ❌ File not found: ${fullPath}`);
         console.error(`   💡 Project path: ${projectPath}`);
         console.error(`   💡 Attempted file: ${normalizedPath}`);
@@ -420,9 +422,9 @@ Think carefully about which file needs modification, then implement the change.`
   }
 
   private getMaxLinesForEffort(effortScore: number): number {
-    if (effortScore <= 2) return 10; // REDUCED from 20 to match validation.ts
-    if (effortScore <= 4) return 25; // REDUCED from 50 to match validation.ts
-    return 50; // REDUCED from 100 to match validation.ts
+    if (effortScore <= 2) return 40; // Matches validation.ts low limit
+    if (effortScore <= 4) return 80; // Matches validation.ts medium limit
+    return 150; // Matches validation.ts high limit
   }
 
   /**
