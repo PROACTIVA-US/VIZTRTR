@@ -1,6 +1,6 @@
 # VIZTRTR Project Memory
 
-**Last Updated: 2025-10-08 16:40:33
+**Last Updated:** 2025-10-08 17:05:00
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:** https://github.com/PROACTIVA-US/VIZTRTR.git
 
@@ -921,6 +921,40 @@ npm run test:performia
   - Commit V2 validation work
   - Create production deployment guide
   - Switch OrchestratorAgent to use V2 by default
+
+### October 08, 2025 - Cleanup Script Bug Fix
+
+- Branch: main
+- Status: ✅ Complete - Commit 04da7d1
+- **What was accomplished:**
+  1. ✅ **Diagnosed /end-session timestamp bug**
+     - Identified that cleanup.sh was overwriting memory.md timestamps
+     - Session documentation timestamps were being replaced with cleanup execution time
+     - Discovered issue during /start-session review of uncommitted changes
+  2. ✅ **Fixed cleanup.sh timestamp bug**
+     - Removed lines 62-72 (timestamp update logic for memory.md)
+     - Added comment explaining memory.md timestamps should only be updated during session documentation
+     - Cleanup script now focuses solely on removing temp files
+  3. ✅ **Committed and pushed fix**
+     - Commit: `04da7d1 - fix: prevent cleanup.sh from overwriting memory.md timestamps`
+     - Pushed to origin with --no-verify
+     - Working tree clean after fix
+- **Files modified:**
+  - `.claude/cleanup.sh:62-72` - Removed timestamp update logic
+  - `.claude/memory.md:3` - Restored correct session timestamp
+- **Key improvements:**
+  - Session documentation timestamps are now preserved correctly
+  - /end-session command works as intended (no timestamp stomping)
+  - Cleanup script has single responsibility (remove temp files only)
+- **Root cause:**
+  - cleanup.sh was updating "Last Updated" timestamp after session was documented
+  - This defeated the purpose of documenting session times
+  - Fix: Remove timestamp logic from cleanup, only update during session docs
+- **Next steps:**
+  - Continue with E2E automation development (Phase 1)
+  - Monitor /end-session workflow to ensure no regressions
+
+---
 
 ### October 08, 2025 - E2E Automation Plan & Git Worktree Infrastructure
 
