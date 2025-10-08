@@ -1,6 +1,6 @@
 # VIZTRTR Project Memory
 
-**Last Updated: 2025-10-08 15:51:05
+**Last Updated: 2025-10-08 18:05:00
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:\*\* <https://github.com/PROACTIVA-US/VIZTRTR.git>
 
@@ -819,10 +819,56 @@ npm run test:performia
   - Consider reducing ESLint warnings (currently 64)
   - Monitor V2 optimization performance in production
 
+### October 08, 2025 - V2 Production Migration Complete
+
+- Branch: main
+- Status: ✅ **V2 IS NOW THE ONLY SUPPORTED VERSION** - V1 fully deprecated
+- **What was accomplished:**
+  1. ✅ **Updated all project documentation**
+     - Added V2 section to CLAUDE.md with performance metrics
+     - Marked V1 agents as deprecated with clear warnings
+     - Fixed markdown linting errors (line length, code block languages)
+  2. ✅ **Deprecated V1 source files**
+     - Added deprecation headers to ControlPanelAgent.ts (V1)
+     - Added deprecation headers to implementation-claude.ts (V1)
+     - Both reference ControlPanelAgentV2 and migration guide
+  3. ✅ **Migrated OrchestratorAgent to V2**
+     - Changed import from ControlPanelAgent → ControlPanelAgentV2
+     - Instantiates V2 per-request with projectPath (constrained tools)
+     - Removed isRelevant() call (V2 defaults all to control panel)
+     - Fixed TypeScript compilation errors
+  4. ✅ **Committed V2 migration**
+     - Commit `95fe6cf` - docs: migrate to V2 only
+     - 19 files changed: documentation + deprecation + migration
+     - All git hooks passed (lint-staged, typecheck, commit-msg)
+- **Files updated:**
+  - `CLAUDE.md:209-254` - V2 section, V1 deprecation, performance metrics
+  - `src/agents/OrchestratorAgent.ts:13-105` - V2 by default
+  - `src/agents/specialized/ControlPanelAgent.ts:1-14` - Deprecation warning
+  - `src/plugins/implementation-claude.ts:1-19` - Deprecation warning
+- **V2 Performance (Validated):**
+  - Tool calls: **2** (vs 12 for V1) - 83% reduction ✅
+  - Success rate: **100%** (vs 0-17% for V1) ✅
+  - Duration: **27s** (vs 47s for V1) - 43% faster ✅
+  - Changes: **2 lines surgical** (vs 60-604 line rewrites) ✅
+- **Key Decision:**
+  - V1 is now deprecated and clearly marked
+  - All new development MUST use ControlPanelAgentV2
+  - OrchestratorAgent routes all control panel work to V2
+  - V1 files remain for reference but discourage use
+- **Commits:**
+  - `9f6a47d` - docs: V2 validation session - 83% reduction
+  - `95fe6cf` - docs: migrate to V2 only - deprecate V1 completely
+- **Next steps:**
+  - Push commits to origin
+  - Update GitHub issues with V2 migration status
+  - Create production deployment guide for V2
+  - Monitor V2 performance in production
+
 ### October 08, 2025 - V2 Optimization Validation & Production Readiness
 
 - Branch: main
-- Status: ✅ **PRODUCTION READY** - V2 optimization validated
+- Status: ✅ **PRODUCTION READY** - V2 optimization validated (SUPERSEDED BY V2 MIGRATION ABOVE)
 - **What was accomplished:**
   1. ✅ **V2 Optimization Performance Validation**
      - Ran real-world test with line hint system active
