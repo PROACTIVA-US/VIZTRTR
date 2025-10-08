@@ -14,10 +14,29 @@ import * as path from 'path';
 dotenv.config();
 
 async function main() {
+  // Determine project root (works in both src and dist)
+  const projectRoot = process.cwd();
+  const frontendPath = path.join(projectRoot, 'ui/frontend');
+  const frontendUrl = 'http://localhost:5173';
+
+  // Check if frontend is running
+  try {
+    const response = await fetch(frontendUrl, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) {
+      console.error('❌ Frontend server not responding properly');
+      console.error(`   Please start the frontend: cd ui/frontend && npm run dev`);
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('❌ Frontend server not running on', frontendUrl);
+    console.error(`   Please start it first: cd ui/frontend && npm run dev`);
+    process.exit(1);
+  }
+
   const config: VIZTRTRConfig = {
     // Project settings - test on VIZTRTR's own UI
-    projectPath: path.resolve(__dirname, '../../ui/frontend'),
-    frontendUrl: 'http://localhost:5173',
+    projectPath: frontendPath,
+    frontendUrl,
     targetScore: 8.5,
     maxIterations: 2,
 
@@ -43,7 +62,7 @@ async function main() {
     },
 
     // Output
-    outputDir: path.resolve(__dirname, '../../viztritr-output/hybrid-test'),
+    outputDir: path.join(projectRoot, 'viztritr-output/hybrid-test'),
     verbose: true,
   };
 
