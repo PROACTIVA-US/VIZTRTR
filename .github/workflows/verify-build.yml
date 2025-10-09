@@ -1,0 +1,11 @@
+# Prevent stale dist/ code by verifying clean builds
+name: Verify Clean Build
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: rm -rf dist && npm run build
+      - run: test -d dist/src/agents || (echo "ERROR: dist/src/agents not found after build" && exit 1)
+      - run: grep -q "ControlPanelAgentV2" dist/src/agents/OrchestratorAgent.js || (echo "ERROR: V2 agents not in compiled code" && exit 1)

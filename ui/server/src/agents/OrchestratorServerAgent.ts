@@ -5,8 +5,8 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { VIZTRTROrchestrator } from '../../../../dist/core/orchestrator';
-import { VIZTRTRConfig } from '../../../../dist/core/types';
+import { VIZTRTROrchestrator } from '../../../../dist/src/core/orchestrator';
+import { VIZTRTRConfig } from '../../../../dist/src/core/types';
 import type { IterationUpdate, RunResult } from '../types';
 
 export class OrchestratorServerAgent {
@@ -36,7 +36,7 @@ export class OrchestratorServerAgent {
         iteration: 0,
         type: 'capture',
         status: 'started',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Run VIZTRTR
@@ -55,10 +55,16 @@ export class OrchestratorServerAgent {
         duration,
         iterations: report.iterations.map((iter: any, idx: number) => ({
           iteration: idx,
-          beforeScore: idx === 0 ? report.startingScore : report.iterations[idx - 1]?.evaluation?.compositeScore || 0,
+          beforeScore:
+            idx === 0
+              ? report.startingScore
+              : report.iterations[idx - 1]?.evaluation?.compositeScore || 0,
           afterScore: iter.evaluation?.compositeScore || 0,
           improvement: iter.evaluation?.compositeScore
-            ? (iter.evaluation.compositeScore - (idx === 0 ? report.startingScore : report.iterations[idx - 1]?.evaluation?.compositeScore || 0))
+            ? iter.evaluation.compositeScore -
+              (idx === 0
+                ? report.startingScore
+                : report.iterations[idx - 1]?.evaluation?.compositeScore || 0)
             : 0,
           beforeScreenshot: iter.beforeScreenshot?.path || '',
           afterScreenshot: iter.afterScreenshot?.path || '',
@@ -73,12 +79,12 @@ export class OrchestratorServerAgent {
               component_design: 0,
               animation_interaction: 0,
               accessibility: 0,
-              overall_aesthetic: 0
+              overall_aesthetic: 0,
             },
-            compositeScore: iter.evaluation?.compositeScore || 0
-          }
+            compositeScore: iter.evaluation?.compositeScore || 0,
+          },
         })),
-        reportPath: report.reportPath
+        reportPath: report.reportPath,
       };
 
       onProgress({
@@ -87,11 +93,10 @@ export class OrchestratorServerAgent {
         type: 'reflect',
         status: 'completed',
         data: result,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       return result;
-
     } catch (error) {
       onProgress({
         runId,
@@ -99,7 +104,7 @@ export class OrchestratorServerAgent {
         type: 'capture',
         status: 'failed',
         data: { error: error instanceof Error ? error.message : 'Unknown error' },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       throw error;
@@ -113,9 +118,10 @@ export class OrchestratorServerAgent {
     const response = await this.anthropic.messages.create({
       model: 'claude-sonnet-4-5',
       max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: `Analyze these VIZTRTR run results and provide insights:
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze these VIZTRTR run results and provide insights:
 
 Starting Score: ${result.startingScore}
 Final Score: ${result.finalScore}
@@ -124,17 +130,23 @@ Target Reached: ${result.targetReached}
 Total Iterations: ${result.totalIterations}
 
 Key Improvements:
-${result.iterations.map(iter =>
-  `- Iteration ${iter.iteration}: ${iter.beforeScore.toFixed(1)} → ${iter.afterScore.toFixed(1)} (${iter.appliedRecommendation || 'N/A'})`
-).join('\n')}
+${result.iterations
+  .map(
+    iter =>
+      `- Iteration ${iter.iteration}: ${iter.beforeScore.toFixed(1)} → ${iter.afterScore.toFixed(1)} (${iter.appliedRecommendation || 'N/A'})`
+  )
+  .join('\n')}
 
 Provide:
 1. Summary of what worked best
 2. Dimension that improved most
-3. Recommendations for next run`
-      }]
+3. Recommendations for next run`,
+        },
+      ],
     });
 
-    return response.content[0]?.type === 'text' ? response.content[0].text : 'No analysis available';
+    return response.content[0]?.type === 'text'
+      ? response.content[0].text
+      : 'No analysis available';
   }
 }

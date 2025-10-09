@@ -4,6 +4,7 @@
   "description": "VIZTRTR UI Backend Server with Claude Agent SDK",
   "main": "dist/index.js",
   "scripts": {
+    "predev": "../../scripts/verify-dist.sh || echo '⚠️  Warning: Parent project needs rebuild (npm run build in root)'",
     "dev": "tsx watch src/index.ts",
     "manager": "tsx src/manager.ts",
     "build": "tsc",

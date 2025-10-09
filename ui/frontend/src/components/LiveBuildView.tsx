@@ -236,7 +236,7 @@ export function LiveBuildView() {
                   >
                     {compositeScore.toFixed(1)}
                   </motion.div>
-                  <div className="text-lg text-slate-200">/ 10.0</div>
+                  <div className="text-2xl text-slate-200">/ 10.0</div>
                   {compositeScore >= targetScore && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -261,7 +261,9 @@ export function LiveBuildView() {
           transition={{ delay: 0.3 }}
           className="bg-slate-800 rounded-lg p-6 role-region aria-labelledby"
         >
-          <h3 className="text-lg font-semibold text-slate-100 mb-4 role-heading aria-level-3">Quality Dimensions</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-4 role-heading aria-level-3">
+            Quality Dimensions
+          </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 role-list">
             {currentIterationData.scores.map((dimension, idx) => {
@@ -283,7 +285,7 @@ export function LiveBuildView() {
                         <span className="ml-2 text-xs text-yellow-400">⭐ Highest</span>
                       )}
                     </span>
-                    <span className="text-xl font-semibold text-slate-100">
+                    <span className="text-2xl font-semibold text-slate-100">
                       {dimension.score.toFixed(1)}
                     </span>
                   </div>

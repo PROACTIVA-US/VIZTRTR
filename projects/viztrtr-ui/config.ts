@@ -45,6 +45,16 @@ export const config: VIZTRTRConfig = {
 
   // Logging
   verbose: true,
+
+  // Human-in-the-loop approval (Phase 2)
+  humanLoop: {
+    enabled: true,
+    approvalRequired: 'always', // Require approval for every iteration
+    costThreshold: 100, // 100 cents = $1.00
+    riskThreshold: 'low', // Show all changes, even low-risk ones
+    enablePromptRefinement: true,
+    enableMemoryAnnotation: true,
+  },
 };
 
 // Validation

@@ -5,7 +5,7 @@
 import { EventEmitter } from 'events';
 import { VIZTRTRDatabase } from './database';
 import { OrchestratorServerAgent } from '../agents/OrchestratorServerAgent';
-import { VIZTRTRConfig } from '../../../../dist/core/types';
+import { VIZTRTRConfig } from '../../../../dist/src/core/types';
 import type { Run, IterationUpdate, RunResult, SSEMessage } from '../types';
 
 import type { ApprovalManager } from '../routes/approval';
@@ -50,7 +50,7 @@ export class RunManager extends EventEmitter {
       screenshotConfig: {
         width: 1440,
         height: 900,
-        fullPage: false
+        fullPage: false,
       },
       outputDir: `./viztritr-output/${run.id}`,
       verbose: true,
@@ -116,14 +116,13 @@ export class RunManager extends EventEmitter {
       this.db.updateRun(runId, {
         status: 'completed',
         currentIteration: result.totalIterations,
-        completedAt: new Date().toISOString()
+        completedAt: new Date().toISOString(),
       });
 
       // Emit completion event
       this.emit('completed', runId, result);
 
       return result;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
@@ -131,7 +130,7 @@ export class RunManager extends EventEmitter {
       this.db.updateRun(runId, {
         status: 'failed',
         completedAt: new Date().toISOString(),
-        error: errorMessage
+        error: errorMessage,
       });
 
       // Emit error event
@@ -172,7 +171,7 @@ export class RunManager extends EventEmitter {
     // For now, just mark as cancelled
     this.db.updateRun(runId, {
       status: 'cancelled',
-      completedAt: new Date().toISOString()
+      completedAt: new Date().toISOString(),
     });
 
     this.emit('cancelled', runId);

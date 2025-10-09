@@ -8,13 +8,14 @@
     "viztrtr": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && ./scripts/verify-dist.sh",
     "dev": "tsc --watch",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:viztrtr-ui": "npm run build && node dist/projects/viztrtr-ui/test.js",
     "test:performia": "npm run build && node dist/performia-test.js",
     "demo": "npm run build && node dist/examples/demo.js",
+    "postinstall": "./scripts/verify-dist.sh || echo '⚠️  Run npm run build to compile V2 agents'",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
     "format": "prettier --write 'src/**/*.{ts,json}'",

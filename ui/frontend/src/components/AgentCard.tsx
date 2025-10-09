@@ -15,7 +15,7 @@ const getStatusConfig = (status: string) => {
         textColor: 'text-green-800',
         borderColor: 'border-green-200',
         icon: '✓',
-        label: 'Success'
+        label: 'Success',
       };
     case 'error':
       return {
@@ -23,7 +23,7 @@ const getStatusConfig = (status: string) => {
         textColor: 'text-red-800',
         borderColor: 'border-red-200',
         icon: '✗',
-        label: 'Error'
+        label: 'Error',
       };
     case 'running':
       return {
@@ -31,7 +31,7 @@ const getStatusConfig = (status: string) => {
         textColor: 'text-blue-800',
         borderColor: 'border-blue-200',
         icon: '⟳',
-        label: 'Running'
+        label: 'Running',
       };
     case 'pending':
       return {
@@ -39,7 +39,7 @@ const getStatusConfig = (status: string) => {
         textColor: 'text-yellow-800',
         borderColor: 'border-yellow-200',
         icon: '⏳',
-        label: 'Pending'
+        label: 'Pending',
       };
     default:
       return {
@@ -47,44 +47,47 @@ const getStatusConfig = (status: string) => {
         textColor: 'text-gray-800',
         borderColor: 'border-gray-200',
         icon: '◯',
-        label: 'Unknown'
+        label: 'Unknown',
       };
   }
 };
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent, onSelect, isSelected = false }) => {
   const statusConfig = getStatusConfig(agent.status || 'unknown');
-  
+
   return (
     <div
-      className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+      className={`p-4 border rounded-lg cursor-pointer transition-all duration-300 ${
         isSelected
           ? 'border-blue-500 bg-blue-50 shadow-md'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg'
       }`}
       onClick={() => onSelect?.(agent)}
     >
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-base font-medium text-gray-900">{agent.name}</h3>
-        <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-          statusConfig.bgColor
-        } ${
-          statusConfig.textColor
-        } ${
-          statusConfig.borderColor
-        }`}>
-          <span className="mr-1" aria-hidden="true">{statusConfig.icon}</span>
+        <div
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
+            statusConfig.bgColor
+          } ${statusConfig.textColor} ${statusConfig.borderColor}`}
+        >
+          <span className="mr-1" aria-hidden="true">
+            {statusConfig.icon}
+          </span>
           <span>{statusConfig.label}</span>
         </div>
       </div>
-      
+
       <p className="text-sm text-gray-600 mb-3 line-clamp-2">
         {agent.responsibilities?.join(', ') || 'No responsibilities defined'}
       </p>
 
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>Role: {agent.role || 'Unknown'}</span>
-        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agent.color || '#888' }}></span>
+        <span
+          className="w-3 h-3 rounded-full"
+          style={{ backgroundColor: agent.color || '#888' }}
+        ></span>
       </div>
     </div>
   );
