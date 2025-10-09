@@ -18,7 +18,15 @@ export async function detectProjectType(projectPath: string): Promise<DetectedPr
   const packageJson = readPackageJson(projectPath);
 
   // Analyze component names and structure
-  const teleprompterKeywords = ['lyric', 'chord', 'song', 'setlist', 'scroll', 'teleprompter', 'stage'];
+  const teleprompterKeywords = [
+    'lyric',
+    'chord',
+    'song',
+    'setlist',
+    'scroll',
+    'teleprompter',
+    'stage',
+  ];
   const builderKeywords = ['builder', 'editor', 'canvas', 'drag', 'drop', 'design', 'tool'];
   const controlPanelKeywords = ['settings', 'config', 'control', 'panel', 'dashboard', 'admin'];
 
@@ -42,15 +50,19 @@ export async function detectProjectType(projectPath: string): Promise<DetectedPr
   let projectType: 'teleprompter' | 'web-builder' | 'control-panel' | 'general' = 'general';
   let confidence = 0.5;
 
-  if (teleprompterScore > builderScore && teleprompterScore > controlPanelScore && teleprompterScore > 0) {
+  if (
+    teleprompterScore > builderScore &&
+    teleprompterScore > controlPanelScore &&
+    teleprompterScore > 0
+  ) {
     projectType = 'teleprompter';
-    confidence = Math.min(0.9, 0.5 + (teleprompterScore * 0.1));
+    confidence = Math.min(0.9, 0.5 + teleprompterScore * 0.1);
   } else if (builderScore > controlPanelScore && builderScore > 0) {
     projectType = 'web-builder';
-    confidence = Math.min(0.9, 0.5 + (builderScore * 0.1));
+    confidence = Math.min(0.9, 0.5 + builderScore * 0.1);
   } else if (controlPanelScore > 0) {
     projectType = 'control-panel';
-    confidence = Math.min(0.9, 0.5 + (controlPanelScore * 0.1));
+    confidence = Math.min(0.9, 0.5 + controlPanelScore * 0.1);
   }
 
   // Generate focus areas based on type
@@ -120,16 +132,17 @@ function detectDevServerUrl(packageJson: any): string {
     return `http://localhost:${portMatch[1]}`;
   }
 
-  // Common defaults
+  // Common defaults (avoid port 3000 to prevent conflicts)
   if (devScript.includes('react-scripts')) {
-    return 'http://localhost:3000';
+    return 'http://localhost:3001'; // CRA sometimes uses 3001 if 3000 is taken
   }
 
   if (devScript.includes('next')) {
-    return 'http://localhost:3000';
+    return 'http://localhost:3002'; // Next.js fallback
   }
 
-  return 'http://localhost:3000'; // Fallback
+  // No default - require user to specify to avoid port conflicts
+  return ''; // Empty = user must specify
 }
 
 function generateFocusAreas(projectType: string, components: string[]): string[] {
@@ -181,15 +194,8 @@ function generateAvoidAreas(projectType: string): string[] {
       'Stage performance UI',
       'Media playback controls',
     ],
-    'control-panel': [
-      'Content editing interfaces',
-      'Media players',
-      'Teleprompter displays',
-    ],
-    general: [
-      'Highly specialized UIs',
-      'Domain-specific visualizations',
-    ],
+    'control-panel': ['Content editing interfaces', 'Media players', 'Teleprompter displays'],
+    general: ['Highly specialized UIs', 'Domain-specific visualizations'],
   };
 
   return avoidMap[projectType as keyof typeof avoidMap] || avoidMap.general;

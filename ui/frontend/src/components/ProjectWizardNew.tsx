@@ -13,7 +13,7 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
   const [projectId, setProjectId] = useState('');
   const [name, setName] = useState('');
   const [projectPath, setProjectPath] = useState('');
-  const [frontendUrl, setFrontendUrl] = useState('http://localhost:3000');
+  const [frontendUrl, setFrontendUrl] = useState(''); // No default to avoid port conflicts
   const [targetScore, setTargetScore] = useState(8.5);
   const [maxIterations, setMaxIterations] = useState(5);
 
@@ -215,16 +215,21 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
               {step === 'complete' && 'Project Ready!'}
             </h2>
             <div className="flex gap-2 mt-2">
-              <div className={`h-1 w-20 rounded ${step === 'basic' ? 'bg-blue-500' : 'bg-slate-600'}`} />
-              <div className={`h-1 w-20 rounded ${step === 'analysis' ? 'bg-blue-500' : 'bg-slate-600'}`} />
-              <div className={`h-1 w-20 rounded ${step === 'review' ? 'bg-blue-500' : 'bg-slate-600'}`} />
-              <div className={`h-1 w-20 rounded ${step === 'complete' ? 'bg-blue-500' : 'bg-slate-600'}`} />
+              <div
+                className={`h-1 w-20 rounded ${step === 'basic' ? 'bg-blue-500' : 'bg-slate-600'}`}
+              />
+              <div
+                className={`h-1 w-20 rounded ${step === 'analysis' ? 'bg-blue-500' : 'bg-slate-600'}`}
+              />
+              <div
+                className={`h-1 w-20 rounded ${step === 'review' ? 'bg-blue-500' : 'bg-slate-600'}`}
+              />
+              <div
+                className={`h-1 w-20 rounded ${step === 'complete' ? 'bg-blue-500' : 'bg-slate-600'}`}
+              />
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             ✕
           </button>
         </div>
@@ -241,13 +246,11 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
           <div className="flex flex-col flex-1 min-h-0">
             <div className="p-6 space-y-4 flex-1 overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Project Name *
-                </label>
+                <label className="block text-sm font-medium mb-2">Project Name *</label>
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={e => setName(e.target.value)}
                   placeholder="My Awesome Project"
                   className="input w-full"
                   autoFocus
@@ -255,13 +258,11 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Project Path *
-                </label>
+                <label className="block text-sm font-medium mb-2">Project Path *</label>
                 <input
                   type="text"
                   value={projectPath}
-                  onChange={(e) => setProjectPath(e.target.value)}
+                  onChange={e => setProjectPath(e.target.value)}
                   placeholder="/Users/you/Projects/my-frontend"
                   className="input w-full font-mono text-sm"
                 />
@@ -271,46 +272,40 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Frontend URL *
-                </label>
+                <label className="block text-sm font-medium mb-2">Frontend URL *</label>
                 <input
                   type="text"
                   value={frontendUrl}
-                  onChange={(e) => setFrontendUrl(e.target.value)}
-                  placeholder="http://localhost:3000"
+                  onChange={e => setFrontendUrl(e.target.value)}
+                  placeholder="http://localhost:5173"
                   className="input w-full"
                 />
                 <p className="text-xs text-slate-400 mt-1">
-                  URL where your dev server runs
+                  URL where your dev server runs (e.g., 5173 for Vite, 3001 for Next.js)
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Target Score
-                  </label>
+                  <label className="block text-sm font-medium mb-2">Target Score</label>
                   <input
                     type="number"
                     min="0"
                     max="10"
                     step="0.1"
                     value={targetScore}
-                    onChange={(e) => setTargetScore(parseFloat(e.target.value))}
+                    onChange={e => setTargetScore(parseFloat(e.target.value))}
                     className="input w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Max Iterations
-                  </label>
+                  <label className="block text-sm font-medium mb-2">Max Iterations</label>
                   <input
                     type="number"
                     min="1"
                     max="20"
                     value={maxIterations}
-                    onChange={(e) => setMaxIterations(parseInt(e.target.value))}
+                    onChange={e => setMaxIterations(parseInt(e.target.value))}
                     className="input w-full"
                   />
                 </div>
@@ -321,11 +316,7 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
               <button onClick={onClose} className="btn-secondary">
                 Cancel
               </button>
-              <button
-                onClick={handleCreateProject}
-                disabled={loading}
-                className="btn-primary"
-              >
+              <button onClick={handleCreateProject} disabled={loading} className="btn-primary">
                 {loading ? 'Creating...' : 'Create Project →'}
               </button>
             </div>
@@ -348,7 +339,7 @@ export default function ProjectWizardNew({ onClose, onComplete }: ProjectWizardP
                 </label>
                 <textarea
                   value={userPRD}
-                  onChange={(e) => setUserPRD(e.target.value)}
+                  onChange={e => setUserPRD(e.target.value)}
                   placeholder="Describe your product vision, target users, key features, design priorities...
 
 Or leave empty for AI to infer from codebase."
@@ -361,17 +352,10 @@ Or leave empty for AI to infer from codebase."
             </div>
 
             <div className="p-6 border-t border-slate-700 shrink-0 flex justify-between">
-              <button
-                onClick={handleSkipAnalysis}
-                className="btn-secondary"
-              >
+              <button onClick={handleSkipAnalysis} className="btn-secondary">
                 Skip Analysis
               </button>
-              <button
-                onClick={handleAnalyze}
-                disabled={loading}
-                className="btn-primary"
-              >
+              <button onClick={handleAnalyze} disabled={loading} className="btn-primary">
                 {loading ? 'Analyzing...' : 'Analyze with AI →'}
               </button>
             </div>
@@ -397,7 +381,9 @@ Or leave empty for AI to infer from codebase."
 
                 {components.length > 0 && (
                   <div>
-                    <span className="text-slate-400 text-sm">Components ({components.length}):</span>
+                    <span className="text-slate-400 text-sm">
+                      Components ({components.length}):
+                    </span>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {components.slice(0, 10).map((comp, idx) => (
                         <span key={idx} className="px-2 py-1 bg-slate-800 rounded text-xs">
@@ -418,7 +404,10 @@ Or leave empty for AI to infer from codebase."
                     <span className="text-slate-400 text-sm">Suggested Agents:</span>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {suggestedAgents.map((agent, idx) => (
-                        <span key={idx} className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded text-sm text-blue-300">
+                        <span
+                          key={idx}
+                          className="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded text-sm text-blue-300"
+                        >
                           {agent}
                         </span>
                       ))}
@@ -430,11 +419,13 @@ Or leave empty for AI to infer from codebase."
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Synthesized PRD
-                  <span className="text-slate-400 font-normal ml-2 text-xs">(Review and edit as needed)</span>
+                  <span className="text-slate-400 font-normal ml-2 text-xs">
+                    (Review and edit as needed)
+                  </span>
                 </label>
                 <textarea
                   value={synthesizedPRD}
-                  onChange={(e) => setSynthesizedPRD(e.target.value)}
+                  onChange={e => setSynthesizedPRD(e.target.value)}
                   className="input w-full h-64 font-mono text-sm"
                 />
                 <p className="text-xs text-slate-400 mt-1">
@@ -444,17 +435,10 @@ Or leave empty for AI to infer from codebase."
             </div>
 
             <div className="p-6 border-t border-slate-700 shrink-0 flex justify-between">
-              <button
-                onClick={() => setStep('analysis')}
-                className="btn-secondary"
-              >
+              <button onClick={() => setStep('analysis')} className="btn-secondary">
                 ← Re-analyze
               </button>
-              <button
-                onClick={handleSavePRD}
-                disabled={loading}
-                className="btn-primary"
-              >
+              <button onClick={handleSavePRD} disabled={loading} className="btn-primary">
                 {loading ? 'Saving...' : 'Save & Complete →'}
               </button>
             </div>
@@ -494,10 +478,7 @@ Or leave empty for AI to infer from codebase."
             </div>
 
             <div className="p-6 border-t border-slate-700 shrink-0 flex justify-center">
-              <button
-                onClick={() => onComplete(projectId)}
-                className="btn-primary px-8"
-              >
+              <button onClick={() => onComplete(projectId)} className="btn-primary px-8">
                 Go to Project →
               </button>
             </div>

@@ -143,7 +143,7 @@ export default function ProjectOnboarding({
 
         if (urlRes.ok) {
           const urlData = await urlRes.json();
-          const detected = urlData.url || 'http://localhost:3000';
+          const detected = urlData.url || ''; // No default to avoid port conflicts
           setDetectedUrl(detected);
           setFrontendUrl(detected);
 

@@ -268,9 +268,9 @@ export function createProjectsRouter(db: VIZTRTRDatabase): Router {
       if (devScript.includes('vite')) {
         candidatePorts.push(5173);
       } else if (devScript.includes('next')) {
-        candidatePorts.push(3000);
+        candidatePorts.push(3002); // Avoid 3000 to prevent conflicts
       } else {
-        candidatePorts.push(3000); // Default
+        candidatePorts.push(5173); // Default to common Vite port
       }
 
       // Also check common alternative ports (but prioritize detected ports)

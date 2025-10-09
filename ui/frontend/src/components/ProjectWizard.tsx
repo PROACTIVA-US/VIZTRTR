@@ -36,7 +36,7 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
 
     try {
       // Detect frontend URL from package.json
-      let frontendUrl = 'http://localhost:3000'; // Default
+      let frontendUrl = ''; // No default to avoid port conflicts
       try {
         const detectRes = await fetch('http://localhost:3001/api/projects/detect-url', {
           method: 'POST',
