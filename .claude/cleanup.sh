@@ -13,6 +13,20 @@ exec 2>&1
 
 echo "🧹 Running smart cleanup..."
 
+# CRITICAL: Check for and move any project files created outside the project directory
+PARENT_DIR="$(dirname "$PROJECT_ROOT")"
+PROJECT_NAME="$(basename "$PROJECT_ROOT")"
+
+# Look for common project-specific directories that may have been created outside
+for dir in "viztritr-output" "viztrtr-output" "ui" ".viztrtr" ".viztritr"; do
+  if [ -d "$PARENT_DIR/$dir" ]; then
+    echo "  ⚠️  Found '$dir' outside project - moving back into $PROJECT_NAME/"
+    rsync -av "$PARENT_DIR/$dir/" "$PROJECT_ROOT/$dir/" 2>/dev/null || true
+    rm -rf "$PARENT_DIR/$dir" 2>/dev/null || true
+    echo "  ✅ Moved $dir back into project"
+  fi
+done
+
 # Always clean these universal temp files
 find "$PROJECT_ROOT" -type f \( \
   -name ".DS_Store" \

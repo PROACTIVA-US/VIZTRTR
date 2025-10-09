@@ -21,6 +21,7 @@ During the E2E automation planning session on October 8, 2025, we explored using
 **Decision:** Keep VIZTRTR self-contained within a single directory
 
 **Reasons:**
+
 1. **Complexity overhead** - Managing 8 separate worktrees added operational complexity
 2. **Disk space** - 3.4GB total for all worktrees (342MB each)
 3. **Simpler alternatives** - Regular git branches work fine for phased development
@@ -31,11 +32,13 @@ During the E2E automation planning session on October 8, 2025, we explored using
 ## What Was Removed?
 
 **Deleted on 2025-10-08:**
+
 - 7 git worktrees (`VIZTRTR-phase1-scoring`, `VIZTRTR-phase2-agents`, etc.)
 - 7 git branches (`phase1-scoring`, `phase2-agents`, `hotfix-env`, `testing-env`, etc.)
 - VS Code workspace file (`viztrtr-e2e.code-workspace`)
 
 **Archived Documentation:**
+
 - `GIT_WORKTREE_STRATEGY.md` - Full worktree workflow guide
 - `WORKTREE_QUICKSTART.md` - Quick reference
 - `SESSION_2025_10_08_E2E_SETUP.md` - Session summary

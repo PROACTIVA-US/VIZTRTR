@@ -31,13 +31,13 @@ export function AgentOrchestration() {
         <h2 className="text-2xl font-bold text-slate-100 mb-2">
           Your Build Team
         </h2>
-        <p className="text-slate-400">
+        <p className="text-slate-300">
           AI agents working together to build your project
         </p>
       </div>
 
       {/* Agent Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <AnimatePresence mode="popLayout">
           {agents
             .filter((agent) => agent.id !== 'viztritr')
@@ -154,7 +154,7 @@ export function AgentOrchestration() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowAddAgent(!showAddAgent)}
-          className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-medium transition-colors flex items-center gap-2"
+          className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-medium transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <svg
             className="w-5 h-5"
@@ -176,7 +176,7 @@ export function AgentOrchestration() {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-medium transition-colors flex items-center gap-2"
+          className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-medium transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <svg
             className="w-5 h-5"

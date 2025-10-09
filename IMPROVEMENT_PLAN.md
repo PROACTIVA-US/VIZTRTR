@@ -1,4 +1,5 @@
 # VIZTRTR Improvement Plan
+
 **Created:** 2025-10-08
 **Objective:** Fix hybrid scoring system to achieve >50% success rate
 **Current Success Rate:** 0% (0/9 attempts)
@@ -8,6 +9,7 @@
 ## 🎯 Executive Summary
 
 The hybrid scoring system has all the right components but is failing due to:
+
 1. **Agent adding unnecessary React imports** (100% build failure rate)
 2. **Changes too large** (75% validation rejection rate)
 3. **Validation too strict for small files** (blocking simple improvements)
@@ -21,18 +23,21 @@ The hybrid scoring system has all the right components but is failing due to:
 ### Critical Issues
 
 #### 1. React Import Bug (P0 - Blocking)
+
 **Symptom:** Agent adds `import React from 'react'` causing TS6133 error
 **Root Cause:** Agent doesn't know React 17+ doesn't need React import
 **Impact:** 100% of builds fail
 **Files Affected:** ControlPanelAgent.ts
 
 #### 2. Oversized Changes (P0 - Blocking)
+
 **Symptom:** 75% of changes rejected by validation (96%, 200%, -60% growth)
 **Root Cause:** Agent ignores "SURGICAL CHANGES ONLY" instruction
 **Impact:** Most changes never attempted
 **Files Affected:** ControlPanelAgent.ts
 
 #### 3. Validation Too Strict (P1 - High Priority)
+
 **Symptom:** 50% growth limit blocks simple improvements on small files
 **Root Cause:** Fixed percentage doesn't scale well
 **Impact:** Can't improve 26-line files without major rewrites
@@ -54,6 +59,7 @@ The hybrid scoring system has all the right components but is failing due to:
 ### Phase 1: Critical Fixes (P0)
 
 #### Fix 1.1: Prevent React Import Addition
+
 **File:** `src/agents/specialized/ControlPanelAgent.ts`
 **Location:** buildImplementationPrompt() method
 **Change:** Add explicit instruction to prompt
@@ -82,6 +88,7 @@ Examples:
 ---
 
 #### Fix 1.2: Enforce Micro-Changes
+
 **File:** `src/agents/specialized/ControlPanelAgent.ts`
 **Location:** buildImplementationPrompt() method
 **Change:** Strengthen constraints and add examples
@@ -123,6 +130,7 @@ Only 3 values changed in 1 line. THIS IS THE TARGET SIZE.
 ### Phase 2: Validation Improvements (P1)
 
 #### Fix 2.1: Dynamic Growth Limits
+
 **File:** `src/core/validation.ts`
 **Location:** validateFileChanges() function
 **Change:** Make growth limits scale with file size
@@ -148,6 +156,7 @@ const maxGrowthPercent = calculateMaxGrowth(originalLines);
 ---
 
 #### Fix 2.2: Reduce Effort-Based Limits for CSS Changes
+
 **File:** `src/core/validation.ts`
 **Location:** DEFAULT_CONSTRAINTS
 **Change:** Add micro-change tier
@@ -170,6 +179,7 @@ effortBasedLineLimits: {
 ### Phase 3: Strategic Improvements (P2)
 
 #### Fix 3.1: CSS-Only Mode
+
 **File:** `src/agents/specialized/ControlPanelAgent.ts`
 **Location:** New method
 **Change:** Add CSS-first strategy
@@ -210,6 +220,7 @@ TARGET: Change 1-3 className attributes, nothing more.`;
 ---
 
 #### Fix 3.2: Progressive Change Strategy
+
 **File:** `src/core/orchestrator.ts`
 **Location:** runIteration() method
 **Change:** Try smallest changes first
@@ -238,6 +249,7 @@ if (currentIteration === 1) {
 ## 📊 Implementation Plan
 
 ### Sprint 1: Critical Fixes (Day 1 - 30 mins)
+
 1. ✅ Fix 1.1: React import prevention (5 min)
 2. ✅ Fix 1.2: Enforce micro-changes (10 min)
 3. ✅ Fix 2.2: Reduce effort limits (5 min)
@@ -246,6 +258,7 @@ if (currentIteration === 1) {
 **Expected Result:** 40-50% success rate
 
 ### Sprint 2: Validation Tuning (Day 1 - 30 mins)
+
 1. ✅ Fix 2.1: Dynamic growth limits (15 min)
 2. ✅ Test: Verify small files can be improved (5 min)
 3. ✅ Test: Run hybrid scoring again (10 min)
@@ -253,6 +266,7 @@ if (currentIteration === 1) {
 **Expected Result:** 60-70% success rate
 
 ### Sprint 3: Strategic Improvements (Day 2 - 45 mins)
+
 1. ✅ Fix 3.1: CSS-only mode (20 min)
 2. ✅ Fix 3.2: Progressive strategy (10 min)
 3. ✅ Test: Full hybrid scoring run (15 min)
@@ -264,17 +278,20 @@ if (currentIteration === 1) {
 ## 🧪 Testing Protocol
 
 ### Test 1: After Critical Fixes
+
 ```bash
 npm run build
 node dist/examples/hybrid-scoring-test.js
 ```
 
 **Success Criteria:**
+
 - ✅ At least 1 change succeeds
 - ✅ No React import errors
 - ✅ Build success rate > 0%
 
 ### Test 2: After Validation Tuning
+
 ```bash
 # Clean previous test
 rm -rf viztritr-output/hybrid-test/*
@@ -284,11 +301,13 @@ node dist/examples/hybrid-scoring-test.js
 ```
 
 **Success Criteria:**
+
 - ✅ 2+ changes succeed
 - ✅ Validation pass rate > 50%
 - ✅ Small files (< 30 lines) can be improved
 
 ### Test 3: Full Integration
+
 ```bash
 # Clean and run with max iterations
 rm -rf viztritr-output/hybrid-test/*
@@ -297,6 +316,7 @@ node dist/examples/hybrid-scoring-test.js
 ```
 
 **Success Criteria:**
+
 - ✅ Overall success rate > 50%
 - ✅ UI score improves by +0.5 points
 - ✅ At least 3 successful changes across iterations
@@ -306,6 +326,7 @@ node dist/examples/hybrid-scoring-test.js
 ## 📈 Success Metrics
 
 ### Before (Current State)
+
 - Build Success: 0/1 (0%)
 - Validation Success: 1/4 (25%)
 - Overall Success: 0/9 (0%)
@@ -313,6 +334,7 @@ node dist/examples/hybrid-scoring-test.js
 - Iteration Completion: 0/2
 
 ### After Sprint 1 (Target)
+
 - Build Success: 2/3 (67%)
 - Validation Success: 2/4 (50%)
 - Overall Success: 2/9 (22%)
@@ -320,6 +342,7 @@ node dist/examples/hybrid-scoring-test.js
 - Iteration Completion: 1/2
 
 ### After Sprint 2 (Target)
+
 - Build Success: 4/5 (80%)
 - Validation Success: 4/6 (67%)
 - Overall Success: 4/9 (44%)
@@ -327,6 +350,7 @@ node dist/examples/hybrid-scoring-test.js
 - Iteration Completion: 1/2
 
 ### After Sprint 3 (Goal)
+
 - Build Success: 6/7 (86%)
 - Validation Success: 5/7 (71%)
 - Overall Success: 5/9 (56%)
@@ -352,16 +376,19 @@ node dist/examples/hybrid-scoring-test.js
 ## 📝 Risk Mitigation
 
 ### Risk 1: Changes Break Existing Functionality
+
 **Mitigation:** All changes are additive (new prompts, adjusted limits)
 **Rollback:** Git revert if issues found
 **Testing:** Build and run existing tests after each change
 
 ### Risk 2: Validation Too Loose
+
 **Mitigation:** Start conservative, gradually relax
 **Monitoring:** Track file growth metrics
 **Safety:** Export/import preservation still enforced
 
 ### Risk 3: CSS-Only Mode Too Restrictive
+
 **Mitigation:** Make it optional, use only for visual changes
 **Fallback:** Regular mode still available
 **Testing:** Validate both modes work

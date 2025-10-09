@@ -7,11 +7,13 @@ Integrate Chrome DevTools MCP server to enhance VIZTRTR's UI/UX analysis accurac
 ## Why Chrome DevTools MCP?
 
 **Current Limitation (Vision-only):**
+
 - Claude Opus 4 analyzes screenshots → subjective visual assessment
 - Cannot measure actual performance, accessibility, or network metrics
 - Estimates contrast ratios, load times, interaction delays
 
 **With Chrome DevTools MCP:**
+
 - **Real performance metrics**: Core Web Vitals (LCP, FID, CLS), trace data
 - **Real accessibility data**: Actual ARIA attributes, keyboard navigation, focus states
 - **Real network data**: Request timing, resource sizes, waterfall analysis
@@ -21,26 +23,31 @@ Integrate Chrome DevTools MCP server to enhance VIZTRTR's UI/UX analysis accurac
 ## Available Tools (23 total)
 
 ### Performance Analysis (Critical for VIZTRTR)
+
 1. `performance_start_trace` - Record performance trace with Core Web Vitals
 2. `performance_stop_trace` - Stop trace and get results
 3. `performance_analyze_insight` - Deep dive into specific insights (LCP breakdown, etc.)
 
 ### Accessibility & Debugging (High Priority)
+
 4. `take_snapshot` - Get DOM snapshot with element UIDs and accessibility tree
 5. `evaluate_script` - Run JS to extract ARIA attributes, contrast ratios, focus states
 6. `list_console_messages` - Detect errors, accessibility warnings
 
 ### Network Analysis (Medium Priority)
+
 7. `list_network_requests` - Get all network requests with timing
 8. `get_network_request` - Detailed request info (size, timing, headers)
 
 ### Browser Automation (Replaces Puppeteer)
+
 9. `navigate_page` - Navigate to URL
 10. `take_screenshot` - Capture screenshots
 11. `resize_page` - Test responsive design
 12. `click`, `fill`, `hover` - Interaction testing
 
 ### Emulation (Testing Different Conditions)
+
 13. `emulate_cpu` - Test on slower devices
 14. `emulate_network` - Test on 3G/4G networks
 
@@ -73,6 +80,7 @@ Integrate Chrome DevTools MCP server to enhance VIZTRTR's UI/UX analysis accurac
 ## Hybrid Scoring System
 
 ### Current (Vision-only) - 8 Dimensions
+
 1. Visual Hierarchy (1.2×)
 2. Typography (1.0×)
 3. Color & Contrast (1.0×)
@@ -85,12 +93,14 @@ Integrate Chrome DevTools MCP server to enhance VIZTRTR's UI/UX analysis accurac
 ### Enhanced (Hybrid) - Vision + Metrics
 
 **Vision Analysis (60% weight):**
+
 - Visual Hierarchy: AI assessment
 - Typography: Font rendering quality
 - Color & Contrast: Visual perception
 - Overall Aesthetic: Design harmony
 
 **Real Metrics (40% weight):**
+
 - **Performance Score** (25%):
   - LCP (Largest Contentful Paint) < 2.5s
   - FID (First Input Delay) < 100ms
@@ -120,6 +130,7 @@ Integrate Chrome DevTools MCP server to enhance VIZTRTR's UI/UX analysis accurac
 ## Implementation Plan
 
 ### Phase 1: Install & Configure (Week 1)
+
 - [x] Review Chrome DevTools MCP documentation
 - [ ] Install chrome-devtools-mcp package
 - [ ] Configure MCP server in Claude Code
@@ -127,6 +138,7 @@ Integrate Chrome DevTools MCP server to enhance VIZTRTR's UI/UX analysis accurac
 - [ ] Create ChromeDevToolsPlugin class
 
 ### Phase 2: Metrics Collection (Week 1-2)
+
 - [ ] Implement performance trace capture
 - [ ] Implement accessibility snapshot analysis
 - [ ] Implement network request analysis
@@ -134,18 +146,21 @@ Integrate Chrome DevTools MCP server to enhance VIZTRTR's UI/UX analysis accurac
 - [ ] Create MetricsAnalyzer service
 
 ### Phase 3: Hybrid Scoring (Week 2)
+
 - [ ] Create HybridScoringAgent
 - [ ] Merge vision scores with real metrics
 - [ ] Update evaluation.json structure
 - [ ] Enhance REPORT.md with metrics
 
 ### Phase 4: Replace Puppeteer (Week 2-3)
+
 - [ ] Migrate screenshot capture to Chrome DevTools MCP
 - [ ] Remove Puppeteer dependency
 - [ ] Update capture-puppeteer.ts → capture-chrome-devtools.ts
 - [ ] Test all existing functionality
 
 ### Phase 5: Advanced Features (Week 3-4)
+
 - [ ] Responsive design testing (resize_page)
 - [ ] Performance testing (emulate_cpu, emulate_network)
 - [ ] Interaction testing (click, hover, fill)
@@ -276,20 +291,24 @@ export interface VIZTRTRConfig {
 ## Expected Improvements
 
 ### Accuracy Gains
+
 - **Before**: ~75% accuracy (vision-only estimates)
 - **After**: ~95% accuracy (hybrid vision + real metrics)
 
 ### Specific Examples
 
 **Accessibility:**
+
 - Before: "Contrast appears adequate" (subjective)
 - After: "Contrast ratio: 4.52:1 (WCAG AA ✓)" (measured)
 
 **Performance:**
+
 - Before: "Page feels responsive" (subjective)
 - After: "LCP: 2.1s, FID: 45ms, CLS: 0.05 (Core Web Vitals ✓)" (measured)
 
 **Network:**
+
 - Before: "Images seem large" (subjective)
 - After: "Total page weight: 3.2MB, 8 unoptimized images (avg 400KB each)" (measured)
 

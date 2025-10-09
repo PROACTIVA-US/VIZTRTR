@@ -2,9 +2,10 @@
 
 ## ✅ Phase 1: Memory & Feedback Loops (COMPLETED)
 
-### What We Built:
+### What We Built
 
 #### 1. **IterationMemoryManager** (`src/memory/IterationMemoryManager.ts`)
+
 - ✅ Tracks all attempted recommendations with status (success/failed/no_effect/broke_build)
 - ✅ Records successful and failed changes
 - ✅ Maintains score history with trend analysis
@@ -14,6 +15,7 @@
 - ✅ Persists to disk for session recovery
 
 **Key Methods:**
+
 ```typescript
 - recordAttempt() - Track recommendation attempts
 - wasAttempted() - Check if already tried
@@ -22,6 +24,7 @@
 ```
 
 #### 2. **VerificationAgent** (`src/agents/VerificationAgent.ts`)
+
 - ✅ Verifies files were actually modified
 - ✅ Runs build and checks for TypeScript errors
 - ✅ Monitors console errors on live page
@@ -29,12 +32,14 @@
 - ✅ Returns structured verification results
 
 **Verification Checks:**
+
 - Build succeeded ✓
 - Files modified ✓
 - Visual changes detected ✓
 - No runtime errors ✓
 
 #### 3. **ReflectionAgent** (`src/agents/ReflectionAgent.ts`)
+
 - ✅ Uses Claude Opus with **3000 token extended thinking budget**
 - ✅ Analyzes what worked / didn't work
 - ✅ Provides reasoning about score changes
@@ -43,12 +48,14 @@
 - ✅ Decides whether to continue or rollback
 
 **Extended Thinking Questions:**
+
 1. What actually happened?
 2. What worked / didn't work?
 3. What should we learn?
 4. What should happen next?
 
 #### 4. **New Type Definitions** (`src/types.ts`)
+
 ```typescript
 ✅ IterationMemory
 ✅ AttemptedRecommendation
@@ -61,9 +68,10 @@
 
 ## 🔄 Next Steps: Integrate with Orchestrator
 
-### What Needs to Happen:
+### What Needs to Happen
 
 1. **Update Orchestrator.ts**:
+
    ```typescript
    import { IterationMemoryManager } from './memory/IterationMemoryManager';
    import { VerificationAgent } from './agents/VerificationAgent';
@@ -119,6 +127,7 @@
    - Extract `detectedContext` from analysis
 
 3. **Add Rollback Capability**:
+
    ```typescript
    private async rollback(changes: Changes): Promise<void> {
      console.log('   ⏪ Rolling back changes...');
@@ -137,14 +146,16 @@
 
 ## 📊 Expected Behavior Changes
 
-### Before (Current):
+### Before (Current)
+
 ```
 Iteration 0: Analyze → Implement → Wait → Evaluate
 Iteration 1: Analyze → Implement (SAME THING) → Wait → Evaluate
 Iteration 2: Analyze → Implement (SAME THING AGAIN) → Wait → Evaluate
 ```
 
-### After (Improved):
+### After (Improved)
+
 ```
 Iteration 0:
   Load Memory →
@@ -172,19 +183,23 @@ Iteration 1:
 We'll create:
 
 ### **OrchestratorAgent** (Claude Opus + Extended Thinking)
+
 - Receives vision analysis
 - Routes recommendations to specialists
 - Coordinates parallel execution
 
 ### **ControlPanelAgent** (Claude Sonnet)
+
 - Only modifies: `SettingsPanel.tsx`, `Header.tsx`, `LibraryView.tsx`
 - Knows: Desktop sizing (32-36px buttons, 0.875-1rem text)
 
 ### **TeleprompterAgent** (Claude Sonnet)
+
 - Only modifies: `TeleprompterView.tsx`, lyric components
 - Knows: Stage sizing (3-4.5rem text, 7:1 contrast)
 
 ### **BlueprintAgent** (Claude Sonnet)
+
 - Only modifies: `BlueprintView.tsx`, section components
 - Knows: Information architecture patterns
 
@@ -192,14 +207,16 @@ We'll create:
 
 ## 📈 Success Metrics
 
-### Phase 1 (Current) Achievements:
+### Phase 1 (Current) Achievements
+
 - ✅ No more repeated recommendations
 - ✅ Build failures caught before continuing
 - ✅ Agent learns from mistakes
 - ✅ Plateau detection automatic
 - ✅ Deep reflection with extended thinking
 
-### Phase 2 (Next) Goals:
+### Phase 2 (Next) Goals
+
 - ⬜ Context boundaries respected
 - ⬜ Parallel agent execution (3-5x faster)
 - ⬜ Specialized expertise per UI area
@@ -225,6 +242,7 @@ npm run test:performia
 ```
 
 Expected logs will show:
+
 ```
 🚀 Starting VIZTRTR iteration cycle...
    Loading memory from disk...

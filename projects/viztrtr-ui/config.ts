@@ -1,54 +1,60 @@
 /**
- * VIZTRTR Self-Improvement Configuration
+ * VIZTRTR UI Self-Improvement Configuration
  *
- * This configuration sets up VIZTRTR to iterate on and improve its own UI.
- * Meta-strategy: The system uses AI vision and implementation to autonomously
- * improve the interface through which users interact with VIZTRTR itself.
+ * This configuration enables VIZTRTR to analyze and improve its own web interface.
+ * The goal is to validate the system can achieve 8.5+/10 design quality score.
  */
 
-import * as path from 'path';
 import { VIZTRTRConfig } from '../../src/core/types';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
 
-// Get API key from environment
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+dotenv.config();
 
-if (!ANTHROPIC_API_KEY) {
-  throw new Error(
-    'ANTHROPIC_API_KEY environment variable is required. Please set it in your .env file.'
-  );
-}
+// Find the actual project root (where package.json is)
+// When compiled, __dirname is in dist/projects/viztrtr-ui
+// We need to go up 3 levels: dist/projects/viztrtr-ui -> dist/projects -> dist -> VIZTRTR
+const projectRoot = path.resolve(__dirname, '../../..');
+const uiFrontendPath = path.join(projectRoot, 'ui/frontend');
 
-/**
- * Configuration for VIZTRTR to improve its own UI
- *
- * Project: VIZTRTR Frontend Interface
- * Target: Achieve a 9.0/10 design score (excellent quality)
- * Strategy: Iterative AI-driven improvements with memory-based learning
- */
 export const config: VIZTRTRConfig = {
-  // Project settings
-  projectPath: path.resolve(__dirname, '../../ui/frontend'),
-  frontendUrl: 'http://localhost:5173',
-  targetScore: 9.0,
-  maxIterations: 1,
+  // Project Path
+  projectPath: uiFrontendPath,
 
-  // AI Model selection
+  // Frontend URL (must be running)
+  frontendUrl: 'http://localhost:5173',
+
+  // Quality Targets
+  targetScore: 8.5,
+  maxIterations: 5,
+
+  // Model Configuration
   visionModel: 'claude-opus',
   implementationModel: 'claude-sonnet',
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
 
-  // API credentials
-  anthropicApiKey: ANTHROPIC_API_KEY,
-
-  // Screenshot configuration
+  // Screenshot Configuration
   screenshotConfig: {
     width: 1920,
     height: 1080,
-    fullPage: true, // Capture full scrollable page
+    fullPage: true, // Capture full page for comprehensive analysis
   },
 
-  // Output configuration
-  outputDir: path.resolve(__dirname, './viztrtr-output'),
+  // Output Directory (IMPORTANT: Must be inside project root)
+  outputDir: path.join(projectRoot, 'viztritr-output/viztrtr-ui-self-test'),
+
+  // Logging
   verbose: true,
 };
 
-export default config;
+// Validation
+if (!config.anthropicApiKey) {
+  throw new Error('ANTHROPIC_API_KEY environment variable is required');
+}
+
+console.log('✅ VIZTRTR UI Self-Test Configuration:');
+console.log(`   Project Path: ${config.projectPath}`);
+console.log(`   Frontend URL: ${config.frontendUrl}`);
+console.log(`   Target Score: ${config.targetScore}/10`);
+console.log(`   Max Iterations: ${config.maxIterations}`);
+console.log(`   Output Dir: ${config.outputDir}`);

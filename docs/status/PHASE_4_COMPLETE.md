@@ -12,9 +12,11 @@ Phase 4 integrates the hybrid scoring system into the main VIZTRTR orchestration
 ## Changes Made
 
 ### 1. Updated Type Definitions ✅
+
 **File**: `src/core/types.ts`
 
 Added optional `hybridScore` field to `IterationResult`:
+
 ```typescript
 export interface IterationResult {
   iteration: number;
@@ -42,9 +44,11 @@ export interface IterationResult {
 ```
 
 ### 2. Updated Orchestrator ✅
+
 **File**: `src/core/orchestrator.ts`
 
 **Initialization**:
+
 ```typescript
 // Initialize hybrid scoring if enabled
 if (config.useChromeDevTools) {
@@ -59,6 +63,7 @@ if (config.useChromeDevTools) {
 ```
 
 **In Iteration Loop**:
+
 ```typescript
 // Step 7: Evaluate (with hybrid scoring if enabled)
 console.log('📊 Step 7: Evaluating result...');
@@ -88,6 +93,7 @@ if (this.hybridScoringAgent) {
 ```
 
 **Cleanup**:
+
 ```typescript
 private async cleanup() {
   await this.capturePlugin.close();
@@ -100,6 +106,7 @@ private async cleanup() {
 ### 3. Enhanced Reporting ✅
 
 **Markdown Reports Now Include**:
+
 - Hybrid scoring indicator in summary
 - Per-iteration hybrid breakdown:
   - Vision score (60%)
@@ -108,6 +115,7 @@ private async cleanup() {
   - Performance/Accessibility/Best Practices scores
 
 **Example Report Output**:
+
 ```markdown
 ## Summary
 - **Starting Score:** 6.5/10
@@ -161,6 +169,7 @@ const config: VIZTRTRConfig = {
 ## How It Works
 
 ### Without Hybrid Scoring (useChromeDevTools: false)
+
 1. Capture before screenshot
 2. Analyze with Claude Opus vision → score
 3. Implement changes
@@ -171,6 +180,7 @@ const config: VIZTRTRConfig = {
 **Basis**: AI interpretation only
 
 ### With Hybrid Scoring (useChromeDevTools: true)
+
 1. Capture before screenshot
 2. Analyze with Claude Opus vision → spec
 3. Implement changes
@@ -189,12 +199,14 @@ const config: VIZTRTRConfig = {
 ## Iteration Loop Console Output
 
 ### Without Hybrid Scoring
+
 ```
 📊 Step 7: Evaluating result...
    Current Score: 7.5/10
 ```
 
 ### With Hybrid Scoring
+
 ```
 📊 Step 7: Evaluating result...
 🔬 Running hybrid scoring analysis...
@@ -218,9 +230,11 @@ const config: VIZTRTRConfig = {
 ## Performance Impact
 
 **Vision-Only Mode**:
+
 - Iteration time: ~10-15 seconds
 
 **Hybrid Mode**:
+
 - Iteration time: ~15-20 seconds (+50%)
 - Additional time: Metrics capture (3-5s)
 - **Trade-off**: +50% time for +20% accuracy
@@ -230,6 +244,7 @@ const config: VIZTRTRConfig = {
 ## What Phase 4 Completes
 
 ✅ **Core VIZTRTR Features**:
+
 1. ✅ AI vision analysis (Phase 1)
 2. ✅ Multi-agent orchestration (Phase 1)
 3. ✅ Persistent memory system (Phase 1)
@@ -243,6 +258,7 @@ const config: VIZTRTRConfig = {
 ## Remaining Phases (Optional Enhancements)
 
 ### Phase 5: Production Features
+
 - Error recovery and resilience
 - Rate limiting and cost controls
 - Performance optimization
@@ -250,6 +266,7 @@ const config: VIZTRTRConfig = {
 - Production deployment guides
 
 ### Phase 6: Ecosystem
+
 - GitHub Action for CI/CD
 - VS Code extension
 - npm package distribution
@@ -268,6 +285,7 @@ const config: VIZTRTRConfig = {
 ## Testing
 
 ### Manual Testing
+
 ```bash
 # With hybrid scoring
 npm run build
@@ -279,6 +297,7 @@ cat viztrtr-output/REPORT.md
 ```
 
 ### Automated Testing
+
 ```bash
 npm run test
 ```
@@ -288,6 +307,7 @@ npm run test
 ### From Vision-Only to Hybrid
 
 **Before**:
+
 ```typescript
 const config = {
   // ... basic config
@@ -295,6 +315,7 @@ const config = {
 ```
 
 **After**:
+
 ```typescript
 const config = {
   // ... basic config

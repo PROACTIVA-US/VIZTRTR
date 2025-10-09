@@ -26,7 +26,9 @@ Phase 2.5 successfully implemented a **4-layer defense architecture** that solve
 **File**: `src/plugins/vision-claude.ts`
 
 **Features Added**:
+
 1. **Project Context Injection**
+
    ```typescript
    const projectSection = projectContext ? `
    **PROJECT CONTEXT:**
@@ -43,6 +45,7 @@ Phase 2.5 successfully implemented a **4-layer defense architecture** that solve
    ```
 
 2. **Component Exclusion**
+
    ```typescript
    const exclusionSection = avoidedComponents?.length > 0 ? `
    🚫 **COMPONENTS TO AVOID - DO NOT GENERATE RECOMMENDATIONS FOR:**
@@ -54,6 +57,7 @@ Phase 2.5 successfully implemented a **4-layer defense architecture** that solve
    ```
 
 **Impact**: Vision agent now knows:
+
 - This is a "web-builder" not a "teleprompter"
 - PromptInput.tsx should be avoided
 - Focus on Headers, Cards, Buttons instead
@@ -65,6 +69,7 @@ Phase 2.5 successfully implemented a **4-layer defense architecture** that solve
 **File**: `src/agents/RecommendationFilterAgent.ts` (NEW)
 
 **Features**:
+
 1. **Component Target Validation**
    - Checks if recommendation targets avoided components
    - Rejects recommendations mentioning flagged files
@@ -78,6 +83,7 @@ Phase 2.5 successfully implemented a **4-layer defense architecture** that solve
    - Filters low-value recommendations
 
 **Test Results from Iteration 1**:
+
 ```
 ⚠️  Filtered Recommendations:
    ✅ Approved: 2
@@ -97,6 +103,7 @@ Phase 2.5 successfully implemented a **4-layer defense architecture** that solve
 **File**: `src/agents/HumanLoopAgent.ts` (NEW)
 
 **Features**:
+
 1. **Approval Gate**
    - CLI interface for reviewing recommendations
    - Shows risk level, estimated cost, ROI per recommendation
@@ -112,6 +119,7 @@ Phase 2.5 successfully implemented a **4-layer defense architecture** that solve
    - Threshold-based approval requirement
 
 **Configuration Options**:
+
 ```typescript
 humanLoop: {
   enabled: true,
@@ -177,6 +185,7 @@ async runIteration(iterationNum: number) {
 ## Test Results: Iteration 1 with Phase 2.5
 
 ### Memory Context Loaded ✅
+
 ```
 ATTEMPTED RECOMMENDATIONS (9 total):
 - [Iter 0] Improve form visual structure: broke_build
@@ -189,6 +198,7 @@ ATTEMPTED RECOMMENDATIONS (9 total):
 ```
 
 ### Vision Analysis ✅
+
 ```
 🔍 Analyzing screenshot with claude-opus-4-20250514...
    Current Score: 3.2/10
@@ -199,6 +209,7 @@ ATTEMPTED RECOMMENDATIONS (9 total):
 **Critical Change**: Score dropped from 5.2 to 3.2, indicating the vision agent is now analyzing the actual UI state (not cached).
 
 ### Filtering Results ✅
+
 ```
 ⚠️  Filtered Recommendations:
    ✅ Approved: 2
@@ -212,6 +223,7 @@ ATTEMPTED RECOMMENDATIONS (9 total):
 **Analysis**: Filter correctly rejected 2 low-value recommendations.
 
 ### Orchestrator Routing ✅
+
 ```
 📋 Routing Plan:
    Strategy: Focus on high-impact, low-effort improvements to the existing
@@ -306,6 +318,7 @@ const humanLoop: HumanLoopConfig = {
 ## Comparison: Iteration 2 (Before) vs Iteration 1 with Phase 2.5 (After)
 
 ### Before Phase 2.5 (Iteration 2)
+
 ❌ Vision agent thought UI was a teleprompter
 ❌ Generated 4 teleprompter recommendations
 ❌ All 4 targeted PromptInput.tsx (the avoided component)
@@ -313,6 +326,7 @@ const humanLoop: HumanLoopConfig = {
 ❌ No filtering, all recommendations sent to implementation
 
 ### After Phase 2.5 (Iteration 1)
+
 ✅ Vision agent recognized "web builder UI"
 ✅ Generated 4 web-builder recommendations
 ✅ 2 recommendations rejected by filter (low ROI)
@@ -324,10 +338,12 @@ const humanLoop: HumanLoopConfig = {
 ## Impact Analysis
 
 ### Problem Solved
+
 **Root Cause**: Vision agent lacked project context and ignored memory warnings
 **Solution**: Explicit project context + component exclusions + filtering
 
 ### Effectiveness Metrics
+
 - **Context accuracy**: 100% (correctly identified as web-builder)
 - **Component avoidance**: TBD (need to check if approved recommendations target PromptInput)
 - **Filter effectiveness**: 50% rejection rate (2/4 recommendations filtered)
@@ -338,6 +354,7 @@ const humanLoop: HumanLoopConfig = {
 ## Known Limitations
 
 ### 1. Vision Agent Still Generates Avoided Components
+
 **Observation**: Vision agent may still generate recommendations targeting PromptInput.tsx, but they get filtered by Layer 2.
 
 **Ideal Behavior**: Vision agent should not generate them at all (Layer 1 should prevent generation).
@@ -345,6 +362,7 @@ const humanLoop: HumanLoopConfig = {
 **Status**: Acceptable for Phase 2.5 (Layer 2 catches them), but should be improved in Phase 2.6.
 
 ### 2. No Multi-Region Analysis Yet
+
 **Limitation**: Still captures full-page screenshot, doesn't force analysis of specific regions.
 
 **Workaround**: Component exclusion in prompt + Layer 2 filtering.
@@ -352,6 +370,7 @@ const humanLoop: HumanLoopConfig = {
 **Fix**: Phase 2.6 (Layer 3) will add region-based capture.
 
 ### 3. CLI Approval Gate Only
+
 **Limitation**: Requires terminal interaction, not suitable for automated pipelines.
 
 **Workaround**: Set `approvalRequired: 'never'` for automated runs.
@@ -363,20 +382,26 @@ const humanLoop: HumanLoopConfig = {
 ## Next Steps
 
 ### Immediate Testing
+
 Run full iteration cycle to verify:
+
 1. ✅ Approved recommendations don't target PromptInput.tsx
 2. ⬜ Build succeeds (no rollback needed)
 3. ⬜ Score improves
 4. ⬜ Memory records successful changes
 
 ### Phase 2.6 (Next)
+
 Implement Layer 3: Multi-Region Screenshot Analysis
+
 - Region-based capture
 - Excluded zone masking
 - Progressive UI coverage tracking
 
 ### Phase 2.7 (Later)
+
 Enhance Layer 4: Full Human-in-the-Loop System
+
 - Web UI approval interface
 - Prompt refinement UI
 - Memory annotation system
@@ -387,11 +412,13 @@ Enhance Layer 4: Full Human-in-the-Loop System
 ## Files Added/Modified
 
 ### New Files (3)
+
 1. `src/agents/RecommendationFilterAgent.ts` (130 lines)
 2. `src/agents/HumanLoopAgent.ts` (220 lines)
 3. `docs/architecture/LAYERED_DEFENSE_ARCHITECTURE.md` (750 lines)
 
 ### Modified Files (4)
+
 1. `src/core/types.ts` - Added ProjectContext, HumanLoopConfig, FilteredRecommendations
 2. `src/plugins/vision-claude.ts` - Enhanced prompt with context + exclusions
 3. `src/core/orchestrator.ts` - Integrated all 4 layers

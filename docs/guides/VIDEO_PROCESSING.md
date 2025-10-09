@@ -28,11 +28,13 @@ npm install fluent-ffmpeg @types/fluent-ffmpeg
 VIZTRTR uses ffmpeg for video processing. Install it on your system:
 
 **macOS** (via Homebrew):
+
 ```bash
 brew install ffmpeg
 ```
 
 **Ubuntu/Debian**:
+
 ```bash
 sudo apt update
 sudo apt install ffmpeg
@@ -42,6 +44,7 @@ sudo apt install ffmpeg
 Download from [ffmpeg.org/download.html](https://ffmpeg.org/download.html) and add to PATH.
 
 **Verify Installation**:
+
 ```bash
 ffmpeg -version
 ```
@@ -49,6 +52,7 @@ ffmpeg -version
 ### 3. Set API Key (for AI analysis)
 
 Create or update `.env` file:
+
 ```bash
 ANTHROPIC_API_KEY=your_api_key_here
 ```
@@ -124,6 +128,7 @@ Main class for video processing operations.
 Extract frames from video.
 
 **Parameters:**
+
 - `videoPath` (string): Path to video file
 - `outputDir` (string): Directory for extracted frames
 - `options` (VideoProcessingOptions): Processing configuration
@@ -131,6 +136,7 @@ Extract frames from video.
 **Returns:** `Promise<VideoFrameResult>`
 
 **Example:**
+
 ```typescript
 const result = await processor.processVideo(
   './video.mp4',
@@ -158,6 +164,7 @@ Get video metadata without extracting frames.
 **Returns:** `Promise<VideoMetadata>`
 
 **Example:**
+
 ```typescript
 const metadata = await processor.getMetadata('./video.mp4');
 console.log(`Duration: ${metadata.duration}s`);
@@ -170,12 +177,14 @@ console.log(`FPS: ${metadata.fps}`);
 Detect scene changes in video.
 
 **Parameters:**
+
 - `videoPath` (string): Path to video
 - `threshold` (number): Detection sensitivity (0-1, default: 0.3)
 
 **Returns:** `Promise<SceneChange[]>`
 
 **Example:**
+
 ```typescript
 const scenes = await processor.detectKeyFrames('./video.mp4', 0.3);
 scenes.forEach(scene => {
@@ -188,6 +197,7 @@ scenes.forEach(scene => {
 Extract frames at specific timestamps.
 
 **Example:**
+
 ```typescript
 const timestamps = [0, 1.5, 3.0, 5.5]; // seconds
 const frames = await processor.extractFrames(
@@ -202,6 +212,7 @@ const frames = await processor.extractFrames(
 Load extracted frame as base64 for AI analysis.
 
 **Example:**
+
 ```typescript
 const base64 = await processor.loadFrameAsBase64('./frames/frame_00001.png');
 ```
@@ -211,6 +222,7 @@ const base64 = await processor.loadFrameAsBase64('./frames/frame_00001.png');
 Delete all extracted frames.
 
 **Example:**
+
 ```typescript
 await processor.cleanupFrames('./frames');
 ```
@@ -236,6 +248,7 @@ AI-powered video analysis using Claude Opus vision.
 Analyze entire video end-to-end.
 
 **Example:**
+
 ```typescript
 const visionPlugin = new ClaudeVideoVisionPlugin(apiKey);
 const spec = await visionPlugin.analyzeVideo('./ui-demo.mp4');
@@ -253,6 +266,7 @@ const spec = await visionPlugin.analyzeVideo('./ui-demo.mp4');
 Analyze pre-extracted frames.
 
 **Example:**
+
 ```typescript
 const processor = new VideoProcessor();
 const result = await processor.processVideo('./video.mp4', './frames');
@@ -268,6 +282,7 @@ Detect animation patterns across frames.
 **Returns:** `Promise<AnimationPattern[]>`
 
 **Example:**
+
 ```typescript
 const animations = await visionPlugin.detectAnimations(frames);
 
@@ -318,21 +333,25 @@ viztrtr-video ./demo.mp4 --analyze --max-frames 20
 ### Examples
 
 **Extract frames at 1 FPS:**
+
 ```bash
 viztrtr-video ./app-demo.mp4 --fps 1 --max-frames 30
 ```
 
 **Keyframes only with analysis:**
+
 ```bash
 viztrtr-video ./ui-flow.mp4 -k -a --max-frames 15
 ```
 
 **Specific time range:**
+
 ```bash
 viztrtr-video ./long-video.mp4 --start 30 --end 90 --fps 2
 ```
 
 **High sensitivity scene detection:**
+
 ```bash
 viztrtr-video ./video.mp4 -k --threshold 0.2
 ```
@@ -448,6 +467,7 @@ const results = await Promise.all(
 ### 1. Frame Extraction Strategy
 
 **For Animation Analysis:**
+
 - Use higher FPS (4-8 FPS) to capture smooth motion
 - Don't rely solely on keyframes
 
@@ -460,6 +480,7 @@ const results = await Promise.all(
 ```
 
 **For Scene Analysis:**
+
 - Use keyframes only for efficiency
 - Lower threshold for subtle changes
 
@@ -472,6 +493,7 @@ const results = await Promise.all(
 ```
 
 **For Cost Efficiency:**
+
 - Limit frames analyzed by AI
 - Use keyframes or low FPS
 
@@ -485,11 +507,13 @@ const results = await Promise.all(
 ### 2. Video Format Recommendations
 
 **Best formats for analysis:**
+
 - MP4 (H.264): Universal compatibility
 - WebM: Web-optimized
 - MOV: High quality for detailed analysis
 
 **Avoid:**
+
 - Highly compressed videos (quality issues)
 - Very high resolution (slow processing, not necessary)
 
@@ -507,6 +531,7 @@ Videos are automatically resized to 1920x1080 for consistency:
 ```
 
 For UI analysis, this resolution is optimal for:
+
 - Text readability
 - Button/element visibility
 - Reasonable file sizes
@@ -514,6 +539,7 @@ For UI analysis, this resolution is optimal for:
 ### 4. Scene Detection Tuning
 
 **Threshold Guide:**
+
 - `0.1-0.2`: Very sensitive (many scenes)
 - `0.3`: Balanced (recommended)
 - `0.4-0.6`: Only major changes
@@ -522,6 +548,7 @@ For UI analysis, this resolution is optimal for:
 ### 5. Performance Tips
 
 **Speed up processing:**
+
 ```typescript
 {
   keyframesOnly: true,    // Skip non-keyframes
@@ -532,6 +559,7 @@ For UI analysis, this resolution is optimal for:
 ```
 
 **Improve analysis quality:**
+
 ```typescript
 {
   fps: 4,                 // More frames
@@ -550,6 +578,7 @@ For UI analysis, this resolution is optimal for:
 **Error:** `FFmpeg is not available`
 
 **Solution:**
+
 1. Install ffmpeg (see Installation section)
 2. Verify: `ffmpeg -version`
 3. Ensure ffmpeg is in system PATH
@@ -559,6 +588,7 @@ For UI analysis, this resolution is optimal for:
 **Error:** `JavaScript heap out of memory`
 
 **Solution:**
+
 1. Process video in chunks (see Advanced Usage)
 2. Reduce `maxFrames`
 3. Use keyframes only
@@ -577,6 +607,7 @@ For UI analysis, this resolution is optimal for:
 **Issue:** `sceneChanges.length === 0`
 
 **Solutions:**
+
 1. Lower threshold: `sceneChangeThreshold: 0.2`
 2. Check video has actual scene changes
 3. Try regular FPS extraction instead
@@ -586,6 +617,7 @@ For UI analysis, this resolution is optimal for:
 **Error:** `Rate limit exceeded`
 
 **Solutions:**
+
 1. Reduce `maxFrames`
 2. Process fewer videos concurrently
 3. Add delays between API calls
@@ -597,6 +629,7 @@ For UI analysis, this resolution is optimal for:
 
 **Solution:**
 Convert video to MP4:
+
 ```bash
 ffmpeg -i input.avi -c:v libx264 -c:a aac output.mp4
 ```
@@ -606,6 +639,7 @@ ffmpeg -i input.avi -c:v libx264 -c:a aac output.mp4
 **Issue:** AI misses details or provides generic feedback
 
 **Solutions:**
+
 1. Increase FPS to capture more states
 2. Ensure frames show clear UI elements
 3. Use higher quality video source
@@ -683,6 +717,7 @@ interface VideoDesignSpec extends DesignSpec {
 See `examples/video-analysis-demo.ts` for a complete working example.
 
 **Run the demo:**
+
 ```bash
 # 1. Place a video at ./demo-video.mp4
 # 2. Set ANTHROPIC_API_KEY in .env

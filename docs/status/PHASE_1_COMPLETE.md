@@ -2,13 +2,14 @@
 
 ## ✅ What We Built
 
-### Core Components:
+### Core Components
+
 1. **IterationMemoryManager** - Persistent memory system
 2. **VerificationAgent** - Build and runtime verification
 3. **ReflectionAgent** - Extended thinking-powered reflection
 4. **Updated Orchestrator** - Full feedback loop integration
 
-### New Iteration Flow:
+### New Iteration Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -55,14 +56,16 @@
 
 ## 📊 Expected Behavior Changes
 
-### Before Phase 1:
+### Before Phase 1
+
 ```bash
 Iteration 0: "Increase lyrics contrast" → Score 4.2 → 5.8
 Iteration 1: "Increase lyrics text contrast" → Score 5.8 → 7.2 (SAME THING!)
 Iteration 2: "Increase chord label contrast" → Score 7.2 → 7.2 (AGAIN!)
 ```
 
-### After Phase 1:
+### After Phase 1
+
 ```bash
 Iteration 0:
   Memory: Empty (first run)
@@ -91,6 +94,7 @@ Iteration 3:
 ## 🔧 Key Features
 
 ### 1. Memory System
+
 - ✅ Tracks all attempted recommendations
 - ✅ Prevents repeating failures
 - ✅ Identifies frequently modified components
@@ -98,12 +102,14 @@ Iteration 3:
 - ✅ Persists across sessions
 
 ### 2. Verification
+
 - ✅ Runs TypeScript build
 - ✅ Checks files actually modified
 - ✅ Monitors runtime errors
 - ✅ Automatic rollback on failure
 
 ### 3. Reflection
+
 - ✅ 3000-token extended thinking budget
 - ✅ Analyzes what worked/didn't work
 - ✅ Extracts lessons learned
@@ -111,7 +117,9 @@ Iteration 3:
 - ✅ Can trigger rollback if needed
 
 ### 4. Output Files
+
 Each iteration now saves:
+
 - `before.png` - Screenshot before changes
 - `after.png` - Screenshot after changes
 - `design_spec.json` - Vision analysis + recommendations
@@ -122,7 +130,7 @@ Each iteration now saves:
 
 ## 🚀 Ready to Test
 
-### Terminal Setup:
+### Terminal Setup
 
 ```bash
 # Terminal 1: Start Performia
@@ -135,7 +143,7 @@ npm run build
 node dist/test-performia.js
 ```
 
-### Expected Log Output:
+### Expected Log Output
 
 ```
 🚀 Starting VIZTRTR iteration cycle...
@@ -208,6 +216,7 @@ ATTEMPTED RECOMMENDATIONS (3 total):
 ## 📈 Success Criteria
 
 Phase 1 is successful if we see:
+
 1. ✅ Memory context displayed before analysis
 2. ✅ Different recommendations in iteration 2 vs iteration 1
 3. ✅ Build verification catches any errors
@@ -218,6 +227,7 @@ Phase 1 is successful if we see:
 ## 🔜 Next: Phase 2
 
 Once Phase 1 is proven working, we'll build:
+
 - Orchestrator Agent (routing specialist)
 - ControlPanelAgent (Settings/Header)
 - TeleprompterAgent (Stage view)

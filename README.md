@@ -242,6 +242,7 @@ VIZTRTR evaluates UIs across **8 weighted dimensions**:
 | **Overall Aesthetic** | 1.0× | Professional polish, modern feel, visual cohesion |
 
 **Composite Score Formula:**
+
 ```
 Score = (Σ dimension_score × weight) / (Σ weights)
 ```
@@ -406,6 +407,7 @@ viztritr-output/
 ### Report Contents
 
 **report.json** includes:
+
 - Starting and final scores
 - All iteration details
 - Success/failure analysis
@@ -413,6 +415,7 @@ viztritr-output/
 - Best iteration identifier
 
 **REPORT.md** includes:
+
 - Executive summary
 - Score progression chart
 - Top improvements made
@@ -465,21 +468,27 @@ See `src/core/types.ts` for the `VIZTRTRPlugin` interface.
 ## Use Cases
 
 ### 1. Pre-Launch QA
+
 Run VIZTRTR before shipping to ensure your UI meets design standards:
+
 ```bash
 npm run test:my-app
 ```
 
 ### 2. Design Reviews
+
 Get expert-level UI critique without hiring consultants. Review the generated `REPORT.md` for specific recommendations.
 
 ### 3. Accessibility Audits
+
 VIZTRTR prioritizes accessibility (1.3× weight). Use it to identify and fix WCAG compliance issues.
 
 ### 4. Continuous Improvement
+
 Integrate into CI/CD to maintain design quality across releases.
 
 ### 5. Design System Compliance
+
 Verify adherence to brand guidelines and design systems automatically.
 
 ## Requirements
@@ -595,6 +604,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Support
 
 For issues, questions, or feature requests:
+
 - Open an issue on GitHub
 - Check existing documentation in `docs/`
 - Review the Performia project example in `projects/performia/`

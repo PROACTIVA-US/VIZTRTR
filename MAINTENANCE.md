@@ -5,11 +5,13 @@ This repository includes an automated maintenance system for easy end-of-session
 ## Quick Start
 
 ### End of Coding Session
+
 ```bash
 npm run maintain
 ```
 
 This single command will:
+
 - Clean all temporary files and build artifacts
 - Update API documentation
 - Lint and format code
@@ -22,21 +24,27 @@ This single command will:
 ### Maintenance Commands
 
 **Full Maintenance** (recommended for end-of-session):
+
 ```bash
 npm run maintain
 ```
+
 Runs: cleanup → docs → quality checks → git check → security audit
 
 **Quick Maintenance** (faster, skips tests initially):
+
 ```bash
 npm run maintain:quick
 ```
+
 Runs: cleanup → lint/format fixes → git status
 
 **Deep Maintenance** (monthly recommended):
+
 ```bash
 npm run maintain:deep
 ```
+
 Runs: deep clean (including node_modules) → full maintenance → dependency check
 
 ### Cleanup Commands
@@ -97,16 +105,19 @@ npm run cleanup:execute  # Actually delete identified files
 Git hooks run automatically when you commit or push:
 
 ### Pre-Commit Hook
+
 - **lint-staged**: Lints and formats only staged files
 - **typecheck**: Runs TypeScript type checking
 
 ### Pre-Push Hook
+
 - **test**: Runs Jest test suite
 - **security**: Runs npm audit
 
 ### Skipping Hooks
 
 If you need to skip hooks (not recommended):
+
 ```bash
 LEFTHOOK=0 git commit -m "message"
 LEFTHOOK=0 git push
@@ -123,18 +134,21 @@ LEFTHOOK=0 git push
 ## Best Practices
 
 ### Daily Workflow
+
 1. Make your changes
 2. Commit (pre-commit hooks run automatically)
 3. Before ending session: `npm run maintain`
 4. Push (pre-push hooks run automatically)
 
 ### Weekly
+
 ```bash
 npm run maintain        # Full maintenance
 npm run git:prune       # Clean stale branches
 ```
 
 ### Monthly
+
 ```bash
 npm run maintain:deep   # Includes dependency updates
 npm run deps:update     # Review and update dependencies
@@ -143,15 +157,18 @@ npm run deps:update     # Review and update dependencies
 ## Troubleshooting
 
 **Hooks taking too long?**
+
 - Pre-push hook runs tests which can be slow
 - Skip with `LEFTHOOK=0 git push` if needed
 - Consider disabling test hook in `lefthook.yml`
 
 **Linting errors?**
+
 - Run `npm run quality:fix` to auto-fix
 - Check specific errors with `npm run lint`
 
 **Documentation not generating?**
+
 - Ensure `src/core/index.ts` exists
 - Check TypeDoc configuration in `typedoc.json`
 
@@ -180,12 +197,14 @@ This maintenance system is designed to be portable. To use in other repositories
    - `scripts/cleanup-repo.js`
 
 2. Install dependencies:
+
    ```bash
    npm install -D lefthook lint-staged npm-run-all rimraf \
      typedoc typedoc-plugin-markdown markdownlint-cli npm-check-updates
    ```
 
 3. Initialize:
+
    ```bash
    npx lefthook install
    ```
@@ -195,6 +214,7 @@ This maintenance system is designed to be portable. To use in other repositories
 ## Support
 
 For issues or questions:
+
 - Check the generated docs: `docs/api/`
 - Run `npm run cleanup:analyze` to see what will be cleaned
 - Use `--help` with any command for details

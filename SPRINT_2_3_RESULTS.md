@@ -50,6 +50,7 @@ private shouldUseCSSOnlyMode(recommendation: Recommendation): boolean {
 ```
 
 CSS-only prompt header:
+
 ```typescript
 **🎨 CSS-ONLY MODE ACTIVATED**
 Make ONLY className/style changes. NO structural changes.
@@ -75,6 +76,7 @@ TARGET: Change 1-3 className attributes ONLY
 ## Test Results Comparison
 
 ### Sprint 1 (Baseline)
+
 | Metric | Value | Status |
 |--------|-------|--------|
 | Build Success | 100% (1/1) | ✅ |
@@ -83,6 +85,7 @@ TARGET: Change 1-3 className attributes ONLY
 | React Import Errors | 0% | ✅ |
 
 ### Sprint 2 (Dynamic Growth)
+
 | Metric | Value | Status |
 |--------|-------|--------|
 | Build Success | 100% (1/1) | ✅ |
@@ -91,6 +94,7 @@ TARGET: Change 1-3 className attributes ONLY
 | Agent Change Size | 25-139 lines | ❌ |
 
 ### Sprint 3 (CSS-Only Mode)
+
 | Metric | Value | Status |
 |--------|-------|--------|
 | Build Success | 0% (0/1) | ❌ **Regression** |
@@ -164,13 +168,15 @@ Despite all the improvements to prompts and validation:
 
 ## Examples of Agent Behavior
 
-### What We Asked For (effort=1, CSS-only):
+### What We Asked For (effort=1, CSS-only)
+
 ```typescript
 // Recommendation: "Improve navigation link contrast"
 // Code hint: className='text-gray-300 hover:text-white transition-colors duration-200'
 ```
 
-### What Agent Did:
+### What Agent Did
+
 ```typescript
 // Completely rewrote Header component:
 - Added useState import
@@ -187,28 +193,36 @@ Despite all the improvements to prompts and validation:
 ## Key Learnings
 
 ### 1. Model Limitations
+
 Claude Sonnet 4.5 (with extended thinking) is excellent at:
+
 - Understanding design requirements ✅
 - Generating complete implementations ✅
 - Following architectural patterns ✅
 
 But struggles with:
+
 - Making minimal, surgical edits ❌
 - Resisting over-engineering ❌
 - Following "do NOT" instructions consistently ❌
 
 ### 2. Validation Strategy
+
 **Current approach (pre-implementation validation):**
+
 - ❌ Agent makes changes → validation rejects → rollback
 - Result: 0% success rate when agent misbehaves
 
 **Better approach (post-implementation validation):**
+
 - ✅ Agent makes changes → build + test → keep if working
 - Would have achieved 100% build success in Sprint 1
 - Validation should guide, not gate
 
 ### 3. Prompt Engineering Limits
+
 Added progressively stronger constraints:
+
 1. "Make surgical changes only" (ignored)
 2. "Maximum 10 lines changed" (ignored)
 3. "CRITICAL: CSS-ONLY MODE" (ignored)
@@ -222,26 +236,31 @@ Added progressively stronger constraints:
 ## Alternative Approaches to Consider
 
 ### Option 1: Different Model
+
 - Try Claude Opus 4 (may follow constraints better)
 - Try GPT-4 with structured outputs
 - Trade: Slower/more expensive but potentially more precise
 
-###Option 2: Change Validation Strategy
+### Option 2: Change Validation Strategy
+
 - Accept agent's changes if they build successfully
 - Remove pre-implementation validation
 - Focus on functional correctness, not change size
 
 ### Option 3: Constrained Tool Access
+
 - Give agent a "modifyClassName" tool instead of file write access
 - Force micro-changes through tool design, not prompts
 - Example: `modifyClassName(file, lineNumber, oldClass, newClass)`
 
 ### Option 4: Multi-Step Process
+
 1. Agent identifies WHICH line to change
 2. Separate "edit" agent makes the actual change
 3. Validator confirms change matches plan
 
 ### Option 5: Accept Current Behavior
+
 - Agent makes large changes, validation catches unsafe ones
 - Focus on improving build success rate to 80%+
 - Optimize for "safe rewrites" instead of "surgical edits"
@@ -257,6 +276,7 @@ Added progressively stronger constraints:
 | Overall Success: 50%+ | 0% | -50% |
 
 **However**, Sprint 1 achieved:
+
 | Metric | Sprint 1 Actual |
 |--------|-----------------|
 | Build Success | 100% |
@@ -317,11 +337,13 @@ Sprint 2+3 **regressed** from Sprint 1 success due to agent behavior getting wor
 **Sprint 2+3 Status:** ⚠️ **Technical Success, Practical Failure**
 
 We successfully implemented:
+
 - ✅ Dynamic growth limits (working as designed)
 - ✅ CSS-only mode detection (activates correctly)
 - ✅ Enhanced prompts (sent to agent properly)
 
 But we failed to achieve:
+
 - ❌ Agent following surgical change instructions
 - ❌ Improved validation pass rate
 - ❌ Improved overall success rate
@@ -339,6 +361,7 @@ But we failed to achieve:
 ---
 
 **Files Modified:**
+
 - `src/core/validation.ts` (dynamic growth limits)
 - `src/agents/specialized/ControlPanelAgent.ts` (CSS-only mode)
 - `SPRINT_1_RESULTS.md` (Sprint 1 documentation)

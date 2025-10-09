@@ -2,9 +2,10 @@
 
 ## ✅ **SUCCESS: Memory & Feedback Loops Work!**
 
-### What Worked:
+### What Worked
 
 1. **✅ Memory System is Functional**
+
    ```
    Iteration 1:
    ITERATION MEMORY CONTEXT:
@@ -19,9 +20,11 @@
    - [Iter 0] Increase lyrics text contrast: failed
    ...
    ```
+
    **PROOF:** Memory was saved, loaded, and provided context to iteration 2! ✅
 
 2. **✅ Different Recommendations in Iteration 2**
+
    ```
    Iteration 1 tried:
    - Increase lyrics text contrast
@@ -33,19 +36,24 @@
    - Enhance control button visibility
    - Optimize line spacing for teleprompter readability
    ```
+
    **PROOF:** Memory prevented exact repeats! ✅
 
 3. **✅ Build Verification Works**
+
    ```
    🔨 Running build...
    ✅ Build succeeded
    ```
+
    **PROOF:** Verification agent caught build status! ✅
 
 4. **✅ Memory Persisted to Disk**
+
    ```json
    /Users/danielconnolly/Projects/Performia/viztritr-output/iteration_memory.json
    ```
+
    **PROOF:** `iteration_memory.json` exists with full history! ✅
 
 ---
@@ -53,16 +61,20 @@
 ## ❌ Issues Found (Minor)
 
 ### Issue 1: Reflection Agent max_tokens Error
+
 **Error:**
+
 ```
 `max_tokens` must be greater than `thinking.budget_tokens`
 ```
 
 **Root Cause:**
+
 - Set `max_tokens: 2048` but `thinking.budget_tokens: 3000`
 - Extended thinking requires max_tokens > budget_tokens
 
 **Fix Applied:**
+
 ```typescript
 max_tokens: 8192  // Now > 3000 thinking budget
 ```
@@ -72,22 +84,27 @@ max_tokens: 8192  // Now > 3000 thinking budget
 ---
 
 ### Issue 2: Implementation Agent File Path Errors
+
 **Error:**
+
 ```
 ⚠️  File not found: src/components/TeleprompterView/LyricDisplay.tsx
 ```
 
 **Root Cause:**
+
 - Implementation agent guessed wrong file structure
 - Actual structure: `components/TeleprompterView.tsx` (flat)
 - Agent assumed: `components/TeleprompterView/LyricDisplay.tsx` (nested)
 
 **Why It Happened:**
+
 - Agent has no knowledge of actual project structure
 - Makes assumptions based on common patterns
 - Needs file discovery before implementation
 
 **Impact:**
+
 - Files not modified (verification caught it!) ✅
 - Build still succeeded ✅
 - Memory recorded attempts ✅
@@ -96,6 +113,7 @@ max_tokens: 8192  // Now > 3000 thinking budget
 **Solutions:**
 
 **Option A: Give Agent File List (Quick Fix)**
+
 ```typescript
 // Before implementation, pass actual file structure
 const projectFiles = await listProjectFiles(projectPath);
@@ -103,6 +121,7 @@ await implementationAgent.implement(spec, projectFiles);
 ```
 
 **Option B: File Discovery Step (Better)**
+
 ```typescript
 // Implementation agent first explores project structure
 const relevantFiles = await agent.discoverRelevantFiles(spec, projectPath);
@@ -111,6 +130,7 @@ const changes = await agent.implement(spec, relevantFiles);
 ```
 
 **Option C: Specialized Agents (Phase 2 - Best)**
+
 ```typescript
 // ControlPanelAgent KNOWS exact files:
 const files = [
@@ -131,6 +151,7 @@ After Iter 2: 6.8/10 (-0.4) ← Regressed!
 ```
 
 **Why Regression?**
+
 1. Iteration 2 changes didn't actually modify files (path errors)
 2. BUT score changed anyway (vision agent re-evaluation variability)
 3. This shows we need **perceptual diff** to verify visual changes
@@ -139,7 +160,8 @@ After Iter 2: 6.8/10 (-0.4) ← Regressed!
 
 ## 🎯 Phase 1 Validation: PASSED
 
-### Core Goals:
+### Core Goals
+
 | Goal | Status | Evidence |
 |------|--------|----------|
 | Memory prevents repeats | ✅ PASS | Different recommendations in iter 2 |
@@ -153,6 +175,7 @@ After Iter 2: 6.8/10 (-0.4) ← Regressed!
 ## 🔧 Required Fixes Before Phase 2
 
 ### 1. ✅ Fix Reflection Agent (DONE)
+
 ```diff
 - max_tokens: 2048,
 + max_tokens: 8192,
@@ -160,7 +183,9 @@ After Iter 2: 6.8/10 (-0.4) ← Regressed!
 ```
 
 ### 2. ⬜ Fix File Path Discovery (TODO)
+
 **Recommended Approach:**
+
 ```typescript
 // In ImplementationPlugin, add file discovery:
 async implementChanges(spec: DesignSpec, projectPath: string) {
@@ -179,6 +204,7 @@ async implementChanges(spec: DesignSpec, projectPath: string) {
 ```
 
 ### 3. ⬜ Add Perceptual Diff (NICE TO HAVE)
+
 - Verify actual visual changes occurred
 - Compare before/after screenshots with pixel diff
 - Prevent false score improvements
@@ -187,13 +213,15 @@ async implementChanges(spec: DesignSpec, projectPath: string) {
 
 ## 🚀 Recommended Next Steps
 
-### Immediate (Before Phase 2):
+### Immediate (Before Phase 2)
+
 1. ✅ Fix reflection agent max_tokens
 2. ⬜ Add file discovery to implementation agent
 3. ⬜ Re-run 2-iteration test to validate fixes
 4. ⬜ Verify actual file modifications occur
 
-### Phase 2 (After Validation):
+### Phase 2 (After Validation)
+
 1. Build specialized agents with hardcoded file lists
 2. Implement orchestrator routing
 3. Add parallel execution
@@ -204,12 +232,14 @@ async implementChanges(spec: DesignSpec, projectPath: string) {
 ## 📈 What We Proved
 
 **The core architecture is sound:**
+
 - ✅ Memory system works
 - ✅ Feedback loops function
 - ✅ Verification catches issues
 - ✅ Different strategies emerge
 
 **Minor implementation issues are fixable:**
+
 - 🔧 Reflection agent: Fixed
 - 🔧 File paths: Solvable with discovery
 - 🔧 Perceptual diff: Nice-to-have enhancement

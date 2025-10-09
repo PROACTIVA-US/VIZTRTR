@@ -11,6 +11,7 @@
 ### 1. Specialized Agent System
 
 **ControlPanelAgent** (`src/agents/specialized/ControlPanelAgent.ts`)
+
 - **Responsibility**: Desktop UI components (Settings, Header, Library)
 - **Managed Files**:
   - `components/SettingsPanel.tsx`
@@ -20,6 +21,7 @@
 - **Viewing Distance**: 1-2 feet (typical desktop use)
 
 **TeleprompterAgent** (`src/agents/specialized/TeleprompterAgent.ts`)
+
 - **Responsibility**: Stage performance UI
 - **Managed Files**:
   - `components/TeleprompterView.tsx`
@@ -27,6 +29,7 @@
 - **Viewing Distance**: 3-10 feet (stage performance)
 
 **OrchestratorAgent** (`src/agents/OrchestratorAgent.ts`)
+
 - **Responsibility**: Strategic routing and coordination
 - **Capabilities**:
   - Uses Claude Opus with 2000-token extended thinking
@@ -37,6 +40,7 @@
 ### 2. Critical Bug Fixes
 
 **Screenshot Capture After Rollback** (`src/plugins/capture-puppeteer.ts:74-100`)
+
 ```typescript
 // Retry logic for element screenshots (handles post-rollback re-renders)
 let element = await page.$(config.selector);
@@ -64,16 +68,19 @@ if (box && box.height > 0 && box.width > 0) {
 ### 3. Meta-Pattern Detection System
 
 **New Methods in IterationMemoryManager** (`src/memory/IterationMemoryManager.ts:164-189`)
+
 ```typescript
 shouldAvoidComponent(componentPath: string, threshold: number = 5): boolean
 getAvoidedComponents(): string[]
 ```
 
 **Intelligent Context Switching**:
+
 - Tracks modification frequency per component
 - Tracks failure rate per component
 - When a component has ≥5 modifications with ≥4 failures, flags it as "avoided"
 - Memory context summary now includes:
+
   ```
   🚫 COMPONENTS TO AVOID (Repeated Failures):
   - src/components/TeleprompterView.tsx: Modified 8 times with consistent failures
@@ -97,9 +104,11 @@ node dist/test-performia.js 2>&1 | tee viztritr-phase2-test.log
 ### What Happened
 
 **Iteration 1:**
+
 1. ✅ Memory loaded (9 previous failed recommendations)
 2. ✅ Vision analysis identified 4 new recommendations
 3. ✅ **Orchestrator routing worked perfectly**:
+
    ```
    🎯 OrchestratorAgent analyzing recommendations...
    💭 Orchestrator is thinking strategically...
@@ -108,24 +117,31 @@ node dist/test-performia.js 2>&1 | tee viztritr-phase2-test.log
                 recommendations target performance scenarios
       → TeleprompterAgent: 4 items (high priority)
    ```
+
 4. ✅ **Parallel execution**: `⚡ Executing 1 specialist agents in parallel...`
 5. ✅ **Correct files modified**:
+
    ```
    ✅ Modified: components/TeleprompterView.tsx (4 edits)
    ```
+
 6. ✅ **Build verification passed**: `✅ Build succeeded`
 7. ✅ **Reflection agent worked** (with extended thinking):
+
    ```
    🤔 Reflecting on iteration 0...
    💭 Agent thinking detected, processing insights...
    ```
+
 8. ✅ **Rollback triggered** (score dropped 6.8 → 4.2, delta: -2.6)
+
    ```
    ⏪ Reflection suggests rollback - reverting changes...
    ✅ Rolled back: components/TeleprompterView.tsx (4 times)
    ```
 
 **Iteration 2:**
+
 - ❌ Screenshot capture initially failed: "Error: Node has 0 height"
 - ✅ **NOW FIXED** with retry logic and fallback
 
@@ -173,13 +189,15 @@ The reflection agent identified a meta-pattern after iteration 1:
 
 ## Architecture Improvements Over Phase 1
 
-### Before (Phase 1):
+### Before (Phase 1)
+
 - Single implementation agent guessed file paths
 - No specialization by UI context
 - No meta-pattern detection
 - Screenshot capture fragile after rollback
 
-### After (Phase 2):
+### After (Phase 2)
+
 - Specialized agents with hardcoded file knowledge
 - Context-aware design criteria (stage vs desktop)
 - Orchestrator with strategic routing (extended thinking)
@@ -192,18 +210,21 @@ The reflection agent identified a meta-pattern after iteration 1:
 ## Key Metrics
 
 **Code Impact:**
+
 - Files created: 3 specialist agents
 - Files modified: 2 (capture plugin, memory manager)
 - Lines added: ~450
 - TypeScript errors: 0
 
 **System Intelligence:**
+
 - Memory tracks 13 total recommendations
 - 9 marked as failed (pattern detected)
 - TeleprompterView modified 16 times (8 old + 8 new)
 - Meta-pattern threshold reached (≥5 modifications with ≥4 failures)
 
 **Execution Performance:**
+
 - Orchestrator routing: < 5 seconds (with extended thinking)
 - Parallel execution: 1 specialist agent (Phase 2 test had only 1)
 - Build verification: < 15 seconds
@@ -216,29 +237,37 @@ The reflection agent identified a meta-pattern after iteration 1:
 Based on the Phase 2 test results and reflection insights:
 
 ### 1. **Force Context Switch**
+
 When meta-pattern detection flags a component, the vision agent should analyze OTHER UI contexts. Current setup tells it to avoid TeleprompterView, but we need to ensure it actually generates recommendations for Settings/Header/Library instead.
 
 **Implementation**: Update `ClaudeOpusVisionPlugin` to skip screenshot regions that match avoided components, or use multiple screenshots (one per context).
 
 ### 2. **Add More Specialists**
+
 - **BlueprintAgent**: For chord chart editing UI
 - **LibraryAgent**: For song browsing and organization
 - **AccessibilityAgent**: Cross-cutting concern for all contexts
 
 ### 3. **Smarter Scoring**
+
 Current scoring is vision-only. Consider:
+
 - Lighthouse audit scores (accessibility, performance)
 - User interaction metrics (if available)
 - Component complexity metrics
 
 ### 4. **Increase Max Iterations**
+
 Currently limited to 2 for testing. For production:
+
 ```typescript
 maxIterations: 10, // Allow more exploration with context switching
 ```
 
 ### 5. **Perceptual Diff Verification**
+
 Add actual visual diff checking to confirm changes were applied:
+
 ```typescript
 const pixelDiff = await compareScreenshots(beforePath, afterPath);
 if (pixelDiff < threshold) {
@@ -250,12 +279,14 @@ if (pixelDiff < threshold) {
 
 ## Files Modified Summary
 
-### New Files:
+### New Files
+
 1. `src/agents/specialized/ControlPanelAgent.ts` (136 lines)
 2. `src/agents/specialized/TeleprompterAgent.ts` (134 lines)
 3. `src/agents/OrchestratorAgent.ts` (254 lines)
 
-### Modified Files:
+### Modified Files
+
 1. `src/orchestrator.ts`:
    - Removed: `ClaudeSonnetImplementationPlugin`
    - Added: `OrchestratorAgent` integration
@@ -298,6 +329,7 @@ node dist/test-performia.js 2>&1 | tee viztritr-phase2-fixed-test.log
 ```
 
 **Expected Behavior**:
+
 1. Memory will show TeleprompterView in "🚫 COMPONENTS TO AVOID" section
 2. Vision agent should focus on Settings/Header/Library instead
 3. Orchestrator will route to ControlPanelAgent (not TeleprompterAgent)

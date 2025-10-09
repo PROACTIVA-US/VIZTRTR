@@ -9,6 +9,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
 **URL:** `POST /api/evaluate-prompt`
 
 **Request Body:**
+
 ```json
 {
   "prompt": "Build an interactive dashboard with real-time data",
@@ -17,6 +18,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
 ```
 
 **Response:**
+
 ```json
 {
   "suggestedAgents": [
@@ -88,6 +90,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
 ## Available Agent Types
 
 ### 1. Architect (`architect`)
+
 - **Purpose:** Technical planning and system design
 - **When to use:** Complex projects, new features, major refactors
 - **Responsibilities:**
@@ -97,6 +100,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
   - Creates technical specifications
 
 ### 2. Designer (`designer`)
+
 - **Purpose:** UI/UX design and visual quality
 - **When to use:** All projects with visual components
 - **Responsibilities:**
@@ -106,6 +110,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
   - Defines styling guidelines
 
 ### 3. Engineer (`engineer`)
+
 - **Purpose:** Code implementation
 - **When to use:** All projects requiring code changes
 - **Responsibilities:**
@@ -115,6 +120,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
   - Handles technical implementation
 
 ### 4. Tester (`tester`)
+
 - **Purpose:** Quality assurance and validation
 - **When to use:** Complex projects, critical features, refactors
 - **Responsibilities:**
@@ -124,6 +130,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
   - Verifies quality standards
 
 ### 5. VIZTRTR (`viztritr`)
+
 - **Purpose:** Final quality evaluation and iteration
 - **When to use:** ALL projects (mandatory)
 - **Responsibilities:**
@@ -135,6 +142,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
 ## Complexity Levels
 
 ### Simple
+
 - **Characteristics:** Single component, minor UI changes, styling updates
 - **Typical Agents:** Designer → Engineer → VIZTRTR
 - **Duration:** 2-3 iterations
@@ -145,6 +153,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
   - Modify single component
 
 ### Moderate
+
 - **Characteristics:** New features, multiple components, moderate scope
 - **Typical Agents:** Architect → Designer → Engineer → VIZTRTR
 - **Duration:** 4-6 iterations
@@ -155,6 +164,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
   - Implement authentication UI
 
 ### Complex
+
 - **Characteristics:** Major features, multiple systems, integrations, large scope
 - **Typical Agents:** Architect → Designer → Engineer → Tester → VIZTRTR
 - **Duration:** 7-10 iterations
@@ -167,6 +177,7 @@ The `/api/evaluate-prompt` endpoint uses Claude Sonnet 4 to analyze user prompts
 ## Usage Examples
 
 ### Example 1: Simple UI Change
+
 ```bash
 curl -X POST http://localhost:3001/api/evaluate-prompt \
   -H "Content-Type: application/json" \
@@ -177,6 +188,7 @@ curl -X POST http://localhost:3001/api/evaluate-prompt \
 ```
 
 ### Example 2: Feature Request
+
 ```bash
 curl -X POST http://localhost:3001/api/evaluate-prompt \
   -H "Content-Type: application/json" \
@@ -187,6 +199,7 @@ curl -X POST http://localhost:3001/api/evaluate-prompt \
 ```
 
 ### Example 3: PRD Document
+
 ```bash
 curl -X POST http://localhost:3001/api/evaluate-prompt \
   -H "Content-Type: application/json" \
@@ -209,6 +222,7 @@ npx tsx test-evaluate-endpoint.ts
 ```
 
 The test script includes three test cases:
+
 1. Simple UI change
 2. Complex feature
 3. PRD document
@@ -216,6 +230,7 @@ The test script includes three test cases:
 ## Error Handling
 
 ### 400 Bad Request
+
 ```json
 {
   "error": "Invalid request",
@@ -226,6 +241,7 @@ The test script includes three test cases:
 **Cause:** Missing or invalid request parameters
 
 ### 500 Internal Server Error
+
 ```json
 {
   "error": "Failed to parse AI response",
@@ -235,6 +251,7 @@ The test script includes three test cases:
 ```
 
 **Causes:**
+
 - Claude API error
 - Invalid JSON in AI response
 - Missing required fields in response
@@ -242,13 +259,16 @@ The test script includes three test cases:
 ## Implementation Details
 
 ### Model Configuration
+
 - **Model:** `claude-sonnet-4-5`
 - **Temperature:** 0.3 (for consistent structured output)
 - **Max Tokens:** 4096
 - **System Prompt:** Comprehensive instructions for agent selection
 
 ### Validation
+
 The endpoint validates:
+
 - Request structure (Zod schema)
 - Agent types (must be valid agent type)
 - Complexity level (simple/moderate/complex)
@@ -256,7 +276,9 @@ The endpoint validates:
 - VIZTRTR agent presence (added automatically if missing)
 
 ### Logging
+
 The endpoint logs:
+
 - Incoming request type and prompt preview
 - Claude API responses
 - Successful evaluations with agent summary

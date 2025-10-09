@@ -5,12 +5,14 @@
 Performia has **THREE distinct UI contexts**, each with different design requirements:
 
 ### 1. **Teleprompter View (STAGE MODE)** 🎤
+
 **Purpose:** Display lyrics/chords during live performance
 **User Distance:** 3-10 feet from screen
 **Primary Activity:** Playing instrument while reading
 **Design Priority:** Maximum readability at distance
 
 **Criteria:**
+
 - **Typography:** 3-4.5rem base font (LARGE)
 - **Contrast:** Very high (4.5:1 minimum, 7:1 ideal)
 - **Touch Targets:** 44px minimum (but mainly scroll-based)
@@ -21,6 +23,7 @@ Performia has **THREE distinct UI contexts**, each with different design require
 - **Accessibility:** Screen reader support for practice mode
 
 **Target Score Weights:**
+
 - Visual Hierarchy: 1.3x
 - Typography: 1.4x ⬆️
 - Color/Contrast: 1.4x ⬆️
@@ -33,12 +36,14 @@ Performia has **THREE distinct UI contexts**, each with different design require
 ---
 
 ### 2. **Settings Panel (CONTROL MODE)** ⚙️
+
 **Purpose:** Configuration and song library management
 **User Distance:** 1-2 feet (normal desktop use)
 **Primary Activity:** Clicking buttons, adjusting sliders, browsing library
 **Design Priority:** Information density + usability
 
 **Criteria:**
+
 - **Typography:** 0.875-1rem base font (NORMAL)
 - **Contrast:** Standard web (4.5:1 text, 3:1 UI components)
 - **Touch Targets:** 32-36px (desktop-optimized)
@@ -49,6 +54,7 @@ Performia has **THREE distinct UI contexts**, each with different design require
 - **Accessibility:** Full keyboard navigation, ARIA labels
 
 **Target Score Weights:**
+
 - Visual Hierarchy: 1.2x
 - Typography: 1.0x
 - Color/Contrast: 1.0x
@@ -59,6 +65,7 @@ Performia has **THREE distinct UI contexts**, each with different design require
 - Overall Aesthetic: 1.1x
 
 **Specific Requirements:**
+
 - Settings icon in Header should be **normal size (32-36px)**, not 52px
 - Panel width: 384px (w-96) is good
 - Content should use standard web typography
@@ -69,12 +76,14 @@ Performia has **THREE distinct UI contexts**, each with different design require
 ---
 
 ### 3. **Blueprint View (EDITING MODE)** 🎼
+
 **Purpose:** Song structure visualization and editing
 **User Distance:** 1-2 feet (normal desktop use)
 **Primary Activity:** Reading structure, editing sections
 **Design Priority:** Information architecture + interactivity
 
 **Criteria:**
+
 - **Typography:** 0.875-1.25rem base font (NORMAL to LARGE)
 - **Contrast:** Standard web with highlights for active sections
 - **Touch Targets:** 36-40px (editing interactions)
@@ -85,6 +94,7 @@ Performia has **THREE distinct UI contexts**, each with different design require
 - **Accessibility:** Keyboard navigation, focus indicators
 
 **Target Score Weights:**
+
 - Visual Hierarchy: 1.3x ⬆️
 - Typography: 1.1x
 - Color/Contrast: 1.2x
@@ -98,7 +108,8 @@ Performia has **THREE distinct UI contexts**, each with different design require
 
 ## Critical Design Errors from Previous Run
 
-### ❌ What Went Wrong:
+### ❌ What Went Wrong
+
 1. **Applied "stage friendly" criteria to EVERYTHING**
    - Settings icon: 52px (should be 32-36px)
    - Settings panel content: Oversized
@@ -114,7 +125,8 @@ Performia has **THREE distinct UI contexts**, each with different design require
    - Didn't identify UI context boundaries
    - Treated entire app as one entity
 
-### ✅ Correct Approach:
+### ✅ Correct Approach
+
 1. **Context Detection First**
    - Identify which component is being analyzed
    - Apply appropriate criteria for that context
@@ -136,7 +148,9 @@ Performia has **THREE distinct UI contexts**, each with different design require
 ## Agent Prompt Modifications
 
 ### Vision Analysis Agent
+
 Must include in prompt:
+
 ```
 Before scoring, identify the UI context:
 - Is this the teleprompter view (large text for stage performance)?
@@ -150,6 +164,7 @@ Apply context-specific criteria and weights accordingly.
 ### Implementation Agent (NEW: Three Specialized Agents)
 
 #### 1. TeleprompterAgent
+
 ```typescript
 // Only modifies:
 // - components/TeleprompterView.tsx
@@ -163,6 +178,7 @@ Apply context-specific criteria and weights accordingly.
 ```
 
 #### 2. ControlPanelAgent
+
 ```typescript
 // Only modifies:
 // - components/SettingsPanel.tsx
@@ -177,6 +193,7 @@ Apply context-specific criteria and weights accordingly.
 ```
 
 #### 3. BlueprintAgent
+
 ```typescript
 // Only modifies:
 // - components/BlueprintView.tsx
@@ -194,22 +211,26 @@ Apply context-specific criteria and weights accordingly.
 ## Implementation Plan
 
 ### Phase 1: Architecture Changes
+
 1. Create three specialized implementation plugins
 2. Add context detection to vision analysis
 3. Update scoring weights per context
 
 ### Phase 2: Context Detection
+
 1. Screenshot analysis identifies active view
 2. DOM selector patterns for each context
 3. Route-based context mapping
 
 ### Phase 3: Targeted Improvements
+
 1. Run TeleprompterAgent on TeleprompterView
 2. Run ControlPanelAgent on SettingsPanel + Header
 3. Run BlueprintAgent on BlueprintView
 4. Never cross-contaminate contexts
 
 ### Phase 4: Validation
+
 1. Settings icon: 32-36px ✓
 2. Settings panel: Normal text sizes ✓
 3. Teleprompter: Large, high contrast ✓
@@ -220,19 +241,23 @@ Apply context-specific criteria and weights accordingly.
 ## Success Metrics (Revised)
 
 ### Overall App Score: N/A (no longer applicable)
-### Per-Context Scores:
+
+### Per-Context Scores
 
 **Teleprompter View Target:** 9.0/10
+
 - Typography: 9+
 - Contrast: 9+
 - Readability at distance: Excellent
 
 **Settings Panel Target:** 8.5/10
+
 - Usability: 9+
 - Information density: 8+
 - Desktop interaction quality: Excellent
 
 **Blueprint View Target:** 8.5/10
+
 - Information architecture: 9+
 - Editing UX: 8+
 - Visual organization: Excellent

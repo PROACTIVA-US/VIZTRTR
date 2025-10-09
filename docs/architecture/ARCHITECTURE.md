@@ -5,6 +5,7 @@
 ## Vision
 
 VIZTRTR is an autonomous design iteration system that:
+
 1. Captures screenshots of your UI
 2. Analyzes design quality using AI vision models
 3. Generates detailed improvement specifications
@@ -60,6 +61,7 @@ interface VIZTRTRPlugin {
 ### Default Plugins
 
 **Vision Analysis:**
+
 - ✅ Claude Opus 4 (with vision) - Default
 - 🔌 GPT-4 Vision
 - 🔌 Gemini Pro Vision
@@ -67,18 +69,21 @@ interface VIZTRTRPlugin {
 - 🔌 Custom API endpoint
 
 **Code Implementation:**
+
 - ✅ Claude Sonnet 4.5 - Default (best code generation)
 - 🔌 GPT-4 Turbo
 - 🔌 DeepSeek Coder (local)
 - 🔌 Custom API endpoint
 
 **Screenshot Capture:**
+
 - ✅ Puppeteer (headless Chrome)
 - 🔌 Playwright
 - 🔌 Selenium
 - 🔌 Custom capture script
 
 **Evaluation:**
+
 - ✅ 8-Dimension Design Rubric (built-in)
 - 🔌 Lighthouse scores
 - 🔌 aXe accessibility scores
@@ -87,6 +92,7 @@ interface VIZTRTRPlugin {
 ## System Components
 
 ### 1. Core Orchestrator
+
 ```typescript
 class VIZTRTROrchestrator {
   constructor(config: VIZTRTRConfig);
@@ -104,6 +110,7 @@ class VIZTRTROrchestrator {
 ```
 
 ### 2. Configuration
+
 ```typescript
 interface VIZTRTRConfig {
   // Project settings
@@ -139,6 +146,7 @@ interface VIZTRTRConfig {
 ### 3. Agent Interfaces
 
 #### Vision Analysis Agent
+
 ```typescript
 interface DesignAnalysisAgent {
   analyzeUI(screenshot: Screenshot): Promise<DesignSpec>;
@@ -153,6 +161,7 @@ interface DesignSpec {
 ```
 
 #### Implementation Agent
+
 ```typescript
 interface ImplementationAgent {
   applyChanges(spec: DesignSpec, codebase: string): Promise<Changes>;
@@ -167,6 +176,7 @@ interface Changes {
 ```
 
 #### Evaluation Agent
+
 ```typescript
 interface EvaluationAgent {
   score(screenshot: Screenshot): Promise<EvaluationResult>;
@@ -184,6 +194,7 @@ interface EvaluationResult {
 ## Workflow
 
 ### Phase 1: Initialization
+
 ```bash
 viztritr init
 # Creates viztritr.config.json
@@ -192,6 +203,7 @@ viztritr init
 ```
 
 ### Phase 2: Analysis
+
 ```bash
 viztritr analyze
 # Captures initial screenshot
@@ -201,6 +213,7 @@ viztritr analyze
 ```
 
 ### Phase 3: Iteration
+
 ```bash
 viztritr iterate --target 8.5 --max-iterations 10
 # Runs autonomous improvement cycles
@@ -212,6 +225,7 @@ viztritr iterate --target 8.5 --max-iterations 10
 ```
 
 ### Phase 4: Review
+
 ```bash
 viztritr report
 # Generates comprehensive report
@@ -223,6 +237,7 @@ viztritr report
 ## Integration Methods
 
 ### Method 1: CLI (Standalone)
+
 ```bash
 npm install -g viztritr
 cd my-project
@@ -231,6 +246,7 @@ viztritr iterate
 ```
 
 ### Method 2: GitHub Action
+
 ```yaml
 name: VIZTRTR UI Review
 on: [pull_request]
@@ -246,6 +262,7 @@ jobs:
 ```
 
 ### Method 3: API Server
+
 ```bash
 viztritr serve --port 3000
 # Runs as HTTP API server
@@ -254,6 +271,7 @@ viztritr serve --port 3000
 ```
 
 ### Method 4: VS Code Extension
+
 ```javascript
 // In VS Code
 Command Palette → "VIZTRTR: Analyze Current UI"
@@ -263,6 +281,7 @@ Command Palette → "VIZTRTR: Analyze Current UI"
 ## API Integration
 
 ### Claude Opus Vision API
+
 ```typescript
 class ClaudeOpusVisionAgent implements DesignAnalysisAgent {
   async analyzeUI(screenshot: Screenshot): Promise<DesignSpec> {
@@ -317,6 +336,7 @@ Prioritize changes by impact and effort.
 ```
 
 ### Local Model Support (Future)
+
 ```typescript
 class LocalVisionAgent implements DesignAnalysisAgent {
   private model: LLaVAModel;
@@ -399,6 +419,7 @@ viztritr/
 ## Implementation Plan
 
 ### Phase 1: MVP (Week 1-2)
+
 - [x] Core orchestrator structure
 - [x] 8-dimension scoring rubric
 - [x] Agent specifications
@@ -409,6 +430,7 @@ viztritr/
 - [ ] Test on Performia project
 
 ### Phase 2: CLI & Plugins (Week 3-4)
+
 - [ ] CLI interface (init, analyze, iterate, report)
 - [ ] Plugin architecture
 - [ ] GPT-4V plugin
@@ -417,6 +439,7 @@ viztritr/
 - [ ] Screenshot gallery
 
 ### Phase 3: Production Features (Week 5-6)
+
 - [ ] API server mode
 - [ ] Queue system for long-running jobs
 - [ ] Caching layer
@@ -425,6 +448,7 @@ viztritr/
 - [ ] Performance optimization
 
 ### Phase 4: Ecosystem (Week 7-8)
+
 - [ ] npm package publication
 - [ ] GitHub Action
 - [ ] VS Code extension
@@ -433,6 +457,7 @@ viztritr/
 - [ ] Community plugins
 
 ### Phase 5: Advanced (Future)
+
 - [ ] Local model support (LLaVA, CogVLM)
 - [ ] Multi-page analysis
 - [ ] Responsive design testing
@@ -443,12 +468,14 @@ viztritr/
 ## Monetization Strategy (Optional)
 
 **Free Tier:**
+
 - 10 iterations/month
 - Basic scoring rubric
 - Puppeteer capture
 - Community support
 
 **Pro Tier ($49/month):**
+
 - Unlimited iterations
 - All AI model plugins
 - Advanced scoring
@@ -456,6 +483,7 @@ viztritr/
 - API access
 
 **Enterprise ($499/month):**
+
 - Self-hosted option
 - Custom models
 - White-label reports

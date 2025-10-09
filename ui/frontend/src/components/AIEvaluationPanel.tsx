@@ -88,7 +88,7 @@ export default function AIEvaluationPanel() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 100 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="w-full max-w-4xl mx-auto mt-6"
+        className="w-full max-w-4xl mx-auto mt-8"
       >
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-8 border border-slate-700">
           {/* Header */}
@@ -201,7 +201,7 @@ export default function AIEvaluationPanel() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9 }}
-              className="mb-8"
+              className="mb-6"
             >
               <h3 className="text-lg font-semibold text-white mb-3">Suggested Build Team:</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -225,7 +225,7 @@ export default function AIEvaluationPanel() {
                       <span className="font-medium text-base mb-1" style={{ color: agent.color }}>
                         {agent.name}
                       </span>
-                      <span className="text-xs text-gray-400">{agent.role}</span>
+                      <span className="text-xs text-gray-300">{agent.role}</span>
                     </div>
                   </motion.div>
                 ))}
@@ -279,7 +279,7 @@ export default function AIEvaluationPanel() {
             transition={{ delay: 1.4 }}
             className="mt-6 pt-6 border-t border-slate-700"
           >
-            <p className="text-sm text-gray-400 text-center">
+            <p className="text-sm text-gray-300 text-center">
               The agents listed above will collaborate to build your project. You can customize
               their roles in the next step.
             </p>

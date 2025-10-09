@@ -43,6 +43,7 @@ npm start
 ## API Endpoints
 
 ### Health Check
+
 ```http
 GET /health
 ```
@@ -58,6 +59,7 @@ DELETE /api/projects/:id       # Delete project
 ```
 
 **Create Project Request:**
+
 ```json
 {
   "name": "My Project",
@@ -81,6 +83,7 @@ GET  /api/runs/:id/stream      # SSE stream (real-time updates)
 ```
 
 **Start Run Request:**
+
 ```json
 {
   "projectId": "proj_xxx"
@@ -166,6 +169,7 @@ server/
 ## Database Schema
 
 ### projects
+
 - id (TEXT PRIMARY KEY)
 - name (TEXT)
 - projectPath (TEXT)
@@ -176,6 +180,7 @@ server/
 - updatedAt (TEXT)
 
 ### runs
+
 - id (TEXT PRIMARY KEY)
 - projectId (TEXT FOREIGN KEY)
 - status (TEXT: queued|running|completed|failed|cancelled)

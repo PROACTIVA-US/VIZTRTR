@@ -18,6 +18,7 @@ This configuration runs VIZTRTR on its own frontend UI, creating a recursive imp
 6. **Repeat** - Continues until target quality (9.0/10) is reached
 
 This is a powerful demonstration of:
+
 - **Self-improvement capabilities** of AI systems
 - **Autonomous code generation** for real projects
 - **Iterative refinement** with memory-based learning
@@ -28,21 +29,26 @@ This is a powerful demonstration of:
 ## Configuration Details
 
 ### Target Project
+
 - **Path**: `/Users/danielconnolly/Projects/VIZTRTR/ui/frontend`
 - **Framework**: React + TypeScript + Vite + TailwindCSS
-- **Dev Server**: http://localhost:3000
+- **Dev Server**: <http://localhost:3000>
 
 ### Quality Goals
+
 - **Target Score**: 9.0/10 (excellent quality)
 - **Max Iterations**: 10 cycles
 - **Full-page Screenshots**: 1920x1080, scrollable
 
 ### AI Models
+
 - **Vision**: Claude Opus 4 (design analysis)
 - **Implementation**: Claude Sonnet 4 (code generation with extended thinking)
 
 ### 8 Design Dimensions
+
 Each evaluated with specific weights:
+
 1. Visual Hierarchy (1.2×)
 2. Typography (1.0×)
 3. Color & Contrast (1.0×)
@@ -59,6 +65,7 @@ Each evaluated with specific weights:
 ### Prerequisites
 
 1. **Environment Setup**
+
    ```bash
    # From VIZTRTR root directory
    cp .env.example .env
@@ -66,20 +73,23 @@ Each evaluated with specific weights:
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Start the Frontend Dev Server**
+
    ```bash
    cd ui/frontend
    npm install
    npm run dev
    ```
 
-   Ensure it's running at http://localhost:3000
+   Ensure it's running at <http://localhost:3000>
 
 4. **Build VIZTRTR** (if not already built)
+
    ```bash
    # From VIZTRTR root
    npm run build
@@ -137,24 +147,28 @@ viztrtr-output/
 ## What to Expect
 
 ### First Iteration (Iteration 0)
+
 - Initial design analysis
 - Usually identifies 5-10 issues
 - Implements high-impact changes
 - **Expect**: 1-2 point score improvement
 
 ### Middle Iterations (1-5)
+
 - Refinement of previous changes
 - Memory system prevents repeating failed attempts
 - Focus shifts to specific dimensions
 - **Expect**: 0.3-1.0 point improvements
 
 ### Later Iterations (6-10)
+
 - Diminishing returns
 - Fine-tuning and polish
 - May hit plateaus
 - **Expect**: 0.1-0.5 point improvements
 
 ### Success Criteria
+
 - **Target Reached**: 9.0/10 score achieved
 - **Improvement**: Typically 2-4 points total
 - **Duration**: 5-20 minutes depending on iterations
@@ -171,6 +185,7 @@ This project demonstrates a crucial capability in AI systems:
 **Recursive Self-Improvement**
 
 The system can:
+
 1. Examine its own artifacts (UI)
 2. Identify deficiencies objectively
 3. Generate solutions autonomously
@@ -179,6 +194,7 @@ The system can:
 6. Learn from results
 
 This is analogous to:
+
 - Humans reviewing and improving their own work
 - Compilers that can compile themselves
 - Games where AI learns to play itself (AlphaGo, etc.)
@@ -196,6 +212,7 @@ Beyond the meta-demonstration, this shows VIZTRTR can:
 ### Limitations & Considerations
 
 **What Works Well:**
+
 - Visual hierarchy improvements
 - Spacing and layout refinement
 - Typography consistency
@@ -203,6 +220,7 @@ Beyond the meta-demonstration, this shows VIZTRTR can:
 - Color scheme optimization
 
 **Current Limitations:**
+
 - Cannot add entirely new features
 - Limited to UI/UX improvements
 - Requires running dev server
@@ -210,6 +228,7 @@ Beyond the meta-demonstration, this shows VIZTRTR can:
 - Build failures require rollback
 
 **Safety Features:**
+
 - Backup system before all changes
 - Build verification after changes
 - Automatic rollback on failure
@@ -222,12 +241,14 @@ Beyond the meta-demonstration, this shows VIZTRTR can:
 ### Reading the Report
 
 **report.json** contains:
+
 - Complete iteration history
 - Score progression
 - All design specs and changes
 - Timing information
 
 **REPORT.md** provides:
+
 - Human-readable summary
 - Before/after screenshots
 - Key recommendations
@@ -246,6 +267,7 @@ Beyond the meta-demonstration, this shows VIZTRTR can:
 ### Memory System Insights
 
 Check `memory.json` to see:
+
 - Which changes succeeded
 - Which changes failed
 - Score trends over time
@@ -257,33 +279,43 @@ Check `memory.json` to see:
 ## Troubleshooting
 
 ### "Connection refused at localhost:3000"
+
 **Solution**: Start the frontend dev server
+
 ```bash
 cd ui/frontend && npm run dev
 ```
 
 ### "ANTHROPIC_API_KEY not found"
+
 **Solution**: Add to .env file
+
 ```bash
 echo "ANTHROPIC_API_KEY=your_key_here" >> .env
 ```
 
 ### "Build failed after implementation"
+
 **System Response**:
+
 - Automatically rolls back changes
 - Records failure in memory
 - Continues with next iteration
 - Check logs for specific error
 
 ### "Score plateau detected"
+
 **Options**:
+
 1. Let it continue (may break through)
 2. Review memory.json for patterns
 3. Manually adjust problematic code
 4. Increase maxIterations
 
 ### "Target not reached after max iterations"
+
 **Analysis**:
+
 1. Check final score - Is it close? (8.5+ is excellent)
 2. Review best iteration - Was one particularly good?
 3. Look at score deltas - Diminishing returns?
@@ -374,6 +406,7 @@ Same as VIZTRTR main project (see root LICENSE file).
 ## Support
 
 For issues or questions:
+
 - Check main VIZTRTR README.md
 - Review CLAUDE.md for architecture details
 - Examine iteration logs in output directory

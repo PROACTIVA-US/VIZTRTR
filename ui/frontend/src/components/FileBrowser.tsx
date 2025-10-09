@@ -135,7 +135,7 @@ export default function FileBrowser({
                 <button
                   key={file.path}
                   onClick={() => handleFileClick(file.path)}
-                  className="w-full text-left px-4 py-2 rounded hover:bg-blue-600/20 border border-transparent hover:border-blue-500 transition-colors flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 rounded hover:bg-blue-600/20 border border-transparent hover:border-blue-500 transition-colors flex items-center gap-2 hover:scale-[1.01]"
                 >
                   <span>📄</span>
                   <span>{file.name}</span>

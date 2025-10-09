@@ -27,6 +27,7 @@ npm install
 ```
 
 This will install:
+
 - TypeScript and development tools
 - Anthropic SDK for Claude models
 - Puppeteer for browser automation
@@ -71,6 +72,7 @@ npm run demo
 ```
 
 **What happens:**
+
 1. VIZTRTR captures a screenshot of your UI
 2. Claude Opus analyzes the design
 3. Claude Sonnet implements improvements
@@ -85,6 +87,7 @@ ls -la viztritr-output/
 ```
 
 You'll find:
+
 - `iteration_*/` - Screenshots and analysis for each iteration
 - `report.json` - Detailed JSON report
 - `REPORT.md` - Human-readable summary
@@ -113,6 +116,7 @@ npm run test:performia
 ```
 
 **What happens:**
+
 - Uses the configuration in `projects/performia/config.ts`
 - Runs 2 iterations (configurable)
 - Learns from memory of past attempts
@@ -122,6 +126,7 @@ npm run test:performia
 **Step 3:** Review results
 
 Check `/path/to/Performia/viztritr-output/REPORT.md` for:
+
 - Score progression
 - Improvements made
 - Performia-specific analysis
@@ -153,7 +158,9 @@ viztritr-output/
 ### Key Files Explained
 
 #### `design_spec.json`
+
 Contains Claude Opus's vision analysis:
+
 ```json
 {
   "overallImpression": "The UI shows good typography...",
@@ -171,7 +178,9 @@ Contains Claude Opus's vision analysis:
 ```
 
 #### `changes.json`
+
 Shows what code was modified:
+
 ```json
 {
   "filesModified": ["src/components/Button.tsx"],
@@ -181,7 +190,9 @@ Shows what code was modified:
 ```
 
 #### `evaluation.json`
+
 Contains 8-dimension scores:
+
 ```json
 {
   "scores": {
@@ -200,7 +211,9 @@ Contains 8-dimension scores:
 ```
 
 #### `REPORT.md`
+
 Human-readable summary with:
+
 - Executive summary
 - Score progression
 - Best improvements
@@ -248,6 +261,7 @@ Should show no linting errors.
 ### Issue: "ANTHROPIC_API_KEY not found"
 
 **Solution:** Ensure `.env` file exists in project root with:
+
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```
@@ -255,6 +269,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 ### Issue: "Frontend is not running"
 
 **Solution:** Start your frontend dev server first:
+
 ```bash
 cd /path/to/frontend
 npm run dev
@@ -265,6 +280,7 @@ Verify it's accessible at the configured URL (e.g., `http://localhost:5001`).
 ### Issue: "Cannot find module"
 
 **Solution:** Rebuild the project:
+
 ```bash
 npm run build
 ```
@@ -272,6 +288,7 @@ npm run build
 ### Issue: "Puppeteer fails to launch Chrome"
 
 **Solution:** Install Chrome/Chromium:
+
 ```bash
 # macOS
 brew install chromium

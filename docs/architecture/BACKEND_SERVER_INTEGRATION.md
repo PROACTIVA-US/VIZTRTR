@@ -6,17 +6,20 @@
 ## Problem Statement
 
 Currently, VIZTRTR only tests the **frontend** by:
+
 1. Taking screenshots
 2. Analyzing visual design
 3. Making CSS/UI changes
 
 But many projects (like Performia) have **backend servers** that:
+
 - Provide real-time data via WebSockets
 - Serve API endpoints
 - Handle state management
 - Process business logic
 
 **Without the backend running**, VIZTRTR can only see:
+
 - Static UI with placeholder data
 - Non-functional interactive elements
 - Missing real-time updates
@@ -291,7 +294,7 @@ export class BackendServerManager {
 
 ## Orchestrator Integration
 
-### Updated `orchestrator.ts`:
+### Updated `orchestrator.ts`
 
 ```typescript
 import { BackendServerManager } from '../services/BackendServerManager.js';
@@ -341,13 +344,15 @@ export class VIZTRTROrchestrator {
 
 ## Enhanced Testing with Real Backend
 
-### Before (Static Screenshots Only):
+### Before (Static Screenshots Only)
+
 ```typescript
 // Take screenshot of static page
 const screenshot = await page.screenshot();
 ```
 
-### After (Interactive + Real Data):
+### After (Interactive + Real Data)
+
 ```typescript
 // Backend is running with test data
 // Frontend connects to real WebSocket
@@ -384,21 +389,25 @@ for (const route of config.testing.routes) {
 ## Benefits
 
 ### 1. **Real Data Testing**
+
 - See actual charts, not placeholder SVGs
 - Test with realistic database content
 - Verify data formatting and display
 
 ### 2. **Interactive Testing**
+
 - Click buttons and see real responses
 - Test WebSocket connections
 - Verify state changes
 
 ### 3. **API Integration**
+
 - Ensure frontend calls work
 - Test error handling
 - Verify loading states
 
 ### 4. **Full Stack Validation**
+
 - Check frontend-backend compatibility
 - Test CORS configuration
 - Verify authentication flows
@@ -548,4 +557,3 @@ Add to `ProjectDetailPage.tsx` Configuration tab:
 5. **Add Database Seeding** - Populate test data before runs
 
 **Priority**: HIGH - This is critical for testing real full-stack applications
-

@@ -28,18 +28,21 @@ Total: ~3.4GB
 ## 🚀 Quick Commands
 
 ### **List All Worktrees**
+
 ```bash
 cd /Users/danielconnolly/Projects/VIZTRTR
 git worktree list
 ```
 
 ### **Open VS Code Multi-Root Workspace**
+
 ```bash
 cd /Users/danielconnolly/Projects
 code viztrtr-e2e.code-workspace
 ```
 
 ### **Start Working on a Phase**
+
 ```bash
 # Example: Phase 1 (Enhanced Scoring)
 cd /Users/danielconnolly/Projects/VIZTRTR-phase1-scoring
@@ -53,6 +56,7 @@ git push origin feat/expert-review-panel
 ```
 
 ### **Sync All Worktrees with Remote**
+
 ```bash
 # Run from any worktree
 for dir in /Users/danielconnolly/Projects/VIZTRTR*/; do
@@ -62,6 +66,7 @@ done
 ```
 
 ### **Check Disk Usage**
+
 ```bash
 du -sh /Users/danielconnolly/Projects/VIZTRTR*
 ```
@@ -71,48 +76,56 @@ du -sh /Users/danielconnolly/Projects/VIZTRTR*
 ## 📂 Worktree Purpose Guide
 
 ### **Main (VIZTRTR/)**
+
 - **Purpose:** Production code, main branch
 - **Use for:** Final merges, releases, documentation
 - **Branch:** `main`
 - **Never:** Develop features here
 
 ### **Phase 1 (VIZTRTR-phase1-scoring/)**
+
 - **Purpose:** Enhanced scoring system (Week 1-2)
 - **Deliverables:** 5 expert agents, EnhancedScoringEngine
 - **Branch:** `phase1-scoring`
 - **Start with:** `git checkout -b feat/expert-review-panel`
 
 ### **Phase 2 (VIZTRTR-phase2-agents/)**
+
 - **Purpose:** Specialized implementation agents (Week 3-4)
 - **Deliverables:** Typography, Color, Animation, A11y, Performance agents
 - **Branch:** `phase2-agents`
 - **Start with:** `git checkout -b feat/typography-agent`
 
 ### **Phase 3 (VIZTRTR-phase3-strategy/)**
+
 - **Purpose:** Strategic planning & orchestration (Week 5)
 - **Deliverables:** StrategicPlannerAgent, StoppingCriteriaEngine
 - **Branch:** `phase3-strategy`
 - **Start with:** `git checkout -b feat/strategic-planner`
 
 ### **Phase 4 (VIZTRTR-phase4-multiroute/)**
+
 - **Purpose:** Multi-route testing (Week 6)
 - **Deliverables:** RouteDiscoveryAgent, ParallelTestOrchestrator
 - **Branch:** `phase4-multiroute`
 - **Start with:** `git checkout -b feat/route-discovery`
 
 ### **Phase 5 (VIZTRTR-phase5-metalearning/)**
+
 - **Purpose:** Self-improvement & meta-learning (Week 7-8)
 - **Deliverables:** AgentPerformanceTracker, PromptEvolution, LessonLibrary
 - **Branch:** `phase5-metalearning`
 - **Start with:** `git checkout -b feat/lesson-library`
 
 ### **Testing (VIZTRTR-testing/)**
+
 - **Purpose:** Benchmarks, integration tests
 - **Use for:** Running tests without interrupting development
 - **Branch:** `testing-env` (tracks main)
 - **Never:** Commit feature code here
 
 ### **Hotfix (VIZTRTR-hotfix/)**
+
 - **Purpose:** Emergency production fixes
 - **Use for:** Critical bugs in main branch
 - **Branch:** `hotfix-env` (tracks main)
@@ -123,6 +136,7 @@ du -sh /Users/danielconnolly/Projects/VIZTRTR*
 ## 🔄 Typical Workflow
 
 ### **Day 1: Start New Feature**
+
 ```bash
 # 1. Go to appropriate phase worktree
 cd /Users/danielconnolly/Projects/VIZTRTR-phase1-scoring
@@ -143,6 +157,7 @@ git commit -m "feat: implement TypographyExpertAgent with readability scoring"
 ```
 
 ### **Day 2-3: Continue Development**
+
 ```bash
 # Continue in same worktree, same branch
 cd /Users/danielconnolly/Projects/VIZTRTR-phase1-scoring
@@ -156,6 +171,7 @@ code .
 ```
 
 ### **Day 4: Ready for PR**
+
 ```bash
 # Push feature branch
 git push origin feat/typography-expert
@@ -170,6 +186,7 @@ git checkout -b feat/color-palette-agent
 ```
 
 ### **After PR Merge**
+
 ```bash
 # Update main worktree
 cd /Users/danielconnolly/Projects/VIZTRTR
@@ -192,6 +209,7 @@ git checkout -b feat/color-expert
 ## 🧪 Testing Across Worktrees
 
 ### **Scenario: Test Phase 2 with Phase 1 Features**
+
 ```bash
 # Build Phase 1
 cd /Users/danielconnolly/Projects/VIZTRTR-phase1-scoring
@@ -213,6 +231,7 @@ git reset --hard main
 ```
 
 ### **Scenario: Run Long Benchmarks**
+
 ```bash
 # In testing worktree (doesn't block development)
 cd /Users/danielconnolly/Projects/VIZTRTR-testing
@@ -259,6 +278,7 @@ cd /Users/danielconnolly/Projects/VIZTRTR-phase2-agents && git fetch origin && g
 ## 🧹 Cleanup & Maintenance
 
 ### **Remove Completed Phase Worktree**
+
 ```bash
 # After phase1 merged to main
 cd /Users/danielconnolly/Projects/VIZTRTR
@@ -272,6 +292,7 @@ git branch -d phase1-scoring
 ```
 
 ### **Clean Build Artifacts (All Worktrees)**
+
 ```bash
 for dir in /Users/danielconnolly/Projects/VIZTRTR*/; do
   echo "Cleaning $dir..."
@@ -280,6 +301,7 @@ done
 ```
 
 ### **Prune Stale Worktrees**
+
 ```bash
 # If worktree directory deleted manually
 git worktree prune
@@ -291,6 +313,7 @@ git worktree list
 ## 📊 VS Code Multi-Root Workspace Features
 
 Open the workspace:
+
 ```bash
 code /Users/danielconnolly/Projects/viztrtr-e2e.code-workspace
 ```
@@ -306,6 +329,7 @@ code /Users/danielconnolly/Projects/viztrtr-e2e.code-workspace
 7. **Git Graph** - See all branches and worktrees visually
 
 ### **Keyboard Shortcuts:**
+
 - `Cmd+P` → Quick file search across all worktrees
 - `Cmd+Shift+F` → Global search
 - `Ctrl+` \` → Toggle terminal (one per worktree)
@@ -316,6 +340,7 @@ code /Users/danielconnolly/Projects/viztrtr-e2e.code-workspace
 ## 🎯 Best Practices
 
 ### **DO:**
+
 ✅ Create feature branches in phase worktrees
 ✅ Commit frequently (squash before pushing)
 ✅ Keep worktrees synced with `git fetch` daily
@@ -324,6 +349,7 @@ code /Users/danielconnolly/Projects/viztrtr-e2e.code-workspace
 ✅ Remove worktrees after phase completion
 
 ### **DON'T:**
+
 ❌ Develop in main worktree
 ❌ Commit directly to phase branches (use feature branches)
 ❌ Share node_modules (keep isolated)
@@ -335,15 +361,18 @@ code /Users/danielconnolly/Projects/viztrtr-e2e.code-workspace
 ## 📈 Current Status
 
 ### **Week 1-2 (Current):**
+
 - **Active:** Phase 1 worktree (enhanced scoring)
 - **Focus:** Implement 5 expert agents
 - **Next:** Create TypographyExpertAgent, ColorTheoryExpertAgent
 
 ### **Week 3-4 (Next):**
+
 - **Activate:** Phase 2 worktree (specialized agents)
 - **Parallel:** Phase 1 in code review, Phase 2 in development
 
 ### **Week 5+:**
+
 - **Activate:** Remaining phase worktrees as needed
 - **Strategy:** Sequential merges to minimize conflicts
 
@@ -352,17 +381,20 @@ code /Users/danielconnolly/Projects/viztrtr-e2e.code-workspace
 ## 🆘 Troubleshooting
 
 ### **Problem: "Cannot checkout branch, already in use"**
+
 ```bash
 git worktree list  # Find which worktree uses the branch
 ```
 
 ### **Problem: "Working tree has modifications"**
+
 ```bash
 git stash  # Or commit/discard changes
 git worktree remove ../VIZTRTR-phase1-scoring
 ```
 
 ### **Problem: "Disk space running low"**
+
 ```bash
 # Clean all worktrees
 for dir in /Users/danielconnolly/Projects/VIZTRTR*/; do
@@ -374,6 +406,7 @@ git worktree remove ../VIZTRTR-phase1-scoring
 ```
 
 ### **Problem: "Merge conflicts across phases"**
+
 ```bash
 cd /Users/danielconnolly/Projects/VIZTRTR-phase2-agents
 git fetch origin

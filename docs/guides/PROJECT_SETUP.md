@@ -250,6 +250,7 @@ npm run test:my-project
 ### Essential Settings
 
 #### `projectPath`
+
 **Type:** `string` (absolute path)
 **Required:** Yes
 **Example:** `'/Users/me/projects/my-app'`
@@ -257,6 +258,7 @@ npm run test:my-project
 The absolute path to your frontend project root directory. This is where VIZTRTR will look for and modify source files.
 
 #### `frontendUrl`
+
 **Type:** `string` (URL)
 **Required:** Yes
 **Example:** `'http://localhost:3000'`
@@ -264,6 +266,7 @@ The absolute path to your frontend project root directory. This is where VIZTRTR
 The URL where your dev server is running. VIZTRTR will screenshot this URL.
 
 #### `outputDir`
+
 **Type:** `string` (absolute path)
 **Required:** Yes
 **Example:** `'/tmp/viztritr-output'`
@@ -273,6 +276,7 @@ Where VIZTRTR saves all results. Will be created if it doesn't exist.
 ### Quality Settings
 
 #### `targetScore`
+
 **Type:** `number` (0-10)
 **Default:** `8.5`
 **Recommended:** `8.5` for production, `7.5` for MVP
@@ -288,6 +292,7 @@ The quality threshold. VIZTRTR stops when this score is reached.
 | 9.0+ | Outstanding, rare |
 
 #### `maxIterations`
+
 **Type:** `number`
 **Default:** `5`
 **Recommended:** `3-10`
@@ -297,6 +302,7 @@ Maximum number of improvement cycles. Higher values allow more refinement but ta
 ### Screenshot Settings
 
 #### `screenshotConfig.width` / `height`
+
 **Type:** `number` (pixels)
 **Defaults:** `1440 × 900`
 
@@ -311,6 +317,7 @@ Viewport dimensions. Common sizes:
 | Mobile (iPhone) | 375 × 667 |
 
 #### `screenshotConfig.fullPage`
+
 **Type:** `boolean`
 **Default:** `false`
 
@@ -318,10 +325,12 @@ Viewport dimensions. Common sizes:
 - `true` - Capture entire scrollable page (slower, more comprehensive)
 
 #### `screenshotConfig.selector`
+
 **Type:** `string` (CSS selector, optional)
 **Example:** `'#app'`, `'.main-content'`, `'[data-testid="dashboard"]'`
 
 Capture only a specific element. Useful for:
+
 - Testing specific components
 - Ignoring headers/footers
 - Focusing on problem areas
@@ -329,18 +338,21 @@ Capture only a specific element. Useful for:
 ### Advanced Settings
 
 #### `verbose`
+
 **Type:** `boolean`
 **Default:** `true`
 
 Enable detailed console logging. Set to `false` for cleaner output in CI/CD.
 
 #### `visionModel`
+
 **Type:** `'claude-opus' | 'gpt4v' | 'gemini'`
 **Default:** `'claude-opus'`
 
 Vision model for UI analysis. Currently only Claude Opus 4 is fully implemented.
 
 #### `implementationModel`
+
 **Type:** `'claude-sonnet'`
 **Default:** `'claude-sonnet'`
 
@@ -421,6 +433,7 @@ export const landingConfig: VIZTRTRConfig = {
 **Error:** `❌ Error: Frontend is not running`
 
 **Solutions:**
+
 1. Verify dev server is running: `curl http://localhost:3000`
 2. Check the correct port in `frontendUrl`
 3. Ensure no firewall blocking localhost connections
@@ -431,6 +444,7 @@ export const landingConfig: VIZTRTRConfig = {
 **Error:** File modifications fail
 
 **Solutions:**
+
 1. Use absolute paths, not relative: `/Users/me/project` not `./project`
 2. Ensure path exists: `ls /path/to/project`
 3. Check write permissions: `ls -la /path/to/project`
@@ -440,6 +454,7 @@ export const landingConfig: VIZTRTRConfig = {
 **Error:** Screenshot captures incorrectly
 
 **Solutions:**
+
 1. Verify selector exists: Open browser dev tools, run `document.querySelector('#app')`
 2. Wait for page load: Add delay in config (not currently supported, contact maintainers)
 3. Use a less specific selector
@@ -450,6 +465,7 @@ export const landingConfig: VIZTRTRConfig = {
 **Error:** Out of memory
 
 **Solutions:**
+
 1. Reduce `maxIterations`
 2. Use `fullPage: false` for screenshots
 3. Increase Node memory: `NODE_OPTIONS=--max-old-space-size=4096 npm run test:my-project`
@@ -480,6 +496,7 @@ selector: undefined     // Less focused
 ### 3. Monitor API Costs
 
 Each iteration makes multiple API calls:
+
 - Vision analysis: ~1-2 API calls
 - Implementation: ~2-3 API calls
 - Evaluation: ~1 API call

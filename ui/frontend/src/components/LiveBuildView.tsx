@@ -59,7 +59,7 @@ export function LiveBuildView() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="w-full max-w-7xl mx-auto p-6 space-y-6"
+      className="w-full max-w-7xl mx-auto p-6 space-y-8"
     >
       {/* Header with controls */}
       <div className="flex items-center justify-between">
@@ -82,7 +82,7 @@ export function LiveBuildView() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handlePauseResume}
-              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-lg font-medium transition-colors"
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               {isBuilding ? '⏸ Pause' : '▶ Resume'}
             </motion.button>
@@ -117,7 +117,7 @@ export function LiveBuildView() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.3 }}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors hover:shadow-md hover:scale-[1.01]"
                   >
                     <div
                       className="flex-shrink-0 w-1 h-full rounded-full"
@@ -200,9 +200,9 @@ export function LiveBuildView() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-800 rounded-lg p-6"
+            className="bg-slate-800 rounded-lg p-6 shadow-xl shadow-blue-500/20 border border-slate-700"
           >
-            <h3 className="text-lg font-semibold text-slate-100 mb-4">Overall Quality Score</h3>
+            <h3 className="text-xl font-semibold text-slate-100 mb-4">Overall Quality Score</h3>
 
             <div className="flex items-center justify-center">
               <div className="relative w-40 h-40">
@@ -229,14 +229,14 @@ export function LiveBuildView() {
                 {/* Score text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <motion.div
-                    className="text-4xl font-bold text-slate-100"
+                    className="text-6xl font-bold text-slate-100"
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.5, duration: 0.5 }}
                   >
                     {compositeScore.toFixed(1)}
                   </motion.div>
-                  <div className="text-sm text-slate-400">/ 10.0</div>
+                  <div className="text-lg text-slate-200">/ 10.0</div>
                   {compositeScore >= targetScore && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -259,11 +259,11 @@ export function LiveBuildView() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-slate-800 rounded-lg p-6"
+          className="bg-slate-800 rounded-lg p-6 role-region aria-labelledby"
         >
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">Quality Dimensions</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-4 role-heading aria-level-3">Quality Dimensions</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 role-list">
             {currentIterationData.scores.map((dimension, idx) => {
               const isHighest =
                 dimension.score === Math.max(...currentIterationData.scores.map(d => d.score));
@@ -274,16 +274,16 @@ export function LiveBuildView() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * idx, duration: 0.3 }}
-                  className="space-y-2"
+                  className="space-y-2 role-listitem focus-visible:outline-2 focus-visible:outline-blue-500"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300 font-medium">
+                    <span className="text-sm text-slate-300 font-medium text-base">
                       {dimension.name}
                       {isHighest && (
                         <span className="ml-2 text-xs text-yellow-400">⭐ Highest</span>
                       )}
                     </span>
-                    <span className="text-sm font-semibold text-slate-100">
+                    <span className="text-xl font-semibold text-slate-100">
                       {dimension.score.toFixed(1)}
                     </span>
                   </div>

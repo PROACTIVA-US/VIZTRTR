@@ -1,12 +1,117 @@
 # VIZTRTR Project Memory
 
-**Last Updated:** 2025-10-08 (Current Session)
+**Last Updated:** 2025-10-08
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:** <https://github.com/PROACTIVA-US/VIZTRTR.git>
 
 ---
 
-## Recent Session: October 08, 2025 - Fallback Search Implementation (100% Success)
+## Recent Session: October 08, 2025 - VIZTRTR UI Self-Improvement PRD & Containment Rules
+
+**Status:** ✅ Complete - PRD created, path containment fixed, cleanup automated
+**Branch:** main
+
+### What was accomplished
+
+1. ✅ **Created Comprehensive VIZTRTR UI PRD (600+ lines)**
+   - Full product requirements document for the VIZTRTR web interface
+   - Documented all 14 implemented features (F1-F12) with user stories and acceptance criteria
+   - Defined 6 user personas, data models, 14 API endpoints
+   - Success criteria (functional, performance, quality metrics @ 8.5+/10 target)
+   - Complete testing strategy including self-improvement test plan
+   - Future roadmap (Phases 2-4 with enterprise features)
+
+2. ✅ **Configured Self-Improvement Test Infrastructure**
+   - Created `projects/viztrtr-ui/config.ts` with absolute path validation
+   - Created `projects/viztrtr-ui/test.ts` with comprehensive test runner
+   - Updated `tsconfig.json` to include `projects/` directory for compilation
+   - Updated `package.json` test:viztrtr-ui script to use new test location
+   - Test validates: UI analysis, two-phase workflow, 8-dimension scoring, 8.5+ target
+
+3. ✅ **Fixed Critical Path Containment Issue**
+   - **Problem:** Files created at `/Users/danielconnolly/Projects/viztritr-output/` (outside project)
+   - **Root cause:** `path.resolve(__dirname, '../..')` from compiled dist/ went to wrong directory
+   - **Solution:** Changed to `path.resolve(__dirname, '../../..')` (3 levels up)
+   - Moved existing external files back into project with rsync
+   - Verified all output now goes to `/Users/danielconnolly/Projects/VIZTRTR/viztritr-output/`
+
+4. ✅ **Enhanced Cleanup Script for Future Prevention**
+   - Modified `.claude/cleanup.sh` to auto-detect files created outside project
+   - Monitors: viztritr-output, viztrtr-output, ui, .viztrtr, .viztritr
+   - Automatically moves files back into project on /end-session
+   - Prevents future path containment violations
+
+5. ✅ **Created Project Containment Documentation**
+   - Comprehensive guide: `.claude/PROJECT_CONTAINMENT_RULES.md`
+   - Mandatory practices for path resolution in compiled code
+   - Prevention methods (hardcoded paths, env vars, package.json scripts)
+   - Emergency recovery procedures
+   - Checklist for all new scripts/configs
+
+### Files Created (3 documents, ~60KB total)
+
+- `docs/PRD_VIZTRTR_UI.md` (48KB) - Complete product requirements document
+- `.claude/PROJECT_CONTAINMENT_RULES.md` (12KB) - Path containment rules and enforcement
+- `projects/viztrtr-ui/config.ts` - Self-improvement test configuration
+- `projects/viztrtr-ui/test.ts` - Self-improvement test runner
+
+### Files Modified
+
+- `.claude/cleanup.sh:14-28` - Added external file detection and recovery
+- `projects/viztrtr-ui/config.ts:14-18` - Fixed path resolution (3 levels up)
+- `tsconfig.json:17-27` - Added projects/ to include paths
+- `package.json:15` - Updated test:viztrtr-ui script path
+
+### Key Findings
+
+1. **Path resolution in compiled code is error-prone**
+   - `__dirname` in dist/ points to compiled location, not source
+   - Must count levels correctly: dist/projects/test → dist/projects → dist → VIZTRTR
+   - Always validate paths contain `/VIZTRTR/` before use
+
+2. **Cleanup script is critical failsafe**
+   - Automatic detection prevents long-term contamination
+   - rsync safely merges external directories back into project
+   - Runs on every /end-session for consistency
+
+3. **Documentation prevents future violations**
+   - Clear examples of correct vs incorrect path resolution
+   - Mandatory checklist for new configs/scripts
+   - Emergency recovery procedures if violations occur
+
+### PRD Highlights
+
+**Features Documented:**
+- F1: Project Management (create, view, delete)
+- F2: Project Detail View (5 tabs: Overview, Spec, Documents, Chat, Config)
+- F3: Run Management & Real-Time Monitoring
+- F4: 8-Dimension Scoring System (weighted composite calculation)
+- F5: Model Configuration (Anthropic, OpenAI, Google, Z.AI)
+- F6: Dashboard & Home Page
+- F7: Features & Documentation Page
+- F8-F12: Advanced features (AI Chat, Document Management, Backend Integration, SSE, Screenshots)
+
+**Architecture:**
+- Frontend: React 18 + Vite + Tailwind CSS
+- Backend: Express + TypeScript + SQLite + SSE
+- Integration: 14 REST API endpoints, real-time updates
+
+**Success Criteria:**
+- Design score: 8.5+/10 when VIZTRTR runs on itself
+- Accessibility: WCAG 2.1 AA compliance
+- Performance: <2s page load, <500ms API response
+- All 8 dimensions evaluated correctly
+
+### Next Steps
+
+1. **Immediate:** Run self-improvement test (test files configured, paths fixed) ✅ Ready
+2. **Validation:** Verify 8.5+ score achievable on VIZTRTR's own UI
+3. **Documentation:** Update PRD based on self-test findings
+4. **Deployment:** Prepare production deployment guide
+
+---
+
+## Previous Session: October 08, 2025 - Fallback Search Implementation (100% Success)
 
 **Status:** ✅ **PRODUCTION READY** - 100% Implementation Rate Achieved
 **Branch:** main

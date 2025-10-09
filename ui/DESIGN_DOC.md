@@ -79,6 +79,7 @@ App
 **Location**: Top of BuilderPage
 
 **Features**:
+
 - Large textarea with placeholder: "Describe what you want to build..."
 - Character count (max 2000)
 - File upload for PRD (accepts .md, .txt, .pdf)
@@ -86,6 +87,7 @@ App
 - Example prompts (clickable, fills textarea)
 
 **States**:
+
 - `idle` - Empty, ready for input
 - `typing` - User is typing
 - `uploaded` - PRD file uploaded
@@ -93,6 +95,7 @@ App
 - `evaluated` - Results ready, show next step
 
 **API Integration**:
+
 ```typescript
 POST /api/evaluate-prompt
 Body: { text: string, type: 'prompt' | 'prd' }
@@ -100,6 +103,7 @@ Response: AIEvaluation
 ```
 
 **Design**:
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ 📝 What do you want to build?                              │
@@ -128,6 +132,7 @@ Response: AIEvaluation
 **Visibility**: Appears after prompt analysis
 
 **Features**:
+
 - Project type badge (Game, App, Website, etc.)
 - Complexity indicator (Simple/Moderate/Complex)
 - Estimated build time
@@ -136,6 +141,7 @@ Response: AIEvaluation
 - "Looks good!" or "Refine Prompt" buttons
 
 **Design**:
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ AI Analysis                                                 │
@@ -166,6 +172,7 @@ Response: AIEvaluation
 **Visibility**: After AI evaluation approval
 
 **Features**:
+
 - Grid of agent cards (Architect, Designer, Engineer, Tester, VIZTRTR)
 - Each card shows:
   - Agent icon/avatar
@@ -213,6 +220,7 @@ Response: AIEvaluation
    - Color: Indigo (#6366f1)
 
 **Design**:
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ Your Build Team                                             │
@@ -247,6 +255,7 @@ Response: AIEvaluation
 **Visibility**: During build execution
 
 **Features**:
+
 - Animated flow diagram showing agent activity
 - Real-time status updates
 - Progress indicators
@@ -255,6 +264,7 @@ Response: AIEvaluation
 - Pause/resume controls
 
 **Animation System**:
+
 - Agents pulse when active
 - "Data" flows between agents (animated particles)
 - Check marks appear when tasks complete
@@ -262,6 +272,7 @@ Response: AIEvaluation
 - Smooth transitions between states
 
 **States**:
+
 ```typescript
 type BuildState =
   | 'initializing'   // Setting up agents
@@ -275,6 +286,7 @@ type BuildState =
 ```
 
 **Design**:
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ Building: Snake Game                           [⏸ Pause]    │
@@ -307,6 +319,7 @@ type BuildState =
 **Visibility**: After build completes
 
 **Features**:
+
 - Side-by-side before/after screenshots
 - VIZTRTR score breakdown (8 dimensions)
 - Score progression chart
@@ -315,6 +328,7 @@ type BuildState =
 - Deploy options (future)
 
 **Design**:
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ Build Complete! 🎉                                          │
@@ -419,17 +433,20 @@ Response: BuildResult
 ### Agent Activity Animation
 
 **Idle State**:
+
 - Agent card has subtle shadow
 - Icon is static
 - Status dot is gray
 
 **Active State**:
+
 - Agent card glows (box-shadow with color)
 - Icon pulses gently
 - Status dot turns green and pulses
 - Progress bar animates
 
 **Completed State**:
+
 - Checkmark animation (scale + fade in)
 - Status dot turns solid green
 - Glow fades out
@@ -488,34 +505,40 @@ Response: BuildResult
 ## Implementation Priority
 
 ### Phase 1: Core Scaffold (Agents will build this)
+
 1. ✓ Project structure
 2. ✓ Tailwind setup
 3. PromptInput component
 4. Basic routing
 
 ### Phase 2: AI Integration (Agents will build this)
+
 5. Backend `/api/evaluate-prompt` endpoint
 6. AIEvaluationPanel component
 7. API client utilities
 
 ### Phase 3: Agent System (Agents will build this)
+
 8. AgentOrchestration component
 9. Agent card sub-components
 10. State management setup
 
 ### Phase 4: Live Build (Agents will build this)
+
 11. LiveBuildView component
 12. Animation system
 13. SSE integration
 14. Activity log
 
 ### Phase 5: Results (Agents will build this)
+
 15. ResultsPanel component
 16. Screenshot comparison
 17. Score visualization
 18. Download functionality
 
 ### Phase 6: VIZTRTR Self-Improvement
+
 19. Configure VIZTRTR to run on itself
 20. Document iterations
 21. Apply improvements

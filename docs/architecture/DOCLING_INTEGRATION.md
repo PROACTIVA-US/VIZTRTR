@@ -7,12 +7,14 @@ Docling is a Python library that parses complex documents (PDF, DOCX, PPTX, HTML
 ## Why Docling?
 
 **Before Docling:**
+
 - ❌ Only supported plain text PRDs
 - ❌ No table extraction
 - ❌ No PDF/DOCX support
 - ❌ Limited to simple markdown
 
 **With Docling:**
+
 - ✅ Parse 10+ page comprehensive PRDs
 - ✅ Extract complex tables with structure preservation
 - ✅ Support PDF, DOCX, PPTX, HTML, MD
@@ -86,6 +88,7 @@ python -c "import docling; print(docling.__version__)"
 ### 2. Dependencies
 
 Docling automatically installs:
+
 - `torch` - PyTorch for ML models
 - `transformers` - Hugging Face transformers
 - `pytesseract` - OCR engine
@@ -100,6 +103,7 @@ Docling automatically installs:
 **Purpose**: Standalone Python script that uses Docling to parse documents.
 
 **Key Features:**
+
 - Accepts file path as command-line argument
 - Parses document using `DocumentConverter`
 - Exports to markdown with `export_to_markdown()`
@@ -148,6 +152,7 @@ $ python docling_parser.py /path/to/document.pdf
 **Purpose**: Node.js wrapper that spawns Python process and handles IPC.
 
 **Key Features:**
+
 - Spawns Python child process via `child_process.spawn()`
 - Validates file existence before parsing
 - Streams stdout/stderr
@@ -364,6 +369,7 @@ Build a modern e-commerce platform for small businesses.
 ```
 
 **Docling Output:**
+
 ```json
 {
   "success": true,
@@ -380,6 +386,7 @@ Build a modern e-commerce platform for small businesses.
 ### 2. Complex PRD with Tables (PDF)
 
 **PDF Content:**
+
 ```
 Feature Roadmap
 
@@ -400,6 +407,7 @@ Technical Requirements
 ```
 
 **Docling Output:**
+
 ```json
 {
   "success": true,
@@ -461,6 +469,7 @@ Extract and return a JSON object with:
 ```
 
 This gives Claude:
+
 - **Full document content** in markdown
 - **Structured table data** for accurate feature extraction
 - **Metadata context** about document size and format
@@ -541,6 +550,7 @@ curl -X POST http://localhost:3001/api/projects \
 | PPTX | 1 MB | 20 | 2.1s | ~250 MB |
 
 **Optimization Tips:**
+
 - Use text-based PDFs when possible (avoid scanned documents)
 - Cache parsed results for frequently accessed PRDs
 - Consider async processing for large documents (> 50 pages)
@@ -555,6 +565,7 @@ Error: Python executable not found at: /path/.venv-docling/bin/python3
 ```
 
 **Solution:**
+
 ```bash
 # Recreate virtual environment
 python3 -m venv .venv-docling
@@ -569,6 +580,7 @@ Error: No module named 'docling'
 ```
 
 **Solution:**
+
 ```bash
 # Activate venv and install
 source .venv-docling/bin/activate
@@ -610,14 +622,15 @@ Error: File not found: /path/to/document.pdf
 
 ## Resources
 
-- **Docling GitHub**: https://github.com/DS4SD/docling
-- **Docling Documentation**: https://ds4sd.github.io/docling/
-- **Python Virtual Environments**: https://docs.python.org/3/library/venv.html
-- **Node.js Child Processes**: https://nodejs.org/api/child_process.html
+- **Docling GitHub**: <https://github.com/DS4SD/docling>
+- **Docling Documentation**: <https://ds4sd.github.io/docling/>
+- **Python Virtual Environments**: <https://docs.python.org/3/library/venv.html>
+- **Node.js Child Processes**: <https://nodejs.org/api/child_process.html>
 
 ## Summary
 
 Docling integration enables VIZTRTR to:
+
 - ✅ Parse comprehensive 10+ page PRDs in PDF/DOCX format
 - ✅ Extract complex tables with structure preservation
 - ✅ Support OCR for scanned documents

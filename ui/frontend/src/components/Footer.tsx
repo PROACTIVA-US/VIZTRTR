@@ -4,7 +4,7 @@ function Footer() {
   return (
     <footer className="bg-slate-800 border-t border-slate-700 mt-auto">
       <div className="px-4 py-6">
-        <div className="grid grid-cols-3 items-center text-sm text-slate-400">
+        <div className="grid grid-cols-3 items-center text-sm text-slate-300">
           {/* Left: Logo */}
           <div className="flex items-center space-x-2">
             <span className="text-lg font-bold text-gradient">VIZTRTR</span>
@@ -21,7 +21,7 @@ function Footer() {
               href="https://github.com/PROACTIVA-US/VIZTRTR"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
+              className="hover:text-white transition-colors hover:scale-105 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800"
             >
               GitHub
             </a>
@@ -29,7 +29,7 @@ function Footer() {
               href="https://github.com/PROACTIVA-US/VIZTRTR#readme"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-white transition-colors"
+              className="hover:text-white transition-colors hover:scale-105 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800"
             >
               Documentation
             </a>

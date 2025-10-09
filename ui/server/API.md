@@ -1,6 +1,7 @@
 # VIZTRTR UI Server API Documentation
 
 ## Base URL
+
 ```
 http://localhost:3001
 ```
@@ -8,11 +9,13 @@ http://localhost:3001
 ## Environment Variables
 
 ### Required
+
 - `ANTHROPIC_API_KEY` - Anthropic API key for AI analysis (required for analysis features)
 
 ### Optional
+
 - `PORT` - Server port (default: 3001)
-- `VITE_API_URL` - Frontend API URL (default: http://localhost:3001)
+- `VITE_API_URL` - Frontend API URL (default: <http://localhost:3001>)
 
 ## Endpoints
 
@@ -23,6 +26,7 @@ http://localhost:3001
 Returns server health status.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -42,6 +46,7 @@ Returns server health status.
 Returns all projects ordered by most recently updated.
 
 **Response:**
+
 ```json
 [
   {
@@ -72,6 +77,7 @@ Returns a single project by ID.
 **Response:** Same as project object above
 
 **Errors:**
+
 - `404` - Project not found
 
 #### Create Project
@@ -81,6 +87,7 @@ Returns a single project by ID.
 Creates a new project.
 
 **Request Body:**
+
 ```json
 {
   "name": "My Project",
@@ -94,6 +101,7 @@ Creates a new project.
 **Response:** Project object with status `"created"`
 
 **Errors:**
+
 - `400` - Invalid request body
 
 #### Update Project
@@ -103,6 +111,7 @@ Creates a new project.
 Updates project fields.
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Name",
@@ -114,6 +123,7 @@ Updates project fields.
 **Response:** `204 No Content`
 
 **Errors:**
+
 - `404` - Project not found
 
 #### Delete Project
@@ -125,6 +135,7 @@ Deletes a project and all associated runs.
 **Response:** `204 No Content`
 
 **Errors:**
+
 - `404` - Project not found
 
 ---
@@ -140,6 +151,7 @@ Runs AI-powered analysis on a project to understand its structure, components, a
 **Rate Limit:** 5 requests per minute per project
 
 **Request Body:**
+
 ```json
 {
   "projectId": "proj_1234567890_abc123",
@@ -149,6 +161,7 @@ Runs AI-powered analysis on a project to understand its structure, components, a
 ```
 
 **Response:**
+
 ```json
 {
   "projectType": "Music Performance Platform",
@@ -172,12 +185,14 @@ Runs AI-powered analysis on a project to understand its structure, components, a
 ```
 
 **Errors:**
+
 - `400` - Invalid input (missing fields, invalid types, PRD too long)
 - `404` - Project not found
 - `429` - Rate limit exceeded (max 5 requests/minute)
 - `503` - ANTHROPIC_API_KEY not configured
 
 **Security:**
+
 - Path validation prevents directory traversal
 - Blocks access to system directories (`/etc`, `/System`, `/usr/bin`, etc.)
 - Component scanning limited to 5 levels deep
@@ -194,9 +209,11 @@ Runs AI-powered analysis on a project to understand its structure, components, a
 Returns all runs, optionally filtered by project.
 
 **Query Parameters:**
+
 - `projectId` (optional) - Filter runs by project ID
 
 **Response:**
+
 ```json
 [
   {
@@ -220,6 +237,7 @@ Returns a single run by ID.
 **Response:** Run object
 
 **Errors:**
+
 - `404` - Run not found
 
 #### Start Run
@@ -229,6 +247,7 @@ Returns a single run by ID.
 Starts a new improvement run for a project.
 
 **Request Body:**
+
 ```json
 {
   "projectId": "proj_1234567890_abc123"
@@ -238,6 +257,7 @@ Starts a new improvement run for a project.
 **Response:** Run object with status `"queued"`
 
 **Errors:**
+
 - `400` - Invalid project ID
 - `404` - Project not found
 
@@ -250,6 +270,7 @@ Cancels a running iteration.
 **Response:** `204 No Content`
 
 **Errors:**
+
 - `404` - Run not found
 
 #### Stream Run Updates
@@ -259,11 +280,13 @@ Cancels a running iteration.
 Server-Sent Events (SSE) stream for real-time run updates.
 
 **Response:** SSE stream with events:
+
 - `iteration` - Iteration update
 - `complete` - Run completed
 - `error` - Run failed
 
 **Example Event:**
+
 ```
 event: iteration
 data: {"runId":"run_123","iteration":1,"type":"analyze","status":"completed","timestamp":"2025-10-03T12:00:00.000Z"}
@@ -280,6 +303,7 @@ data: {"runId":"run_123","iteration":1,"type":"analyze","status":"completed","ti
 Evaluates a user prompt to suggest agents and estimate complexity.
 
 **Request Body:**
+
 ```json
 {
   "prompt": "Build a music performance app with teleprompter",
@@ -288,6 +312,7 @@ Evaluates a user prompt to suggest agents and estimate complexity.
 ```
 
 **Response:**
+
 ```json
 {
   "suggestedAgents": [
@@ -313,6 +338,7 @@ Evaluates a user prompt to suggest agents and estimate complexity.
 ```
 
 **Errors:**
+
 - `400` - Invalid request body
 
 ---
@@ -335,6 +361,7 @@ Evaluates a user prompt to suggest agents and estimate complexity.
 ## Error Response Format
 
 All errors return JSON:
+
 ```json
 {
   "error": "Error message description"

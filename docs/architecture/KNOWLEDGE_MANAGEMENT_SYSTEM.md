@@ -3,6 +3,7 @@
 ## Overview
 
 VIZTRTR's knowledge management system provides:
+
 1. **Intelligent PRD Processing** via Docling
 2. **Persistent Design Knowledge Base** with vector embeddings
 3. **Autonomous Weekly Knowledge Updates** from web sources
@@ -108,6 +109,7 @@ VIZTRTR's knowledge management system provides:
 **Purpose**: Parse any document format into structured data
 
 **Files**:
+
 ```
 src/services/docling/
 ├── parser.ts          # Main Docling wrapper (Python child process)
@@ -116,6 +118,7 @@ src/services/docling/
 ```
 
 **API**:
+
 ```typescript
 interface DoclingParser {
   parsePRD(filePath: string): Promise<StructuredPRD>;
@@ -134,6 +137,7 @@ interface StructuredPRD {
 ```
 
 **Implementation**:
+
 - Spawn Python child process running Docling
 - Use `python-shell` npm package for IPC
 - Cache parsed results to avoid re-processing
@@ -145,6 +149,7 @@ interface StructuredPRD {
 **Location**: `src/services/vector-db/`
 
 **Why Qdrant over Pinecone**:
+
 - Open source, can run locally
 - Better privacy for sensitive PRDs
 - Excellent TypeScript support
@@ -202,6 +207,7 @@ interface StructuredPRD {
 ```
 
 **API**:
+
 ```typescript
 interface VectorDBService {
   // Semantic search
@@ -227,14 +233,16 @@ interface VectorDBService {
 **Scheduler**: Node-cron (runs weekly)
 
 **Sources**:
-- https://m3.material.io (Material Design updates)
-- https://www.w3.org/WAI (WCAG updates)
-- https://web.dev (Chrome team best practices)
-- https://www.smashingmagazine.com (UI/UX articles)
-- https://uxdesign.cc (Medium UX collective)
-- https://github.com/topics/ui-components (trending repos)
+
+- <https://m3.material.io> (Material Design updates)
+- <https://www.w3.org/WAI> (WCAG updates)
+- <https://web.dev> (Chrome team best practices)
+- <https://www.smashingmagazine.com> (UI/UX articles)
+- <https://uxdesign.cc> (Medium UX collective)
+- <https://github.com/topics/ui-components> (trending repos)
 
 **Workflow**:
+
 ```typescript
 // Every Sunday at 2am
 cron.schedule('0 2 * * 0', async () => {
@@ -268,6 +276,7 @@ cron.schedule('0 2 * * 0', async () => {
 ```
 
 **Files**:
+
 ```
 src/services/knowledge-updater/
 ├── scheduler.ts       # Cron job setup
@@ -283,6 +292,7 @@ src/services/knowledge-updater/
 **Location**: `src/services/chrome-devtools-mcp/`
 
 **Installation**:
+
 ```bash
 cd src/services/chrome-devtools-mcp
 npm install chrome-devtools-mcp
@@ -291,6 +301,7 @@ npm install chrome-devtools-mcp
 **Purpose**: Replace Puppeteer with MCP for enhanced capabilities
 
 **Capabilities**:
+
 1. **Accessibility Metrics**
    - Get accessibility tree
    - Measure contrast ratios
@@ -315,6 +326,7 @@ npm install chrome-devtools-mcp
    - Network throttling
 
 **API**:
+
 ```typescript
 interface ChromeDevToolsMCP {
   // Accessibility
@@ -333,6 +345,7 @@ interface ChromeDevToolsMCP {
 ```
 
 **Integration with Orchestrator**:
+
 ```typescript
 // src/core/orchestrator.ts
 async evaluateIteration(url: string): Promise<Evaluation> {
@@ -364,6 +377,7 @@ async evaluateIteration(url: string): Promise<Evaluation> {
 ## Enhanced Scoring System
 
 ### Current (Vision-Only)
+
 ```typescript
 // 8 dimensions, all from AI vision estimation
 {
@@ -375,6 +389,7 @@ async evaluateIteration(url: string): Promise<Evaluation> {
 ```
 
 ### New (Hybrid: Vision + Real Metrics)
+
 ```typescript
 {
   visualHierarchy: {
@@ -409,6 +424,7 @@ async evaluateIteration(url: string): Promise<Evaluation> {
 ## Workflow: PRD to Deployment
 
 ### Step 1: Project Creation (with PRD)
+
 ```
 User uploads: comprehensive-prd.pdf (10+ pages)
 ↓
@@ -427,6 +443,7 @@ Project created with rich context
 ```
 
 ### Step 2: Iteration Loop (Context-Aware)
+
 ```
 Vision Analysis:
   "Poor contrast on CTA button"
@@ -449,6 +466,7 @@ Verification (Chrome DevTools MCP):
 ```
 
 ### Step 3: Weekly Knowledge Update
+
 ```
 Sunday 2am:
   Scrape web sources
@@ -472,6 +490,7 @@ Next iteration:
 ## Implementation Phases
 
 ### Phase 1: Docling + PRD Enhancement (Week 1)
+
 - [ ] Install Docling Python library
 - [ ] Create TypeScript wrapper via python-shell
 - [ ] Enhance PRD analyzer to use Docling
@@ -479,6 +498,7 @@ Next iteration:
 - [ ] Update product spec generator with richer data
 
 ### Phase 2: Vector Database Setup (Week 1-2)
+
 - [ ] Install Qdrant (Docker or cloud)
 - [ ] Create collections schema
 - [ ] Implement embedding service (OpenAI ada-002)
@@ -487,6 +507,7 @@ Next iteration:
 - [ ] Build search API
 
 ### Phase 3: Chrome DevTools MCP Integration (Week 2-3)
+
 - [ ] Install chrome-devtools-mcp
 - [ ] Create MCP client wrapper
 - [ ] Implement accessibility metrics gathering
@@ -495,6 +516,7 @@ Next iteration:
 - [ ] Update orchestrator to use real metrics
 
 ### Phase 4: Knowledge Updater (Week 3-4)
+
 - [ ] Build web scraper (Playwright)
 - [ ] Configure source list
 - [ ] Implement chunking strategy
@@ -503,6 +525,7 @@ Next iteration:
 - [ ] Test weekly cycle
 
 ### Phase 5: Hybrid Scoring System (Week 4)
+
 - [ ] Update evaluation types
 - [ ] Implement hybrid scoring logic
 - [ ] Weight real metrics appropriately
@@ -549,18 +572,22 @@ Much cheaper than Pinecone ($70+/month for similar capacity).
 ## Benefits Summary
 
 ### Accuracy
+
 - **Before**: ~75% accuracy (vision guesses)
 - **After**: ~95% accuracy (vision + real metrics + knowledge base)
 
 ### Context Awareness
+
 - **Before**: Generic improvements
 - **After**: PRD-specific, WCAG-compliant, brand-aligned
 
 ### Knowledge
+
 - **Before**: Static model knowledge (cutoff Jan 2025)
 - **After**: Weekly updates, latest patterns, current standards
 
 ### Verification
+
 - **Before**: Screenshot comparison
 - **After**: Real WCAG validation, measured performance
 

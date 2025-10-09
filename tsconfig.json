@@ -23,7 +23,8 @@
     "src/tools/**/*",
     "src/utils/**/*",
     "src/__tests__/**/*",
-    "examples/**/*"
+    "examples/**/*",
+    "projects/**/*"
   ],
   "exclude": [
     "node_modules",

@@ -8,6 +8,7 @@
 ## Why Git Worktrees?
 
 ### **Benefits:**
+
 1. **True Parallelism** - Work on multiple phases simultaneously without branch switching
 2. **Isolated Environments** - Each worktree has independent `node_modules`, build artifacts
 3. **Fast Context Switching** - No `git checkout` delays, instant directory switching
@@ -15,6 +16,7 @@
 5. **No Stash Hell** - Changes in one worktree don't affect others
 
 ### **Use Cases:**
+
 - Develop Phase 1 (scoring) while testing Phase 2 (agents)
 - Prototype risky features in dedicated worktree
 - Run long-running benchmarks without blocking development
@@ -236,6 +238,7 @@ git rebase origin/main
 #### **Parallel Workflow Example (Week 5)**
 
 **Terminal 1 - Phase 3 (Strategic Planner):**
+
 ```bash
 cd ../VIZTRTR-phase3-strategy
 git checkout -b feat/strategic-planner
@@ -244,6 +247,7 @@ npm run dev
 ```
 
 **Terminal 2 - Phase 4 (Route Discovery):**
+
 ```bash
 cd ../VIZTRTR-phase4-multiroute
 git checkout -b feat/route-discovery
@@ -252,6 +256,7 @@ npm test -- --watch
 ```
 
 **Terminal 3 - Phase 5 (Lesson Library):**
+
 ```bash
 cd ../VIZTRTR-phase5-metalearning
 git checkout -b feat/lesson-library
@@ -260,6 +265,7 @@ npm run build
 ```
 
 **Terminal 4 - Testing:**
+
 ```bash
 cd ../VIZTRTR-testing
 npm run test:performia  # Run benchmarks without interrupting dev
@@ -282,11 +288,13 @@ Phase 5 (Week 8) → main (rebased on Phase 4)
 ```
 
 **Benefits:**
+
 - Cleaner history
 - Easier conflict resolution
 - Dependencies naturally resolved
 
 **Workflow:**
+
 ```bash
 # Week 2: Merge Phase 1
 cd ../VIZTRTR-phase1-scoring
@@ -318,11 +326,13 @@ Phase 5 (Week 8) → main
 ```
 
 **Benefits:**
+
 - Faster integration
 - Immediate validation on main
 - Continuous deployment possible
 
 **Conflict Resolution:**
+
 ```bash
 # If Phase 3 conflicts with Phase 2 (both merged to main)
 cd ../VIZTRTR-phase3-strategy
@@ -609,11 +619,13 @@ Create `.code-workspace` file:
 ```
 
 **Usage:**
+
 ```bash
 code viztrtr-e2e.code-workspace
 ```
 
 **Benefits:**
+
 - See all phases in one window
 - Search across all worktrees
 - Unified terminal tabs
@@ -628,6 +640,7 @@ code viztrtr-e2e.code-workspace
 **Cause:** Trying to checkout branch already used by another worktree
 
 **Solution:**
+
 ```bash
 # List worktrees to find which one uses the branch
 git worktree list
@@ -641,6 +654,7 @@ git worktree remove ../VIZTRTR-phase1-scoring
 ### **Problem: "Cannot remove worktree, uncommitted changes"**
 
 **Solution:**
+
 ```bash
 # Commit or stash changes first
 cd ../VIZTRTR-phase1-scoring
@@ -660,6 +674,7 @@ git worktree remove ../VIZTRTR-phase1-scoring
 ### **Problem: Merge conflicts across phases**
 
 **Solution:**
+
 ```bash
 # In conflicting worktree
 git fetch origin
@@ -690,6 +705,7 @@ git rebase --continue
 ### **When to Use Worktrees:**
 
 ✅ **Use Worktrees For:**
+
 - Parallel phase development
 - Long-running benchmarks
 - Feature prototyping
@@ -697,6 +713,7 @@ git rebase --continue
 - Cross-phase testing
 
 ❌ **Don't Use Worktrees For:**
+
 - Simple bug fixes (use `git stash`)
 - Single-feature development (use regular branches)
 - Short-lived experiments (use `git stash`)

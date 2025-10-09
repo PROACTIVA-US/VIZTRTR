@@ -31,15 +31,18 @@ shows clear path to 80%+ target with further refinements.
 
 1. Added `lineContent: string` field to PlannedChange interface
 2. Modified `buildAnalysisPrompt()` to prefix each line with line number:
+
    ```typescript
    const numberedLines = lines.map((line, i) => `${i + 1}: ${line}`).join('\n');
    ```
+
 3. Enhanced prompt with 6-step line verification instructions
 4. Added example showing line number prefix format
 
 **File: `src/agents/specialized/ControlPanelAgentV2.ts`**
 
 1. Added line content verification before execution:
+
    ```typescript
    const fileContent = await fs.readFile(fullPath, 'utf-8');
    const lines = fileContent.split('\n');
@@ -50,6 +53,7 @@ shows clear path to 80%+ target with further refinements.
      continue; // Skip this change
    }
    ```
+
 2. Whitespace-insensitive comparison (trim both sides)
 3. Clear error messages showing expected vs actual content
 
@@ -77,6 +81,7 @@ shows clear path to 80%+ target with further refinements.
 ### Detailed Breakdown
 
 **Phase 1: Discovery (24.7s)**
+
 ```
 Change 1: Line 790 - Send button (text-sm → text-base)
 Status: ✅ Planned correctly
@@ -86,6 +91,7 @@ Status: ❌ Incorrect line content (expected className line, actual: ">")
 ```
 
 **Phase 2: Execution (3.0s)**
+
 ```
 Change 1 (Line 790):
 ✅ Line content verified
@@ -152,6 +158,7 @@ Skipped for safety
 **Hypothesis:** Discovery Agent identified className string but not the exact line where it appears.
 
 Actual file content around line 888:
+
 ```
 886: <button
 887:   className="bg-yellow-600 text-white px-4 py-2..."
@@ -160,6 +167,7 @@ Actual file content around line 888:
 ```
 
 Discovery Agent provided:
+
 - Line Number: 888
 - Line Content: `className="bg-yellow-600..."`
 
@@ -208,11 +216,13 @@ multiple lines or when parsing JSX attributes.
 ## Cost Analysis
 
 **Current Test:**
+
 - Phase 1 (Discovery): ~$0.12 (24.7s, Claude Sonnet 4.5, 3000 token thinking)
 - Phase 2 (Execution): $0 (deterministic tool execution)
 - **Total:** ~$0.12 per recommendation
 
 **Comparison to Baseline:**
+
 - V1 (single-phase): ~$0.05-0.10 per recommendation
 - V2 (two-phase): ~$0.12 per recommendation
 - **Cost increase:** 2× but with benefits:
@@ -265,6 +275,7 @@ className may not be on the line the agent thinks it's on.
 ### For Production Deployment
 
 **Hold on production deployment** until:
+
 - Line accuracy reaches 80%+ consistently
 - Fallback search mechanism implemented
 - Tested on 5+ different files successfully

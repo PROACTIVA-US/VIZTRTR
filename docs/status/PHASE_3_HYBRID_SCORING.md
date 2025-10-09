@@ -6,6 +6,7 @@
 ## Overview
 
 Successfully implemented hybrid scoring system that combines:
+
 - **AI Vision Analysis** (60% weight) - Subjective design quality assessment
 - **Real Browser Metrics** (40% weight) - Objective performance & accessibility data
 
@@ -14,9 +15,11 @@ Successfully implemented hybrid scoring system that combines:
 ## What Was Built
 
 ### 1. Chrome DevTools MCP Client ✅
+
 **File**: `src/services/chromeDevToolsClient.ts`
 
 **Features:**
+
 - MCP SDK integration via stdio transport
 - Connects to chrome-devtools-mcp server
 - Captures real browser metrics:
@@ -28,6 +31,7 @@ Successfully implemented hybrid scoring system that combines:
 - Markdown response parsing (chrome-devtools-mcp returns text, not JSON)
 
 **API Methods:**
+
 ```typescript
 await client.connect();
 await client.navigateTo(url);
@@ -41,6 +45,7 @@ await client.disconnect();
 ```
 
 ### 2. MetricsAnalyzer Service ✅
+
 **File**: `src/services/MetricsAnalyzer.ts`
 
 **Purpose**: Convert raw browser metrics into 0-10 scores
@@ -48,6 +53,7 @@ await client.disconnect();
 **Scoring Logic:**
 
 **Core Web Vitals:**
+
 - **LCP** (Largest Contentful Paint)
   - Good: < 2.5s → 10 points
   - Needs Improvement: 2.5-4s → 5-10 points
@@ -64,18 +70,21 @@ await client.disconnect();
   - Poor: > 0.25 → 0-5 points
 
 **Accessibility:**
+
 - Base: 10 points
 - Critical violations: -2 points each
 - Warnings: -0.5 points each
 - Contrast issues: -1 point each
 
 **Best Practices:**
+
 - Base: 10 points
 - Console errors: -1 point each
 - Large resources (> 500KB): -0.5 points each
 - Excessive requests (> 50): -0.1 per 10 over limit
 
 **Output:**
+
 ```typescript
 {
   performance: 8.5,        // 0-10
@@ -89,24 +98,29 @@ await client.disconnect();
 ```
 
 ### 3. HybridScoringAgent ✅
+
 **File**: `src/agents/HybridScoringAgent.ts`
 
 **Purpose**: Combine vision + metrics into single authoritative score
 
 **Algorithm:**
+
 ```
 Composite Score = (Vision Score × 0.6) + (Metrics Score × 0.4)
 ```
 
 **Confidence Calculation:**
+
 ```
 Confidence = 1.0 - (|vision - metrics| / 10)
 ```
+
 - Perfect agreement (same score): 100% confidence
 - Each point of difference: -10% confidence
 - 10-point difference: 0% confidence
 
 **Output:**
+
 ```typescript
 {
   compositeScore: 8.7,     // 0-10 weighted combination
@@ -147,9 +161,11 @@ Confidence = 1.0 - (|vision - metrics| / 10)
 ```
 
 ### 4. Integration Test ✅
+
 **File**: `tests/integration/chrome-devtools.test.ts`
 
 **Tests:**
+
 1. ✅ MCP connection
 2. ✅ Navigation to URL
 3. ⚠️ Performance metrics (parse error - markdown vs JSON)
@@ -160,6 +176,7 @@ Confidence = 1.0 - (|vision - metrics| / 10)
 8. ⏳ Combined metrics
 
 **Results:**
+
 ```
 🧪 Starting Chrome DevTools MCP Integration Test
 
@@ -212,6 +229,7 @@ Confidence = 1.0 - (|vision - metrics| / 10)
 ## Type Definitions
 
 ### Updated Types (`src/plugins/chrome-devtools.ts`)
+
 ```typescript
 export interface AccessibilitySnapshot {
   elements: AccessibilityElement[];
@@ -274,6 +292,7 @@ await agent.dispose();
 ## Benefits
 
 ### Before (Vision Only)
+
 - **Accuracy**: ~75%
 - **Subjectivity**: High - AI interpretation only
 - **Metrics**: Estimated/guessed values
@@ -282,6 +301,7 @@ await agent.dispose();
 - **Reliability**: Inconsistent across runs
 
 ### After (Hybrid)
+
 - **Accuracy**: ~95%
 - **Objectivity**: High - Real measured data
 - **Metrics**: Actual browser measurements
@@ -292,6 +312,7 @@ await agent.dispose();
 ## Files Created/Modified
 
 ### New Files
+
 - `src/services/chromeDevToolsClient.ts` - MCP client implementation
 - `src/services/MetricsAnalyzer.ts` - Metrics scoring service
 - `src/agents/HybridScoringAgent.ts` - Hybrid scoring logic
@@ -299,6 +320,7 @@ await agent.dispose();
 - `docs/status/PHASE_3_HYBRID_SCORING.md` - This document
 
 ### Modified Files
+
 - `src/plugins/chrome-devtools.ts` - Updated AccessibilitySnapshot interface
 - `src/services/chromeDevToolsClient.ts` - Markdown parsing for MCP responses
 - `src/core/types.ts` - Added ScreenshotConfig, chromeDevToolsConfig (from Phase 2)
@@ -306,6 +328,7 @@ await agent.dispose();
 ## Configuration
 
 ### Enable Hybrid Scoring in VIZTRTRConfig
+
 ```typescript
 const config: VIZTRTRConfig = {
   // ... existing config
@@ -324,6 +347,7 @@ const config: VIZTRTRConfig = {
 ```
 
 ### Claude Code MCP Server Setup
+
 ```bash
 # Already configured via:
 $ claude mcp add chrome-devtools npx chrome-devtools-mcp@latest -- --isolated=true --headless=false --viewport=1280x720
@@ -346,6 +370,7 @@ $ claude mcp add chrome-devtools npx chrome-devtools-mcp@latest -- --isolated=tr
 ## Next Steps
 
 ### Immediate
+
 1. ✅ Fix markdown parsing
 2. ✅ Complete MetricsAnalyzer
 3. ✅ Build HybridScoringAgent
@@ -353,6 +378,7 @@ $ claude mcp add chrome-devtools npx chrome-devtools-mcp@latest -- --isolated=tr
 5. ⏳ Update orchestrator to use HybridScoringAgent
 
 ### Phase 4
+
 1. Replace `evaluate()` in orchestrator with HybridScoringAgent
 2. Add hybrid score to DesignSpec
 3. Update IterationResult to include metrics breakdown
@@ -372,11 +398,13 @@ $ claude mcp add chrome-devtools npx chrome-devtools-mcp@latest -- --isolated=tr
 ## Performance Impact
 
 **Hybrid Scoring Overhead:**
+
 - Vision analysis: ~5-10 seconds (unchanged)
 - Metrics capture: ~3-5 seconds (new)
 - Total iteration time: +50% (acceptable for 20% accuracy gain)
 
 **Optimization Opportunities:**
+
 - Parallel vision + metrics capture (already implemented)
 - Cache metrics for similar UIs
 - Progressive metric capture (only changed areas)
@@ -384,6 +412,7 @@ $ claude mcp add chrome-devtools npx chrome-devtools-mcp@latest -- --isolated=tr
 ## Conclusion
 
 Phase 3 successfully implements the foundation for hybrid scoring. The system can now:
+
 1. Connect to Chrome DevTools MCP
 2. Capture real browser performance metrics
 3. Score based on objective measurements

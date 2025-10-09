@@ -18,6 +18,7 @@ After running a test on Performia, we discovered several critical issues:
 ## Issue #1: Implementation Agent Returns Empty Changes ✅ RESOLVED
 
 ### Evidence
+
 ```json
 // changes.json shows:
 {
@@ -27,6 +28,7 @@ After running a test on Performia, we discovered several critical issues:
 ```
 
 Despite having 5 good recommendations from vision agent:
+
 - Increase chord label contrast (impact: 9, effort: 1)
 - Brighten lyrics text (impact: 9, effort: 1)
 - Increase line height (impact: 7, effort: 1)
@@ -34,7 +36,9 @@ Despite having 5 good recommendations from vision agent:
 - Add high contrast mode toggle (impact: 8, effort: 3)
 
 ### Root Cause (IDENTIFIED)
+
 Specialist agents had **hardcoded file paths** for VIZTRTR UI only:
+
 ```typescript
 private readonly MANAGED_FILES = [
   'src/components/Header.tsx',
@@ -44,6 +48,7 @@ private readonly MANAGED_FILES = [
   'src/components/AgentOrchestration.tsx',
 ];
 ```
+
 When testing Performia, these files didn't exist → agents returned zero changes.
 
 ### Solution Implemented ✅
@@ -51,15 +56,18 @@ When testing Performia, these files didn't exist → agents returned zero change
 **Chose Option A** - Made agents project-agnostic with dynamic file discovery
 
 #### Implementation (October 3, 2025)
+
 **Commit**: `80710e5` - Dynamic file discovery for project-agnostic agents
 **Branch**: `fix/backend-manager-security-and-reliability`
 
 **Changes:**
+
 1. Created `src/utils/file-discovery.ts` - Utility for discovering React components
 2. Updated `ControlPanelAgent` - Discovers files dynamically at runtime
 3. Updated `TeleprompterAgent` - Discovers files dynamically at runtime
 
 **How It Works:**
+
 ```typescript
 // Agents now discover files on every implement() call
 async implement(recommendations, projectPath) {
@@ -71,6 +79,7 @@ async implement(recommendations, projectPath) {
 ```
 
 **Discovery Criteria:**
+
 - Extensions: .tsx, .jsx, .ts, .js
 - Naming: PascalCase or contains "component", "page", "view"
 - Location: /components/, /pages/ directories
@@ -85,17 +94,21 @@ async implement(recommendations, projectPath) {
 ## Issue #2: Chrome DevTools Not Used (Hybrid Scoring)
 
 ### Current State
+
 - Only using AI vision scoring
 - Missing 40% of hybrid score (real browser metrics)
 - No Chrome browser window opens during runs
 
 ### What Should Happen
+
 From PHASE_4_COMPLETE.md:
+
 - Chrome DevTools MCP should connect
 - Measure real metrics: Core Web Vitals, Lighthouse scores, actual contrast ratios
 - Combine: 60% AI vision + 40% real metrics = 95% accuracy
 
 ### Solution
+
 ```typescript
 // In orchestrator config:
 {
@@ -109,6 +122,7 @@ From PHASE_4_COMPLETE.md:
 ```
 
 Add Chrome DevTools MCP integration:
+
 1. Install `@modelcontextprotocol/server-chrome-devtools`
 2. Configure in orchestrator initialization
 3. Call metrics collection after each iteration
@@ -119,6 +133,7 @@ Add Chrome DevTools MCP integration:
 ## Issue #3: Single Page Testing Only
 
 ### Current Limitation
+
 - Only captures screenshot of initial route (e.g., `/`)
 - Teleprompter apps have multiple views: Song List, Teleprompter View, Settings, etc.
 - Performia has: Living Chart, Control Panel, Config, etc.
@@ -179,7 +194,9 @@ for (const route of routes.filter(r => r.priority === 'high')) {
 ```
 
 ### User Configuration
+
 Add to UI:
+
 ```tsx
 // In ProjectsPage or SettingsPage
 <RouteConfiguration projectId={project.id}>
@@ -194,7 +211,9 @@ Add to UI:
 ## Issue #4: Missing Change Descriptions
 
 ### Current State
+
 Results show before/after screenshots and scores, but:
+
 - No clear description of what files were changed
 - No explanation of what code was modified
 - No reasoning for why changes were made
@@ -247,6 +266,7 @@ Update `RunPage.tsx` to show:
 ## Issue #5: No PRD Validation
 
 ### Current State
+
 - Recommendations are made without checking product spec
 - Might suggest features not in PRD
 - Might remove features that ARE in PRD
@@ -316,6 +336,7 @@ for (const change of designSpec.prioritizedChanges) {
 ### UI for Human Review
 
 Add "Pending Approvals" section:
+
 ```tsx
 // In RunPage or dedicated ApprovalPage
 <PendingApprovals runId={runId}>
@@ -336,15 +357,18 @@ Add "Pending Approvals" section:
 ## Recommended Implementation Order
 
 ### Phase 1: Fix Core Functionality (CRITICAL)
+
 1. **Debug Implementation Agent** - Get actual file changes working
 2. **Add Change Descriptions to UI** - Show what was attempted even if it failed
 3. **Add verbose logging** - Understand what's happening at each step
 
 ### Phase 2: Quality Improvements (HIGH PRIORITY)
+
 4. **Chrome DevTools Integration** - Real hybrid scoring
 5. **PRD Validation** - Ensure changes align with product spec
 
 ### Phase 3: Enhanced Testing (MEDIUM PRIORITY)
+
 6. **Multi-Route Testing** - Test all sections of the app
 7. **Human Review Workflow** - Approve/reject out-of-scope changes
 
@@ -367,6 +391,7 @@ DEBUG=viztrtr:* npm run test:performia
 ```
 
 **Expected Output:**
+
 - Should see OrchestratorAgent creating tasks
 - Should see specialist agents being called
 - Should see file edits being attempted

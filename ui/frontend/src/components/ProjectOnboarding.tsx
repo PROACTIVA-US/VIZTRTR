@@ -406,7 +406,7 @@ export default function ProjectOnboarding({
         {step === 'prd-upload' && (
           <div className="bg-slate-800 rounded-lg p-8">
             <h2 className="text-2xl font-bold mb-4">Upload Product Requirements Document (PRD)</h2>
-            <p className="text-slate-400 mb-6">
+            <p className="text-slate-300 mb-6">
               VIZTRTR will analyze your PRD to generate a technical specification, UI/UX guidelines,
               and route structure.
             </p>
@@ -826,7 +826,7 @@ export default function ProjectOnboarding({
                   type="text"
                   value={frontendUrl}
                   onChange={e => setFrontendUrl(e.target.value)}
-                  className="flex-1 bg-slate-900 text-white px-4 py-3 rounded border border-slate-700 focus:border-blue-500 focus:outline-none"
+                  className="flex-1 bg-slate-900 text-white px-4 py-3 rounded border border-slate-700 focus:border-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800"
                   placeholder="http://localhost:5173"
                 />
                 <button onClick={checkServerStatus} className="btn-secondary">

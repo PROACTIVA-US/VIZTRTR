@@ -76,11 +76,13 @@
 ## Layer 1: Vision Prompt Enhancement
 
 ### Implementation Location
+
 `src/plugins/vision-claude.ts` - `ClaudeOpusVisionPlugin.analyzeScreenshot()`
 
 ### Features
 
 #### 1.1 Project Context Injection
+
 ```typescript
 interface ProjectContext {
   name: string;
@@ -101,6 +103,7 @@ projectContext: {
 ```
 
 #### 1.2 Component Exclusion
+
 ```typescript
 function buildVisionPrompt(
   memoryContext: string,
@@ -131,6 +134,7 @@ Generate recommendations ONLY for components NOT in the excluded list.
 ```
 
 #### 1.3 Region-Specific Analysis
+
 ```typescript
 interface UIRegion {
   name: string;
@@ -155,11 +159,13 @@ const targetRegion = uiRegions.filter(r => !r.explored && !isAvoided(r.name))[0]
 ## Layer 2: Recommendation Filtering
 
 ### Implementation Location
+
 `src/agents/RecommendationFilterAgent.ts` (new file)
 
 ### Features
 
 #### 2.1 Component Target Validation
+
 ```typescript
 class RecommendationFilterAgent {
   filterRecommendations(
@@ -193,6 +199,7 @@ class RecommendationFilterAgent {
 ```
 
 #### 2.2 Duplicate Detection
+
 ```typescript
   filterDuplicates(
     recommendations: Recommendation[],
@@ -205,6 +212,7 @@ class RecommendationFilterAgent {
 ```
 
 #### 2.3 Impact/Effort Validation
+
 ```typescript
   validateImpactEffort(rec: Recommendation): ValidationResult {
     const ratio = rec.impact / rec.effort;
@@ -225,12 +233,14 @@ class RecommendationFilterAgent {
 ## Layer 3: Multi-Region Screenshot Analysis
 
 ### Implementation Location
+
 `src/plugins/capture-puppeteer.ts` - enhanced screenshot capture
 `src/core/types.ts` - new UIRegion types
 
 ### Features
 
 #### 3.1 Region-Based Capture
+
 ```typescript
 interface RegionScreenshotConfig {
   regions: UIRegion[];
@@ -265,6 +275,7 @@ class EnhancedPuppeteerCapture {
 ```
 
 #### 3.2 Excluded Zone Masking
+
 ```typescript
   async captureWithMask(
     url: string,
@@ -288,6 +299,7 @@ class EnhancedPuppeteerCapture {
 ```
 
 #### 3.3 Progressive Coverage Tracking
+
 ```typescript
 interface CoverageTracker {
   regions: Map<string, RegionStatus>;
@@ -305,12 +317,14 @@ interface CoverageTracker {
 ## Layer 4: Human-in-the-Loop System
 
 ### Implementation Location
+
 `src/agents/HumanLoopAgent.ts` (new file)
 `ui/frontend/src/components/ApprovalGate.tsx` (UI component)
 
 ### Features
 
 #### 4.1 Approval Gate
+
 ```typescript
 interface ApprovalRequest {
   iteration: number;
@@ -344,6 +358,7 @@ class HumanLoopAgent {
 ```
 
 #### 4.2 Prompt Refinement Interface
+
 ```typescript
 interface PromptRefinement {
   agentType: 'vision' | 'orchestrator' | 'implementation';
@@ -366,6 +381,7 @@ class PromptRefinementSystem {
 ```
 
 #### 4.3 Context Correction Feedback
+
 ```typescript
 interface ContextCorrection {
   incorrectAssumption: string;
@@ -392,6 +408,7 @@ class ContextCorrectionAgent {
 ```
 
 #### 4.4 Memory Annotation
+
 ```typescript
 interface MemoryAnnotation {
   recommendationId: string;
@@ -419,6 +436,7 @@ class MemoryAnnotationSystem {
 ```
 
 #### 4.5 Cost/Risk Alerts
+
 ```typescript
 interface RiskThresholds {
   maxCostPerIteration: number; // cents
@@ -452,6 +470,7 @@ class RiskAlertSystem {
 ## Integration Points
 
 ### Orchestrator Flow (Updated)
+
 ```typescript
 async runIteration(iteration: number): Promise<IterationResult> {
   // 1. Load memory
@@ -515,6 +534,7 @@ async runIteration(iteration: number): Promise<IterationResult> {
 ## Configuration Updates
 
 ### New Config Fields
+
 ```typescript
 interface VIZTRTRConfig {
   // ... existing fields
@@ -543,6 +563,7 @@ interface VIZTRTRConfig {
 ## UI Components for Human Loop
 
 ### ApprovalGate.tsx
+
 ```typescript
 interface ApprovalGateProps {
   recommendations: Recommendation[];
@@ -563,6 +584,7 @@ interface ApprovalGateProps {
 ```
 
 ### PromptEditor.tsx
+
 ```typescript
 interface PromptEditorProps {
   agentType: string;
@@ -581,6 +603,7 @@ interface PromptEditorProps {
 ```
 
 ### MemoryViewer.tsx
+
 ```typescript
 interface MemoryViewerProps {
   memory: IterationMemory;
@@ -601,6 +624,7 @@ interface MemoryViewerProps {
 ## Implementation Priority
 
 ### Phase 2.5 (Immediate)
+
 1. ✅ **Layer 1.1**: Project context injection (2 hours)
 2. ✅ **Layer 1.2**: Component exclusion (2 hours)
 3. ✅ **Layer 2.1**: Basic recommendation filtering (3 hours)
@@ -609,6 +633,7 @@ interface MemoryViewerProps {
 **Total**: ~9 hours, high impact
 
 ### Phase 2.6 (Near-term)
+
 5. **Layer 3.1**: Region-based capture (4 hours)
 6. **Layer 2.2**: Duplicate detection (1 hour)
 7. **Layer 4.2**: Prompt refinement UI (6 hours)
@@ -616,6 +641,7 @@ interface MemoryViewerProps {
 **Total**: ~11 hours
 
 ### Phase 2.7 (Medium-term)
+
 8. **Layer 3.2**: Excluded zone masking (3 hours)
 9. **Layer 4.3**: Context correction feedback (4 hours)
 10. **Layer 4.4**: Memory annotation system (5 hours)
@@ -640,17 +666,20 @@ interface MemoryViewerProps {
 ## Testing Plan
 
 ### Unit Tests
+
 - `RecommendationFilterAgent.test.ts` - Filter logic
 - `ProjectContext.test.ts` - Context injection
 - `RegionCapture.test.ts` - Multi-region screenshots
 
 ### Integration Tests
+
 - End-to-end with all layers active
 - Measure reduction in failed attempts
 - Verify component exclusion works
 - Test approval gate flow
 
 ### User Acceptance Tests
+
 - Prompt refinement workflow
 - Memory annotation usability
 - Approval gate response time
@@ -660,17 +689,20 @@ interface MemoryViewerProps {
 ## Expected Outcomes
 
 ### After Layer 1+2 (Phase 2.5)
+
 - ✅ Vision agent respects avoided components
 - ✅ No more teleprompter recommendations for web builder
 - ✅ Automatic filtering of invalid recommendations
 - ✅ Basic human approval before high-risk changes
 
 ### After Layer 3 (Phase 2.6)
+
 - ✅ Systematic exploration of all UI regions
 - ✅ No repeated attempts on same problematic component
 - ✅ 80%+ UI coverage within 5 iterations
 
 ### After Layer 4 (Phase 2.7)
+
 - ✅ Users can correct AI misunderstandings
 - ✅ Prompt quality improves over time
 - ✅ Memory becomes curated knowledge base

@@ -13,11 +13,13 @@ After extensive research into multi-agent AI systems, LLM-driven autonomous impr
 ### 1. **Single-Loop, No Feedback Architecture**
 
 **Problem**: The current system is a simple loop:
+
 ```
 Screenshot → Vision Analysis → Implementation → Wait → Screenshot → Repeat
 ```
 
 **What's Missing**:
+
 - No self-reflection after implementation
 - No evaluation of WHAT was actually changed
 - No comparison of intended vs. actual outcomes
@@ -31,12 +33,14 @@ Screenshot → Vision Analysis → Implementation → Wait → Screenshot → Re
 ### 2. **Vision Agent Has No Memory or Context**
 
 **Problem**: Each iteration, the vision agent analyzes a fresh screenshot with NO knowledge of:
+
 - What was previously changed
 - What recommendations were already attempted
 - Why previous changes failed or succeeded
 - The history of score progression
 
 **Current Behavior**:
+
 ```
 Iteration 0: Score 7.2 → Recommends "Increase lyrics contrast"
 Iteration 1: Score 7.8 → Recommends "Increase lyrics text contrast" (SAME THING!)
@@ -50,6 +54,7 @@ Iteration 2: Score 7.2 → Recommends "Increase chord label contrast" (AGAIN!)
 ### 3. **Implementation Agent Lacks Extended Thinking Budget**
 
 **Problem**: We allocated 2000 tokens for extended thinking, but the agent is given a **single-shot task**:
+
 ```
 "Here's a recommendation. Implement it. Return JSON."
 ```
@@ -57,6 +62,7 @@ Iteration 2: Score 7.2 → Recommends "Increase chord label contrast" (AGAIN!)
 This doesn't leverage extended thinking properly!
 
 **What Extended Thinking Should Do**:
+
 - **Plan**: "Let me think about which files need modification..."
 - **Reason**: "The recommendation says 'contrast' but which elements specifically?"
 - **Reflect**: "Wait, this change might affect multiple components..."
@@ -69,6 +75,7 @@ This doesn't leverage extended thinking properly!
 ### 4. **No Specialized Agents (Despite Claiming Multi-Agent)**
 
 **Problem**: We have ONE implementation agent that tries to handle:
+
 - Settings Panel (desktop UI)
 - Teleprompter View (stage UI)
 - Blueprint View (editing UI)
@@ -79,6 +86,7 @@ This doesn't leverage extended thinking properly!
 **Research Finding**: **Orchestrator-Worker Pattern** with **specialized subagents** is the gold standard. The lead agent coordinates while delegating to specialists who operate in parallel.
 
 **What We Need**:
+
 ```
 VisionAgent → DesignOrchestratorAgent → {
   ControlPanelAgent (Settings, Header)
@@ -92,6 +100,7 @@ VisionAgent → DesignOrchestratorAgent → {
 ### 5. **Scoring System Is Unreliable**
 
 **Problem**: Vision agent scores are wildly inconsistent:
+
 ```
 Iteration 0: 7.2 (before) → 7.8 (after) = +0.6 improvement
 Iteration 1: 5.8 (before) → 7.2 (after) = score drops then recovers?
@@ -102,6 +111,7 @@ Iteration 1: 5.8 (before) → 7.2 (after) = score drops then recovers?
 **Research Finding**: **Perceptual diff tools** (Percy, Applitools) use AI to perform sophisticated visual comparisons that mimic human perception. We're relying on Claude Opus to give a number out of thin air.
 
 **What We Need**:
+
 - Objective metrics (contrast ratios from accessibility tools)
 - Perceptual diffs (what pixels actually changed)
 - Component-level scoring (not whole-app)
@@ -114,6 +124,7 @@ Iteration 1: 5.8 (before) → 7.2 (after) = score drops then recovers?
 **Problem**: Agent implements changes, we wait 3 seconds, assume it worked, move on.
 
 **Reality**:
+
 - TypeScript errors might have broken the build
 - HMR might have failed
 - Changes might have been ineffective
@@ -122,6 +133,7 @@ Iteration 1: 5.8 (before) → 7.2 (after) = score drops then recovers?
 **Research Finding**: **Reflection and self-criticism** are core components of autonomous systems. The agent should evaluate its own actions and course-correct.
 
 **What We Need**:
+
 - Verify build succeeded
 - Check for console errors
 - Confirm files were actually modified
@@ -136,6 +148,7 @@ Iteration 1: 5.8 (before) → 7.2 (after) = score drops then recovers?
 #### 1.1 **Add Memory Layer**
 
 Create `IterationMemory` that tracks:
+
 ```typescript
 interface IterationMemory {
   attemptedRecommendations: Recommendation[];
@@ -155,6 +168,7 @@ interface IterationMemory {
 #### 1.2 **Add Reflection Step**
 
 After implementation, before next screenshot:
+
 ```
 ImplementationAgent → ReflectionAgent → {
   - Did the build succeed?
@@ -251,6 +265,7 @@ Return routing decisions as JSON:
 #### 3.1 **Add Accessibility Tool Integration**
 
 Use `@axe-core/puppeteer` to get REAL metrics:
+
 ```typescript
 const axe = require('@axe-core/puppeteer').default;
 const results = await axe(page);
@@ -265,6 +280,7 @@ const results = await axe(page);
 #### 3.2 **Perceptual Diff Analysis**
 
 Use Pixelmatch or similar:
+
 ```typescript
 import pixelmatch from 'pixelmatch';
 
@@ -330,6 +346,7 @@ const results = await Promise.all(tasks);
 #### 4.2 **Batch Screenshot Analysis**
 
 Instead of one whole-page screenshot, capture:
+
 - Settings panel region
 - Teleprompter content region
 - Header region
@@ -405,23 +422,27 @@ Analyze in parallel, get context-specific scores.
 
 ## Implementation Priority
 
-### Immediate (This Week):
+### Immediate (This Week)
+
 1. ✅ Add iteration memory system
 2. ✅ Update vision prompt with memory context
 3. ✅ Add reflection step after implementation
 4. ✅ Add build verification
 
-### High Priority (Next Week):
+### High Priority (Next Week)
+
 5. ⬜ Create specialist agents (ControlPanel, Teleprompter, Blueprint)
 6. ⬜ Implement orchestrator agent with routing
 7. ⬜ Add parallel execution for specialists
 
-### Medium Priority (Week 3):
+### Medium Priority (Week 3)
+
 8. ⬜ Integrate @axe-core/puppeteer for objective metrics
 9. ⬜ Add perceptual diff analysis
 10. ⬜ Implement component-level screenshot capture
 
-### Future Enhancements:
+### Future Enhancements
+
 11. ⬜ Self-supervised learning (agent learns from successful patterns)
 12. ⬜ Emergent orchestration through message passing
 13. ⬜ Consensus building between specialist agents
@@ -430,14 +451,16 @@ Analyze in parallel, get context-specific scores.
 
 ## Expected Improvements
 
-### Before (Current):
+### Before (Current)
+
 - **Plateau after 1-2 iterations**
 - **Repeats same recommendations**
 - **Breaks UI context boundaries**
 - **No verification of success**
 - **Scores are unreliable**
 
-### After (Improved):
+### After (Improved)
+
 - **Continuous improvement through reflection**
 - **No repeated attempts (memory-aware)**
 - **Respects UI context boundaries (specialized agents)**
@@ -464,6 +487,7 @@ Analyze in parallel, get context-specific scores.
 ## Conclusion
 
 VIZTRTR has good bones, but it's architecturally stuck in a **2022 mindset** when current best practices (2025) demand:
+
 - Memory-augmented agents
 - Orchestrator-worker patterns
 - Parallel execution

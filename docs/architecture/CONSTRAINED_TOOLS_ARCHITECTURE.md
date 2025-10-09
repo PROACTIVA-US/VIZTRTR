@@ -5,6 +5,7 @@
 **Root Cause:** Claude Sonnet 4.5 cannot be constrained via prompt engineering alone. When asked to make "surgical changes" (e.g., "change 1-3 className attributes only"), the model consistently rewrites entire components (25-139 lines) instead.
 
 **Evidence from Sprint Testing:**
+
 - Sprint 1: 100% build success, 50% validation pass (40/80/150 limits)
 - Sprint 2: 100% build success, 0% validation pass (10/25/50 limits + dynamic growth)
 - Sprint 3: 0% build success, 20% validation pass (CSS-only mode)
@@ -18,6 +19,7 @@
 **Concept:** Force micro-changes by limiting what the AI can do through restricted tool APIs.
 
 **Implementation:**
+
 ```typescript
 // Instead of giving full file write access, provide micro-change tools:
 
@@ -72,6 +74,7 @@ const tools = [
 ```
 
 **Advantages:**
+
 - ✅ Physically impossible for agent to rewrite entire files
 - ✅ Every change is atomic and logged
 - ✅ Easy rollback (each tool call is separate)
@@ -79,6 +82,7 @@ const tools = [
 - ✅ Enforces surgical changes by design
 
 **Challenges:**
+
 - ❌ Requires building new tool system
 - ❌ May limit agent creativity
 - ❌ Complex changes require multiple tool calls
@@ -89,6 +93,7 @@ const tools = [
 **Concept:** Separate planning from execution with specialized agents.
 
 **Implementation:**
+
 ```typescript
 // 1. Planner Agent - High-level strategy
 const plannerAgent = {
@@ -116,12 +121,14 @@ const validatorAgent = {
 ```
 
 **Advantages:**
+
 - ✅ Separation of concerns (planning vs execution)
 - ✅ Each agent has clear, limited scope
 - ✅ Planner can think broadly, editor executes narrowly
 - ✅ Validator provides quality control
 
 **Challenges:**
+
 - ❌ More complex orchestration
 - ❌ Higher API costs (3 agents per change)
 - ❌ Latency (sequential agent calls)
@@ -132,6 +139,7 @@ const validatorAgent = {
 **Concept:** Accept all changes that compile successfully, regardless of size.
 
 **Implementation:**
+
 ```typescript
 // Current state (as of this commit):
 // 1. Agent generates code
@@ -142,12 +150,14 @@ const validatorAgent = {
 ```
 
 **Advantages:**
+
 - ✅ Simple to implement (already done)
 - ✅ Build system is final arbiter
 - ✅ No false rejections (validation warnings don't block)
 - ✅ Works with existing codebase
 
 **Challenges:**
+
 - ❌ Large diffs still occur (agent rewrites files)
 - ❌ Git history becomes noisy
 - ❌ Hard to understand what changed (25-139 line diffs)
@@ -156,17 +166,20 @@ const validatorAgent = {
 ## Recommendation
 
 **Immediate (0-1 week):** Continue with build-first validation (Solution 3)
+
 - Already implemented and working
 - Provides baseline functionality
 - Allows testing while designing better solution
 
 **Short-term (1-2 weeks):** Implement constrained tools (Solution 1)
+
 - Create `updateClassName`, `updateStyleValue`, `updateTextContent` tools
 - Integrate with Claude Agent SDK tool use
 - Test on Performia Living Chart
 - Measure success rate vs current approach
 
 **Long-term (1+ month):** Consider multi-agent workflow (Solution 2)
+
 - If constrained tools prove limiting
 - When need more sophisticated reasoning
 - For complex multi-file refactors
@@ -174,6 +187,7 @@ const validatorAgent = {
 ## Implementation Plan: Constrained Tools
 
 ### Phase 1: Core Tools (Week 1)
+
 1. Create `MicroChangeToolkit` class
 2. Implement tools:
    - `updateClassName(filePath, selector, oldClass, newClass)`
@@ -183,12 +197,14 @@ const validatorAgent = {
 4. Test with simple CSS changes
 
 ### Phase 2: Integration (Week 2)
+
 1. Update `ControlPanelAgent` to use constrained tools
 2. Modify prompts to guide tool selection
 3. Add tool-level validation (ensure single-line changes)
 4. Test on Performia project
 
 ### Phase 3: Expansion (Week 3+)
+
 1. Add more tools as needed:
    - `updatePropValue` - Modify single prop
    - `updateImport` - Change import path
@@ -199,12 +215,14 @@ const validatorAgent = {
 ## Metrics to Track
 
 **Validation Metrics:**
+
 - Pre-validation pass rate (currently logging only)
 - Build success rate (final arbiter)
 - Average lines changed per modification
 - Tool calls per recommendation (for constrained tools)
 
 **Quality Metrics:**
+
 - Design score improvement (8-dimension rubric)
 - Iteration count to target score (8.5+/10)
 - Git diff readability (lines changed, hunks)
@@ -213,12 +231,14 @@ const validatorAgent = {
 ## Success Criteria
 
 **Constrained Tools Success:**
+
 - ✅ 80%+ of changes use ≤5 lines modified
 - ✅ 90%+ build success rate
 - ✅ 100% of changes are intentional (no accidental rewrites)
 - ✅ Average 2-3 tool calls per recommendation
 
 **Build-First Baseline (Current):**
+
 - ❓ ~50% validation warnings (size limits exceeded)
 - ❓ ~80% build success (if builds pass)
 - ❌ Large diffs (25-139 lines common)
