@@ -462,15 +462,9 @@ export default function ProjectOnboarding({
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Cancel clicked, resetting and navigating to /projects');
-                  // Reset all state before navigating
-                  setError('');
-                  setPrdMethod(null);
-                  setPrdText('');
-                  setPrdFilePath('');
-                  setPrdFileName('');
-                  setStep('prd-upload');
-                  navigate('/projects');
+                  console.log('Cancel clicked - closing onboarding to return later');
+                  // Close the onboarding modal - user can return later to complete PRD analysis
+                  onComplete();
                 }}
                 className="btn-secondary"
               >

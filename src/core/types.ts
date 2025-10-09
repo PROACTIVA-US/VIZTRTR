@@ -57,7 +57,13 @@ export const AVAILABLE_MODELS = {
     'claude-haiku-4-20250402',
   ],
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
-  google: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro'],
+  google: [
+    'gemini-2.5-computer-use-preview-10-2025', // Computer Use model for implementation
+    'gemini-2.0-flash-exp', // Latest flash model for vision
+    'gemini-1.5-pro',
+    'gemini-1.5-flash',
+    'gemini-1.0-pro',
+  ],
   zai: [
     'zai-default', // Z.AI models - will be populated from their API
   ],
