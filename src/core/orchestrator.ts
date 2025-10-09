@@ -22,6 +22,7 @@ import { ReflectionAgent } from '../agents/ReflectionAgent';
 import { OrchestratorAgent } from '../agents/OrchestratorAgent';
 import { RecommendationFilterAgent } from '../agents/RecommendationFilterAgent';
 import { HumanLoopAgent } from '../agents/HumanLoopAgent';
+import { ExpertReviewAgent } from '../agents/ExpertReviewAgent';
 import { BackendServerManager, BackendConfig } from '../services/BackendServerManager';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -36,6 +37,7 @@ export class VIZTRTROrchestrator {
   private reflectionAgent: ReflectionAgent;
   private filterAgent: RecommendationFilterAgent;
   private humanLoopAgent: HumanLoopAgent;
+  private expertReviewAgent: ExpertReviewAgent | null = null;
   private hybridScoringAgent: HybridScoringAgent | null = null;
   private backendManager: BackendServerManager | null = null;
   private iterations: IterationResult[] = [];
@@ -65,6 +67,11 @@ export class VIZTRTROrchestrator {
         visionWeight,
         metricsWeight
       );
+    }
+
+    // Initialize expert review agent if refinement mode enabled
+    if (config.continueToExcellence?.enabled) {
+      this.expertReviewAgent = new ExpertReviewAgent(config.anthropicApiKey!);
     }
 
     // Ensure output directory exists
@@ -152,6 +159,15 @@ export class VIZTRTROrchestrator {
         }
 
         iteration++;
+      }
+
+      // Phase 3: Refinement loop (if enabled and target reached)
+      if (this.config.continueToExcellence?.enabled && currentScore >= this.config.targetScore) {
+        console.log('\n🎨 Entering Excellence Refinement Mode...');
+        console.log(`   Current Score: ${currentScore.toFixed(2)}/10`);
+        console.log(`   Target: ${this.config.continueToExcellence.targetScore}/10\n`);
+
+        await this.runRefinementLoop(currentScore, this.iterations.length);
       }
 
       // Generate final report
@@ -509,12 +525,251 @@ export class VIZTRTROrchestrator {
     };
   }
 
+  /**
+   * Phase 3: Refinement loop - Continue refining until 10/10 or diminishing returns
+   */
+  private async runRefinementLoop(startingScore: number, startIteration: number): Promise<void> {
+    if (!this.expertReviewAgent || !this.config.continueToExcellence) {
+      return;
+    }
+
+    const refinementConfig = this.config.continueToExcellence;
+    let currentScore = startingScore;
+    let refinementIteration = 0;
+    let plateauCount = 0;
+    let lastScore = startingScore;
+
+    while (
+      refinementIteration < refinementConfig.maxRefinementIterations &&
+      currentScore < refinementConfig.targetScore &&
+      plateauCount < refinementConfig.plateauIterations
+    ) {
+      const iterationNum = startIteration + refinementIteration;
+      console.log(`\n${'─'.repeat(70)}`);
+      console.log(
+        `🔬 REFINEMENT ${refinementIteration + 1}/${refinementConfig.maxRefinementIterations}`
+      );
+      console.log(`${'─'.repeat(70)}\n`);
+      console.log(`   Current: ${currentScore.toFixed(2)}/10`);
+      console.log(`   Target: ${refinementConfig.targetScore}/10`);
+      console.log(
+        `   Improvement Needed: +${(refinementConfig.targetScore - currentScore).toFixed(2)}\n`
+      );
+
+      try {
+        // Run refinement iteration
+        const result = await this.runRefinementIteration(iterationNum, currentScore);
+        this.iterations.push(result);
+
+        currentScore = result.evaluation.compositeScore;
+
+        // Check for improvement
+        const improvement = currentScore - lastScore;
+        console.log(`\n📊 Refinement ${refinementIteration + 1} Complete:`);
+        console.log(`   Score: ${currentScore.toFixed(2)}/10`);
+        console.log(`   Delta: ${improvement > 0 ? '+' : ''}${improvement.toFixed(2)}`);
+
+        if (improvement < refinementConfig.minImprovement) {
+          plateauCount++;
+          console.log(
+            `   ⚠️  Plateau detected (${plateauCount}/${refinementConfig.plateauIterations})`
+          );
+          console.log(
+            `   Improvement: ${improvement.toFixed(2)} < threshold ${refinementConfig.minImprovement}`
+          );
+        } else {
+          plateauCount = 0;
+          console.log(`   ✅ Meaningful improvement achieved`);
+        }
+
+        lastScore = currentScore;
+        refinementIteration++;
+
+        // Check if perfection reached
+        if (currentScore >= refinementConfig.targetScore) {
+          console.log(`\n🎉 Perfection achieved! Score: ${currentScore.toFixed(2)}/10`);
+          break;
+        }
+      } catch (error) {
+        console.error(`\n❌ Refinement iteration ${refinementIteration + 1} failed:`, error);
+        console.log('   Continuing to next refinement...');
+        refinementIteration++;
+      }
+    }
+
+    // Final status
+    if (plateauCount >= refinementConfig.plateauIterations) {
+      console.log(`\n⏸️  Refinement stopped: Diminishing returns detected`);
+      console.log(`   Final Score: ${currentScore.toFixed(2)}/10`);
+      console.log(`   Plateau Count: ${plateauCount}/${refinementConfig.plateauIterations}`);
+    } else if (currentScore >= refinementConfig.targetScore) {
+      console.log(`\n🏆 Target perfection reached!`);
+    } else {
+      console.log(`\n⏱️  Refinement stopped: Max iterations reached`);
+      console.log(`   Final Score: ${currentScore.toFixed(2)}/10`);
+    }
+  }
+
+  /**
+   * Run a single refinement iteration
+   */
+  private async runRefinementIteration(
+    iterationNum: number,
+    currentScore: number
+  ): Promise<IterationResult> {
+    const iterationDir = path.join(this.config.outputDir, `refinement_${iterationNum}`);
+    await fs.mkdir(iterationDir, { recursive: true });
+
+    // Step 1: Capture current state
+    console.log('📸 Step 1: Capturing current state...');
+    const beforeScreenshot = await this.capturePlugin.captureScreenshot(
+      this.config.frontendUrl,
+      this.config.screenshotConfig
+    );
+
+    const beforePath = path.join(iterationDir, 'before.png');
+    if (beforeScreenshot.path) {
+      await fs.copyFile(beforeScreenshot.path, beforePath);
+      beforeScreenshot.path = beforePath;
+    }
+
+    // Step 2: Get current evaluation (for dimension scores)
+    console.log('🔍 Step 2: Analyzing current quality...');
+    const currentEval = await this.evaluate(beforeScreenshot);
+
+    // Step 3: Expert review
+    console.log('🔬 Step 3: Expert review for micro-improvements...');
+    const refinementRecommendations = await this.expertReviewAgent!.analyzePerfection(
+      beforeScreenshot,
+      currentScore,
+      currentEval.scores,
+      this.config.continueToExcellence?.focusDimensions
+    );
+
+    console.log(`   Recommendations: ${refinementRecommendations.recommendations.length}`);
+    console.log(`   Refinement Level: ${refinementRecommendations.refinementLevel}`);
+    console.log(`   Estimated Gain: +${refinementRecommendations.estimatedScoreGain.toFixed(2)}`);
+
+    // Create design spec from refinement
+    const designSpec: DesignSpec = {
+      iteration: iterationNum,
+      timestamp: new Date(),
+      currentScore,
+      currentIssues: [],
+      recommendations: refinementRecommendations.recommendations,
+      prioritizedChanges: refinementRecommendations.recommendations,
+      estimatedNewScore: currentScore + refinementRecommendations.estimatedScoreGain,
+    };
+
+    // Save design spec
+    const specPath = path.join(iterationDir, 'design_spec.json');
+    await fs.writeFile(specPath, JSON.stringify(designSpec, null, 2));
+
+    // Step 4: Human approval (if required)
+    if (this.config.continueToExcellence?.requireApproval) {
+      console.log('👤 Step 4: Requesting human approval for refinement...');
+      const risk = this.humanLoopAgent.assessRisk(refinementRecommendations.recommendations);
+      const estimatedCost = this.humanLoopAgent.estimateCost(
+        refinementRecommendations.recommendations
+      );
+
+      let approval;
+      if (this.config.approvalCallback) {
+        const runId = path.basename(this.config.outputDir);
+        approval = await this.config.approvalCallback(
+          runId,
+          iterationNum,
+          refinementRecommendations.recommendations,
+          risk,
+          estimatedCost
+        );
+      } else {
+        approval = await this.humanLoopAgent.requestApproval(
+          refinementRecommendations.recommendations,
+          {
+            iteration: iterationNum,
+            risk,
+            estimatedCost,
+          }
+        );
+      }
+
+      if (!approval.approved) {
+        throw new Error(`Refinement approval denied: ${approval.reason || 'No reason provided'}`);
+      }
+    }
+
+    // Step 5: Implement changes
+    console.log('🔧 Step 5: Implementing refinements...');
+    const changes = await this.implementChanges(designSpec);
+
+    const changesPath = path.join(iterationDir, 'changes.json');
+    await fs.writeFile(changesPath, JSON.stringify(changes, null, 2));
+
+    console.log(`   Files Modified: ${changes.files.length}`);
+
+    // Step 6: Verify
+    console.log('🔍 Step 6: Verifying changes...');
+    const verification = await this.verificationAgent.verify(changes);
+
+    if (!verification.buildSucceeded) {
+      console.error('   ❌ Build failed! Rolling back refinement...');
+      await this.rollbackChanges(changes);
+      throw new Error('Refinement build failed - changes rolled back');
+    }
+
+    // Step 7: Wait for rebuild
+    console.log('⏳ Step 7: Waiting for rebuild...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Step 8: Capture after screenshot
+    console.log('📸 Step 8: Capturing refined state...');
+    const afterScreenshot = await this.capturePlugin.captureScreenshot(
+      this.config.frontendUrl,
+      this.config.screenshotConfig
+    );
+
+    const afterPath = path.join(iterationDir, 'after.png');
+    if (afterScreenshot.path) {
+      await fs.copyFile(afterScreenshot.path, afterPath);
+      afterScreenshot.path = afterPath;
+    }
+
+    // Step 9: Evaluate refined state
+    console.log('📊 Step 9: Evaluating refinement...');
+    const newEval = await this.evaluate(afterScreenshot);
+
+    const evalPath = path.join(iterationDir, 'evaluation.json');
+    await fs.writeFile(evalPath, JSON.stringify(newEval, null, 2));
+
+    const scoreDelta = newEval.compositeScore - currentScore;
+
+    return {
+      iteration: iterationNum,
+      timestamp: new Date(),
+      beforeScreenshot,
+      afterScreenshot,
+      designSpec,
+      changes,
+      evaluation: newEval,
+      scoreDelta,
+      targetReached:
+        newEval.compositeScore >= (this.config.continueToExcellence?.targetScore || 10),
+    };
+  }
+
   private async generateReport(): Promise<IterationReport> {
     const endTime = new Date();
     const duration = endTime.getTime() - (this.startTime?.getTime() || 0);
 
     const startingScore = this.iterations[0]?.designSpec.currentScore || 0;
     const finalScore = this.iterations[this.iterations.length - 1]?.evaluation.compositeScore || 0;
+
+    // Calculate standard vs refinement iterations
+    const standardIterations = this.iterations.filter(
+      iter => !iter.beforeScreenshot.path?.includes('refinement')
+    ).length;
+    const refinementIterations = this.iterations.length - standardIterations;
 
     const report: IterationReport = {
       status: 'complete',
@@ -530,6 +785,13 @@ export class VIZTRTROrchestrator {
       bestIteration: this.findBestIteration(),
       iterations: this.iterations,
       reportPath: path.join(this.config.outputDir, 'report.json'),
+      // Phase 3: Refinement tracking
+      standardIterations,
+      refinementIterations,
+      refinementEnabled: this.config.continueToExcellence?.enabled || false,
+      perfectionReached:
+        this.config.continueToExcellence?.enabled &&
+        finalScore >= (this.config.continueToExcellence.targetScore || 10),
     };
 
     // Save report
@@ -576,6 +838,7 @@ Generated: ${new Date().toISOString()}
 - **Best Iteration:** ${report.bestIteration}
 - **Duration:** ${Math.round(report.duration / 1000)}s
 ${hasHybridScoring ? '- **Hybrid Scoring:** Enabled (Vision 60% + Metrics 40%)' : ''}
+${report.refinementEnabled ? `\n### Excellence Refinement Mode\n- **Standard Iterations:** ${report.standardIterations}\n- **Refinement Iterations:** ${report.refinementIterations}\n- **Perfection Reached:** ${report.perfectionReached ? '🏆 YES (10/10)' : '❌ NO'}\n- **Refinement Target:** ${this.config.continueToExcellence?.targetScore || 10}/10` : ''}
 
 ## Iteration History
 

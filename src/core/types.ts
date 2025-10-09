@@ -19,6 +19,17 @@ export interface HumanLoopConfig {
   enableMemoryAnnotation?: boolean;
 }
 
+// Phase 3: Excellence Refinement Mode (10/10 pursuit)
+export interface RefinementConfig {
+  enabled: boolean; // Default: false
+  targetScore: number; // Default: 10.0
+  maxRefinementIterations: number; // Default: 5
+  minImprovement: number; // Default: 0.05 (stop if <0.05 improvement)
+  plateauIterations: number; // Default: 3 (stop after 3 iterations with no improvement)
+  requireApproval: boolean; // Default: true (human approval for refinements)
+  focusDimensions?: string[]; // Optional: ['typography', 'spacing_layout']
+}
+
 // Multi-Provider Model Configuration
 export type ModelProvider = 'anthropic' | 'openai' | 'google' | 'zai';
 
@@ -43,24 +54,13 @@ export const AVAILABLE_MODELS = {
     'claude-opus-4-20250514',
     'claude-sonnet-4-20250514',
     'claude-sonnet-4.5-20250402',
-    'claude-haiku-4-20250402'
+    'claude-haiku-4-20250402',
   ],
-  openai: [
-    'gpt-4o',
-    'gpt-4o-mini',
-    'gpt-4-turbo',
-    'gpt-4',
-    'gpt-3.5-turbo'
-  ],
-  google: [
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
-    'gemini-1.0-pro'
-  ],
+  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
+  google: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro'],
   zai: [
-    'zai-default' // Z.AI models - will be populated from their API
-  ]
+    'zai-default', // Z.AI models - will be populated from their API
+  ],
 } as const;
 
 // Project configuration from viztrtr-config.json
@@ -167,6 +167,9 @@ export interface VIZTRTRConfig {
     risk: 'low' | 'medium' | 'high',
     estimatedCost: number
   ) => Promise<ApprovalResponse>;
+
+  // Phase 3: Excellence Refinement Mode
+  continueToExcellence?: RefinementConfig;
 
   // Chrome DevTools MCP config
   useChromeDevTools?: boolean; // Enable hybrid scoring with real metrics
@@ -386,6 +389,11 @@ export interface IterationReport {
   bestIteration: number;
   iterations: IterationResult[];
   reportPath: string;
+  // Phase 3: Refinement tracking
+  standardIterations?: number;
+  refinementIterations?: number;
+  refinementEnabled?: boolean;
+  perfectionReached?: boolean; // true if score >= continueToExcellence.targetScore
 }
 
 export interface ScoringRubric {
