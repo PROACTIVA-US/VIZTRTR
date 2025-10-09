@@ -112,7 +112,7 @@ export default function AIEvaluationPanel() {
             className="flex flex-wrap items-center gap-3 mb-6"
           >
             {/* Project Type Badge */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-slate-700 rounded-lg border border-slate-600">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-700 rounded-lg border border-slate-600 shadow-md">
               <span className="text-xl">{getProjectTypeEmoji()}</span>
               <span className="text-white font-medium">{evaluation.projectType}</span>
             </div>
@@ -130,7 +130,7 @@ export default function AIEvaluationPanel() {
             <span className="text-gray-500">•</span>
 
             {/* Estimated Time */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-slate-700 rounded-lg border border-slate-600">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-700 rounded-lg border border-slate-600 shadow-md">
               <span className="text-xl">⏱️</span>
               <span className="text-white font-medium">{evaluation.estimatedTime}</span>
             </div>
@@ -215,7 +215,7 @@ export default function AIEvaluationPanel() {
                       type: 'spring',
                       stiffness: 150,
                     }}
-                    className="bg-slate-700/50 rounded-lg p-3 border border-slate-600 hover:border-slate-500 transition-colors"
+                    className="bg-slate-700/50 rounded-lg p-3 border border-slate-600 hover:border-slate-500 transition-all duration-200"
                     style={{
                       boxShadow: `0 0 20px ${agent.color}20`,
                     }}

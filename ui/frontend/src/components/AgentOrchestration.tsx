@@ -57,7 +57,7 @@ export function AgentOrchestration() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="mb-6"
+            className="mb-8"
           >
             <div className="bg-slate-800 rounded-lg overflow-hidden">
               {/* Colored top border */}

@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, Edit3, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface Recommendation {
   dimension: string;
@@ -58,14 +58,14 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
   estimatedCost,
   onApprove,
   onReject,
-  onModify,
+  // onModify, // Not yet implemented - reserved for future
   onSkip,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'screenshots' | 'diffs'>('overview');
   const [feedback, setFeedback] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [modifiedRecs, setModifiedRecs] = useState<Recommendation[]>(recommendations);
+  const modifiedRecs = recommendations; // TODO: Enable modification UI in future
 
   const riskColors = {
     low: 'text-green-400 bg-green-900/20 border-green-800/50',
@@ -185,7 +185,7 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
                   <h3 className="text-lg font-semibold text-white mb-3">Score Comparison</h3>
                   <div className="grid grid-cols-2 gap-3">
                     {scoreComparison.map((score, idx) => (
-                      <div key={idx} className="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                      <div key={idx} className="bg-slate-900 p-3 rounded-lg border border-slate-700 shadow-sm">
                         <div className="text-sm text-slate-400 mb-1">{score.dimension}</div>
                         <div className="flex items-center justify-between">
                           <div className="text-white font-medium">
