@@ -68,6 +68,13 @@ function ProjectsPage() {
     loadProjects();
   }, []);
 
+  // Auto-open wizard when there are no projects
+  useEffect(() => {
+    if (!loading && projects.length === 0) {
+      setShowWizard(true);
+    }
+  }, [loading, projects.length]);
+
   const handleWizardComplete = async (projectId: number) => {
     setShowWizard(false);
 
