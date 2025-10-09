@@ -30,6 +30,9 @@ export interface PlannedChange {
   /** Exact line number (1-indexed) */
   lineNumber: number;
 
+  /** Actual line content from file (for verification) */
+  lineContent: string;
+
   /** Tool-specific parameters */
   params:
     | UpdateClassNameParams
@@ -188,15 +191,18 @@ export class DiscoveryAgent {
     files: Array<DiscoveredFile & { content: string }>,
     projectPath: string
   ): string {
+    // Add line numbers to file contents for accurate counting
     const fileContents = files
-      .map(
-        file => `
-**File: ${file.path}**
+      .map(file => {
+        const lines = file.content.split('\n');
+        const numberedLines = lines.map((line, i) => `${i + 1}: ${line}`).join('\n');
+        return `
+**File: ${file.path}** (${lines.length} lines total)
 \`\`\`${file.path.endsWith('.tsx') ? 'tsx' : 'jsx'}
-${file.content}
+${numberedLines}
 \`\`\`
-`
-      )
+`;
+      })
       .join('\n\n');
 
     return `You are a DISCOVERY AGENT for a UI/UX improvement system.
@@ -249,6 +255,7 @@ You MUST respond with ONLY valid JSON matching this schema:
       "tool": "updateClassName" | "updateStyleValue" | "updateTextContent" | "appendToClassName",
       "filePath": "relative/path/to/file.tsx",
       "lineNumber": 42,
+      "lineContent": "        <button className=\"text-sm px-4\">",
       "params": {
         // For updateClassName:
         "oldClassName": "text-sm",
@@ -271,9 +278,18 @@ You MUST respond with ONLY valid JSON matching this schema:
   ]
 }
 
+**CRITICAL LINE NUMBER VERIFICATION:**
+1. Each line in the file above is prefixed with its line number (e.g., "42: <div>")
+2. Find the line with your target className/value/text
+3. Use the line number from the prefix (the number before the colon)
+4. Copy ONLY the line content AFTER the colon to "lineContent" (exclude the "42: " prefix)
+5. Verify the oldClassName/oldValue/oldText appears in that exact line
+6. Double-check the line number matches the prefix number
+
 **IMPORTANT:**
 - Output ONLY the JSON object (no markdown code blocks, no explanations)
-- Count line numbers carefully from the file contents provided
+- lineContent MUST be the exact line from the file (copy-paste from above)
+- Count line numbers by looking at the file content structure
 - Verify exact text matches (oldClassName, oldValue, oldText must match exactly)
 - If you cannot make changes, output: {"strategy": "N/A", "expectedImpact": "N/A", "changes": []}
 

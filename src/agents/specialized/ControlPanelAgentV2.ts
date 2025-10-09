@@ -97,6 +97,33 @@ export class ControlPanelAgentV2 {
         );
         console.log(`         Reason: ${plannedChange.reason}`);
 
+        // Verify line content before attempting change
+        const fullPath = path.resolve(projectPath, plannedChange.filePath);
+        const fileContent = await fs.readFile(fullPath, 'utf-8');
+        const lines = fileContent.split('\n');
+        const actualLine = lines[plannedChange.lineNumber - 1]; // 1-indexed to 0-indexed
+
+        if (!actualLine) {
+          console.warn(
+            `         ⚠️  Line ${plannedChange.lineNumber} does not exist (file has ${lines.length} lines)`
+          );
+          continue;
+        }
+
+        // Trim both for comparison (whitespace-insensitive)
+        const expectedLine = plannedChange.lineContent.trim();
+        const actualLineTrimmed = actualLine.trim();
+
+        if (expectedLine !== actualLineTrimmed) {
+          console.warn(`         ⚠️  Line content mismatch:`);
+          console.warn(`            Expected: ${expectedLine}`);
+          console.warn(`            Actual:   ${actualLineTrimmed}`);
+          console.warn(`         Skipping this change`);
+          continue;
+        }
+
+        console.log(`         ✅ Line content verified`);
+
         let result: MicroChangeResult;
 
         switch (plannedChange.tool) {

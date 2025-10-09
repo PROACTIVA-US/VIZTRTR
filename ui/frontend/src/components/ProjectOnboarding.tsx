@@ -787,7 +787,7 @@ export default function ProjectOnboarding({
                     placeholder="Ask AI to modify spec..."
                     className="flex-1 bg-slate-900 text-white px-3 py-2 rounded border border-slate-700 focus:border-blue-500 focus:outline-none text-sm"
                   />
-                  <button onClick={handleSendChat} className="btn-primary px-4 py-2 text-sm">
+                  <button onClick={handleSendChat} className="btn-primary px-4 py-2 text-base">
                     Send
                   </button>
                 </div>
