@@ -15,6 +15,13 @@ import {
   summarizeDiscovery,
 } from '../../utils/file-discovery';
 import { generateLineHintsForRecommendation } from '../../utils/line-hint-generator';
+import {
+  ChangePlan,
+  UpdateClassNameParams,
+  UpdateStyleValueParams,
+  UpdateTextContentParams,
+  AppendToClassNameParams,
+} from './DiscoveryAgent';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -69,6 +76,126 @@ export class ControlPanelAgentV2 {
     console.log(`      By Type:`, stats.changesByType);
 
     return changes;
+  }
+
+  /**
+   * Execute a pre-planned change from DiscoveryAgent (Two-Phase Workflow)
+   * This method bypasses agent decision-making and directly executes the plan.
+   */
+  async executeChangePlan(changePlan: ChangePlan, projectPath: string): Promise<FileChange | null> {
+    try {
+      console.log(`\n   🎯 Executing change plan: ${changePlan.recommendation.title}`);
+      console.log(`   📋 Strategy: ${changePlan.strategy}`);
+      console.log(`   📊 Planned changes: ${changePlan.changes.length}`);
+
+      const allChanges: MicroChangeResult[] = [];
+
+      // Execute each planned change
+      for (const plannedChange of changePlan.changes) {
+        console.log(
+          `\n      🔨 Executing: ${plannedChange.tool} at ${plannedChange.filePath}:${plannedChange.lineNumber}`
+        );
+        console.log(`         Reason: ${plannedChange.reason}`);
+
+        let result: MicroChangeResult;
+
+        switch (plannedChange.tool) {
+          case 'updateClassName': {
+            const params = plannedChange.params as UpdateClassNameParams;
+            result = await this.toolkit.updateClassName({
+              filePath: plannedChange.filePath,
+              lineNumber: plannedChange.lineNumber,
+              oldClassName: params.oldClassName,
+              newClassName: params.newClassName,
+            });
+            break;
+          }
+
+          case 'updateStyleValue': {
+            const params = plannedChange.params as UpdateStyleValueParams;
+            result = await this.toolkit.updateStyleValue({
+              filePath: plannedChange.filePath,
+              lineNumber: plannedChange.lineNumber,
+              property: params.property,
+              oldValue: params.oldValue,
+              newValue: params.newValue,
+            });
+            break;
+          }
+
+          case 'updateTextContent': {
+            const params = plannedChange.params as UpdateTextContentParams;
+            result = await this.toolkit.updateTextContent({
+              filePath: plannedChange.filePath,
+              lineNumber: plannedChange.lineNumber,
+              oldText: params.oldText,
+              newText: params.newText,
+            });
+            break;
+          }
+
+          case 'appendToClassName': {
+            const params = plannedChange.params as AppendToClassNameParams;
+            result = await this.toolkit.appendToClassName({
+              filePath: plannedChange.filePath,
+              lineNumber: plannedChange.lineNumber,
+              classesToAdd: params.classesToAdd,
+            });
+            break;
+          }
+
+          default:
+            console.error(`      ❌ Unknown tool: ${plannedChange.tool}`);
+            continue;
+        }
+
+        console.log(
+          `         ${result.success ? '✅' : '❌'} Result: ${result.success ? 'Success' : result.error}`
+        );
+        if (result.success) {
+          console.log(`            Before: ${result.before.trim()}`);
+          console.log(`            After:  ${result.after.trim()}`);
+          allChanges.push(result);
+        } else {
+          console.warn(`         ⚠️  Failed to apply change: ${result.error}`);
+        }
+      }
+
+      // If no changes were successful, return null
+      if (allChanges.length === 0) {
+        console.warn(`   ⚠️  No changes were successfully applied`);
+        return null;
+      }
+
+      // Create FileChange from all micro-changes
+      const primaryFile = allChanges[0].filePath;
+      const fullPath = path.resolve(projectPath, primaryFile);
+
+      // Read the updated file content
+      const newContent = await fs.readFile(fullPath, 'utf-8');
+
+      // Reconstruct old content
+      const oldContent = await this.reconstructOldContent(allChanges, newContent);
+
+      // Wait for file stabilization
+      console.log(`   ⏳ Waiting 3s for file stabilization (HMR, linters)...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      console.log(`\n   ✅ Change plan executed successfully`);
+      console.log(`      Expected impact: ${changePlan.expectedImpact}`);
+      console.log(`      Changes applied: ${allChanges.length}/${changePlan.changes.length}`);
+
+      return {
+        path: primaryFile,
+        type: 'edit',
+        oldContent,
+        newContent,
+        diff: this.createDiff(allChanges),
+      };
+    } catch (error) {
+      console.error(`   ❌ Error executing change plan:`, error);
+      return null;
+    }
   }
 
   private async implementRecommendation(
