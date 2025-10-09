@@ -70,6 +70,14 @@
 - ✅ Cost predictable (2 agent calls, no loops)
 - ✅ Safety guaranteed (constrained tools prevent rewrites)
 
+### What Worked in Improvements:
+
+- ✅ Line-numbered file contents (agent can see exact line numbers)
+- ✅ Line content verification (prevents incorrect changes)
+- ✅ Whitespace-insensitive comparison (trim before matching)
+- ✅ Clear error messages (shows expected vs actual content)
+- ✅ Surgical precision (only 1 line modified)
+
 ### Next Steps
 
 1. **Immediate:** Fix Discovery Agent line number accuracy
