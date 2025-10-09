@@ -132,6 +132,28 @@ Focus on NEW approaches or DIFFERENT UI contexts than what has been tried before
     return `You are a world-class UI/UX designer and accessibility expert analyzing this user interface.
 ${projectSection}${exclusionSection}${contextSection}
 
+**DESIGN SYSTEM CONSTRAINTS:**
+
+This project uses a **dark theme design system**. When suggesting className changes, you MUST follow these rules:
+
+✅ **ALLOWED Classes:**
+- Dark backgrounds: \`bg-slate-700\`, \`bg-slate-800\`, \`bg-slate-900\`
+- Dark borders: \`border-slate-600\`, \`border-slate-700\`, \`border-slate-800\`
+- Dark text: \`text-white\`, \`text-slate-100\`, \`text-slate-200\`, \`text-slate-300\`, \`text-slate-400\`
+- Accent colors: \`bg-blue-600\`, \`bg-green-600\`, \`bg-red-600\` (dark variants only)
+- Dark hovers: \`hover:bg-slate-600\`, \`hover:bg-blue-700\`, \`hover:border-slate-500\`
+
+❌ **FORBIDDEN Classes (NEVER suggest these):**
+- Light backgrounds: \`bg-white\`, \`bg-gray-50\`, \`bg-gray-100\`, \`bg-gray-200\`
+- Light borders: \`border-gray-200\`, \`border-gray-300\`, \`border-white\`
+- Light hovers: \`hover:bg-gray-50\`, \`hover:bg-blue-50\`, \`hover:bg-green-50\`
+- Light text on dark: \`text-gray-900\`, \`text-gray-800\`
+
+**CRITICAL:** If you suggest ANY forbidden classes, your recommendation will be automatically rejected.
+Always use dark theme variants (slate-*, higher numbers = darker).
+
+---
+
 **Your Task:**
 Identify the UI context, then analyze across 8 critical dimensions with context-appropriate criteria.
 
@@ -215,7 +237,7 @@ Please respond with a JSON object in this exact format:
       "description": "Add visible focus rings (outline or box-shadow) to all interactive elements. Use focus-visible for keyboard-only focus indicators.",
       "impact": 9,
       "effort": 2,
-      "code": "className='... focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'"
+      "code": "className='... focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900'"
     }
   ]
 }
