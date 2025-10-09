@@ -124,6 +124,45 @@ export const MICRO_CHANGE_TOOLS: Anthropic.Tool[] = [
       required: ['filePath', 'lineNumber', 'oldText', 'newText'],
     },
   },
+  {
+    name: 'appendToClassName',
+    description: `Append new classes to an existing className attribute.
+
+**When to use:**
+- Adding focus indicators (e.g., add "focus-visible:ring-2")
+- Adding hover states (e.g., add "hover:shadow-lg")
+- Adding accessibility classes
+- Adding responsive classes
+
+**Important:**
+- APPENDS classes to the END of existing className
+- Does NOT replace existing classes
+- Requires className attribute to already exist on the line
+- Perfect for adding new functionality without removing existing styles`,
+    input_schema: {
+      type: 'object',
+      properties: {
+        filePath: {
+          type: 'string',
+          description:
+            'Relative path to file from project root (e.g., "src/components/Header.tsx")',
+        },
+        lineNumber: {
+          type: 'number',
+          description: 'Line number where the className appears (1-indexed)',
+        },
+        classesToAdd: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+          description:
+            'Array of classes to append (e.g., ["focus-visible:ring-2", "focus-visible:ring-blue-500"])',
+        },
+      },
+      required: ['filePath', 'lineNumber', 'classesToAdd'],
+    },
+  },
 ];
 
 /**
@@ -140,6 +179,7 @@ export const TOOL_NAMES = {
   UPDATE_CLASS_NAME: 'updateClassName',
   UPDATE_STYLE_VALUE: 'updateStyleValue',
   UPDATE_TEXT_CONTENT: 'updateTextContent',
+  APPEND_TO_CLASS_NAME: 'appendToClassName',
 } as const;
 
 /**

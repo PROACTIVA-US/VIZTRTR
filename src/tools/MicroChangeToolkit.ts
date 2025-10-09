@@ -47,6 +47,12 @@ export interface TextContentChange {
   newText: string;
 }
 
+export interface AppendClassNameChange {
+  filePath: string;
+  lineNumber: number;
+  classesToAdd: string[];
+}
+
 export class MicroChangeToolkit {
   private projectPath: string;
   private changeLog: MicroChangeResult[] = [];
@@ -322,6 +328,88 @@ export class MicroChangeToolkit {
         filePath,
         lineNumber,
         changeType: 'textContent',
+        before: '',
+        after: '',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Append classes to an existing className attribute
+   *
+   * Example:
+   * - Before: <div className="text-sm py-2">
+   * - After:  <div className="text-sm py-2 focus-visible:ring-2 focus-visible:ring-blue-500">
+   */
+  async appendToClassName(change: AppendClassNameChange): Promise<MicroChangeResult> {
+    const { filePath, lineNumber, classesToAdd } = change;
+    const absolutePath = path.resolve(this.projectPath, filePath);
+
+    try {
+      // Read file
+      const content = await fs.readFile(absolutePath, 'utf-8');
+      const lines = content.split('\n');
+
+      // Validate line number
+      if (lineNumber < 1 || lineNumber > lines.length) {
+        return {
+          success: false,
+          filePath,
+          lineNumber,
+          changeType: 'appendClassName',
+          before: '',
+          after: '',
+          error: `Invalid line number: ${lineNumber} (file has ${lines.length} lines)`,
+        };
+      }
+
+      const targetLine = lines[lineNumber - 1];
+
+      // Find className attribute
+      const classNameMatch = targetLine.match(/className="([^"]*)"/);
+      if (!classNameMatch) {
+        return {
+          success: false,
+          filePath,
+          lineNumber,
+          changeType: 'appendClassName',
+          before: targetLine,
+          after: targetLine,
+          error: `No className attribute found on line ${lineNumber}`,
+        };
+      }
+
+      const existingClasses = classNameMatch[1];
+      const newClasses = `${existingClasses} ${classesToAdd.join(' ')}`;
+
+      // Perform atomic replacement of className value
+      const newLine = targetLine.replace(
+        `className="${existingClasses}"`,
+        `className="${newClasses}"`
+      );
+
+      // Apply change
+      lines[lineNumber - 1] = newLine;
+      await fs.writeFile(absolutePath, lines.join('\n'), 'utf-8');
+
+      const result: MicroChangeResult = {
+        success: true,
+        filePath,
+        lineNumber,
+        changeType: 'appendClassName',
+        before: targetLine,
+        after: newLine,
+      };
+
+      this.changeLog.push(result);
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        filePath,
+        lineNumber,
+        changeType: 'appendClassName',
         before: '',
         after: '',
         error: error instanceof Error ? error.message : 'Unknown error',

@@ -141,6 +141,9 @@ export class ControlPanelAgentV2 {
             case 'updateTextContent':
               result = await this.toolkit.updateTextContent(toolUse.input as any);
               break;
+            case 'appendToClassName':
+              result = await this.toolkit.appendToClassName(toolUse.input as any);
+              break;
             default:
               result = {
                 success: false,
@@ -283,6 +286,9 @@ You CANNOT rewrite entire files or make large structural changes.
 
 3. **updateTextContent** - Change text content on one line
    - Example: Change "Submit" to "Save" on line 8
+
+4. **appendToClassName** - Add new classes to existing className
+   - Example: Add "focus-visible:ring-2 focus-visible:ring-blue-500" to line 24
 
 **IMPORTANT CONSTRAINTS:**
 - Each tool call modifies EXACTLY ONE thing on ONE line
