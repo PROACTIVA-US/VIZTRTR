@@ -102,9 +102,7 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
               </div>
               <div className="text-sm text-slate-400">
                 Est. Cost:{' '}
-                <span className="text-white font-bold text-lg">
-                  ${(estimatedCost / 100).toFixed(2)}
-                </span>
+                <span className="text-white font-medium">${(estimatedCost / 100).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -171,7 +169,7 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
                         </div>
                         <div className="text-right ml-4">
                           <div className="text-xs text-slate-500">Impact/Effort</div>
-                          <div className="text-white font-bold text-lg">
+                          <div className="text-white font-medium">
                             {rec.impact}/10 · {rec.effort}/10
                           </div>
                           <div className="text-xs text-green-400">
@@ -188,21 +186,15 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
               {scoreComparison && scoreComparison.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3">Score Comparison</h3>
-                  <div
-                    className="grid grid-cols-2 gap-3"
-                    role="list"
-                    aria-label="Score comparison statistics"
-                  >
+                  <div className="grid grid-cols-2 gap-3">
                     {scoreComparison.map((score, idx) => (
                       <div
                         key={idx}
                         className="bg-slate-900 p-3 rounded-lg border border-slate-700 shadow-sm"
-                        role="listitem"
-                        aria-label="Score metric"
                       >
                         <div className="text-sm text-slate-400 mb-1">{score.dimension}</div>
                         <div className="flex items-center justify-between">
-                          <div className="text-white font-bold text-base">
+                          <div className="text-white font-medium">
                             {score.before.toFixed(1)} → {score.after.toFixed(1)}
                           </div>
                           <div
