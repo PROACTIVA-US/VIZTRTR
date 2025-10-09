@@ -12,6 +12,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { DesignSpec, Recommendation, Changes, FileChange } from '../core/types';
 import { ControlPanelAgentV2 } from './specialized/ControlPanelAgentV2'; // V2: PRODUCTION READY ✅
 import { DiscoveryAgent } from './specialized/DiscoveryAgent'; // Two-Phase Workflow ✅
+import { UIConsistencyAgent } from './specialized/UIConsistencyAgent'; // Design System Validation ✅
 // import { ControlPanelAgent } from './specialized/ControlPanelAgent'; // V1: DEPRECATED ❌
 import { TeleprompterAgent } from './specialized/TeleprompterAgent';
 import {
@@ -40,6 +41,7 @@ export class OrchestratorAgent {
   private apiKey: string;
   private teleprompterAgent: TeleprompterAgent;
   private discoveryAgent: DiscoveryAgent;
+  private uiConsistencyAgent: UIConsistencyAgent | null = null;
   private discoveredFiles: DiscoveredFile[] = [];
   private fileCache = new Map<string, DiscoveredFile[]>();
 
@@ -49,6 +51,7 @@ export class OrchestratorAgent {
     // Two-Phase Workflow: DiscoveryAgent + ControlPanelAgentV2
     this.discoveryAgent = new DiscoveryAgent(apiKey);
     // Note: ControlPanelAgentV2 is instantiated per-request with projectPath
+    // Note: UIConsistencyAgent is instantiated per-request with projectPath
     this.teleprompterAgent = new TeleprompterAgent(apiKey);
   }
 
@@ -141,12 +144,18 @@ export class OrchestratorAgent {
     recommendations: Recommendation[],
     projectPath: string
   ): Promise<FileChange[]> {
-    console.log(`\n   🔄 Two-Phase Workflow: ${recommendations.length} recommendations`);
+    console.log(`\n   🔄 Enhanced Two-Phase Workflow: ${recommendations.length} recommendations`);
+    console.log(`      Phase 0: UI Consistency Validation (design system checks)`);
     console.log(`      Phase 1: Discovery (analyzing files, creating change plans)`);
     console.log(`      Phase 2: Execution (applying changes with constrained tools)`);
 
     const changes: FileChange[] = [];
     const controlPanelAgentV2 = new ControlPanelAgentV2(this.apiKey, projectPath);
+
+    // Initialize UIConsistencyAgent for this project
+    if (!this.uiConsistencyAgent) {
+      this.uiConsistencyAgent = new UIConsistencyAgent(this.apiKey, projectPath);
+    }
 
     for (const rec of recommendations) {
       try {
@@ -160,6 +169,56 @@ export class OrchestratorAgent {
         }
 
         console.log(`   ✅ Change plan created with ${changePlan.changes.length} changes`);
+
+        // Phase 1.5: UI Consistency Validation - Validate changes before execution
+        console.log(`   🎨 Phase 1.5: UIConsistencyAgent validating design system compliance...`);
+        const changesToValidate = changePlan.changes.map(change => {
+          let oldClassName = '';
+          let newClassName = '';
+
+          // Extract className values based on tool type
+          if (change.tool === 'updateClassName' && 'oldClassName' in change.params && 'newClassName' in change.params) {
+            oldClassName = change.params.oldClassName;
+            newClassName = change.params.newClassName;
+          } else if (change.tool === 'appendToClassName' && 'classesToAdd' in change.params) {
+            // For append, validate the new classes being added
+            oldClassName = '';
+            newClassName = change.params.classesToAdd.join(' ');
+          }
+
+          return {
+            file: change.filePath,
+            lineNumber: change.lineNumber,
+            oldClassName,
+            newClassName,
+            changeType: change.tool === 'updateClassName' || change.tool === 'appendToClassName'
+              ? 'className' as const
+              : change.tool === 'updateStyleValue'
+              ? 'styleValue' as const
+              : 'textContent' as const,
+          };
+        });
+
+        const validation = await this.uiConsistencyAgent.validateChanges(changesToValidate);
+
+        if (!validation.isValid) {
+          console.error(`   ❌ Design system validation failed: ${validation.summary}`);
+          console.error(`   Violations:`);
+          validation.violations.forEach(v => {
+            console.error(`      - ${v.type} (${v.severity}): ${v.reason}`);
+            if (v.suggestion) {
+              console.error(`        Suggestion: ${v.suggestion}`);
+            }
+          });
+          console.warn(`   ⏭️  Skipping "${rec.title}" due to design system violations`);
+          continue;
+        }
+
+        console.log(`   ✅ Design system validation passed: ${validation.summary}`);
+        if (validation.suggestions.length > 0) {
+          console.log(`   💡 Suggestions:`);
+          validation.suggestions.forEach(s => console.log(`      - ${s}`));
+        }
 
         // Phase 2: Execution - Execute change plan
         console.log(`   📍 Phase 2: ControlPanelAgentV2 executing change plan...`);
@@ -177,7 +236,7 @@ export class OrchestratorAgent {
     }
 
     console.log(
-      `\n   🎯 Two-Phase Workflow Complete: ${changes.length}/${recommendations.length} recommendations implemented`
+      `\n   🎯 Enhanced Workflow Complete: ${changes.length}/${recommendations.length} recommendations implemented`
     );
     return changes;
   }

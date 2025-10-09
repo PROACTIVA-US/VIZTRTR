@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Run } from '../types';
+import { IterationReview } from '../components/IterationReview';
 
 export default function RunPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -14,6 +15,8 @@ export default function RunPage() {
   const [_serverStatus, setServerStatus] = useState<{ running: boolean; url?: string } | null>(
     null
   );
+  const [pendingApproval, setPendingApproval] = useState<any>(null);
+  const [beforeScreenshot, setBeforeScreenshot] = useState<string>('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,7 +42,26 @@ export default function RunPage() {
     // Poll for updates every 2 seconds
     const interval = setInterval(loadRun, 2000);
 
-    return () => clearInterval(interval);
+    // SSE for real-time approval events
+    const eventSource = new EventSource(`http://localhost:3001/api/runs/${runId}/stream`);
+
+    eventSource.addEventListener('approval_required', ((event: MessageEvent) => {
+      const data = JSON.parse(event.data);
+      setPendingApproval(data);
+
+      // Fetch before screenshot for the current iteration
+      const iterationNum = data.iteration || 0;
+      setBeforeScreenshot(`http://localhost:3001/outputs/${runId}/iteration_${iterationNum}/before.png`);
+    }) as EventListener);
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      clearInterval(interval);
+      eventSource.close();
+    };
   }, [runId]);
 
   if (loading) {
@@ -151,6 +173,78 @@ export default function RunPage() {
       alert(err instanceof Error ? err.message : 'Failed to start server');
     } finally {
       setStartingServer(false);
+    }
+  };
+
+  const handleApprove = async (feedback?: string) => {
+    if (!runId || !pendingApproval) return;
+    try {
+      const res = await fetch(
+        `http://localhost:3001/api/runs/${runId}/iterations/${pendingApproval.iteration}/review`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'approve', feedback }),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to approve');
+      setPendingApproval(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to approve');
+    }
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!runId || !pendingApproval) return;
+    try {
+      const res = await fetch(
+        `http://localhost:3001/api/runs/${runId}/iterations/${pendingApproval.iteration}/review`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'reject', reason }),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to reject');
+      setPendingApproval(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to reject');
+    }
+  };
+
+  const handleSkip = async () => {
+    if (!runId || !pendingApproval) return;
+    try {
+      const res = await fetch(
+        `http://localhost:3001/api/runs/${runId}/iterations/${pendingApproval.iteration}/review`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'skip' }),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to skip');
+      setPendingApproval(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to skip');
+    }
+  };
+
+  const handleModify = async (modifiedRecommendations: any[]) => {
+    if (!runId || !pendingApproval) return;
+    try {
+      const res = await fetch(
+        `http://localhost:3001/api/runs/${runId}/iterations/${pendingApproval.iteration}/review`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'modify', modifiedRecommendations }),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to modify');
+      setPendingApproval(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to modify');
     }
   };
 
@@ -409,6 +503,22 @@ export default function RunPage() {
             </details>
           </div>
         </div>
+      )}
+
+      {/* Approval Modal */}
+      {pendingApproval && runId && (
+        <IterationReview
+          runId={runId}
+          iterationId={pendingApproval.iteration}
+          beforeScreenshot={beforeScreenshot}
+          recommendations={pendingApproval.recommendations || []}
+          risk={pendingApproval.risk || 'medium'}
+          estimatedCost={pendingApproval.estimatedCost || 0}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onModify={handleModify}
+          onSkip={handleSkip}
+        />
       )}
     </div>
   );

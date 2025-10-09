@@ -8,15 +8,19 @@ import { OrchestratorServerAgent } from '../agents/OrchestratorServerAgent';
 import { VIZTRTRConfig } from '../../../../dist/core/types';
 import type { Run, IterationUpdate, RunResult, SSEMessage } from '../types';
 
+import type { ApprovalManager } from '../routes/approval';
+
 export class RunManager extends EventEmitter {
   private db: VIZTRTRDatabase;
   private agent: OrchestratorServerAgent;
   private activeRuns: Map<string, Promise<RunResult>> = new Map();
+  private approvalManager: ApprovalManager | null = null;
 
-  constructor(db: VIZTRTRDatabase, anthropicApiKey: string) {
+  constructor(db: VIZTRTRDatabase, anthropicApiKey: string, approvalManager?: ApprovalManager) {
     super();
     this.db = db;
     this.agent = new OrchestratorServerAgent(anthropicApiKey);
+    this.approvalManager = approvalManager || null;
   }
 
   /**
@@ -49,7 +53,30 @@ export class RunManager extends EventEmitter {
         fullPage: false
       },
       outputDir: `./viztritr-output/${run.id}`,
-      verbose: true
+      verbose: true,
+      // Add approval callback if approvalManager is configured
+      approvalCallback: this.approvalManager
+        ? async (runId, iteration, recommendations, risk, estimatedCost) => {
+            // Emit SSE event for approval required
+            this.emit('approval_required', runId, {
+              iteration,
+              recommendations,
+              risk,
+              estimatedCost,
+            });
+
+            // Wait for approval from ApprovalManager
+            const response = await this.approvalManager!.requestApproval(
+              runId,
+              iteration,
+              recommendations,
+              risk,
+              estimatedCost
+            );
+
+            return response;
+          }
+        : undefined,
     };
 
     // Start run in background
@@ -179,10 +206,17 @@ export class RunManager extends EventEmitter {
       }
     };
 
+    const approvalRequiredHandler = (rid: string, data: any) => {
+      if (rid === runId) {
+        callback({ event: 'approval_required', data });
+      }
+    };
+
     this.on('progress', progressHandler);
     this.on('completed', completedHandler);
     this.on('error', errorHandler);
     this.on('cancelled', cancelledHandler);
+    this.on('approval_required', approvalRequiredHandler);
 
     // Return cleanup function
     return () => {
@@ -190,6 +224,7 @@ export class RunManager extends EventEmitter {
       this.off('completed', completedHandler);
       this.off('error', errorHandler);
       this.off('cancelled', cancelledHandler);
+      this.off('approval_required', approvalRequiredHandler);
     };
   }
 }

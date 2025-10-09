@@ -13,6 +13,7 @@ import { RunManager } from './services/runManager';
 import { createProjectsRouter } from './routes/projects';
 import { createRunsRouter } from './routes/runs';
 import { createEvaluateRouter } from './routes/evaluate';
+import { createApprovalRouter, ApprovalManager } from './routes/approval';
 import analyzeRouter from './routes/analyze';
 import filesystemRouter from './routes/filesystem';
 
@@ -66,7 +67,11 @@ if (!anthropicApiKey) {
   process.exit(1);
 }
 
-const runManager = new RunManager(db, anthropicApiKey);
+// Initialize approval manager
+const approvalManager = new ApprovalManager();
+
+// Initialize run manager with approval manager
+const runManager = new RunManager(db, anthropicApiKey, approvalManager);
 
 // Serve static files (screenshots) - check both locations
 const outputDirServer = path.join(__dirname, '../viztrtr-output');
@@ -77,6 +82,7 @@ app.use('/outputs-root', express.static(outputDirRoot));
 // Routes
 app.use('/api/projects', createProjectsRouter(db));
 app.use('/api/runs', createRunsRouter(db, runManager));
+app.use('/api/runs', createApprovalRouter(db, approvalManager)); // Approval endpoints
 app.use('/api', createEvaluateRouter(anthropicApiKey));
 app.use('/api', analyzeRouter);
 app.use('/api/filesystem', filesystemRouter);
@@ -203,4 +209,4 @@ process.on('SIGINT', () => {
   });
 });
 
-export { app, db, runManager };
+export { app, db, runManager, approvalManager };

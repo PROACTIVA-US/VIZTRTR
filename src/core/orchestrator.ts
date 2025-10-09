@@ -277,11 +277,25 @@ export class VIZTRTROrchestrator {
     const risk = this.humanLoopAgent.assessRisk(filtered.approved);
     const estimatedCost = this.humanLoopAgent.estimateCost(filtered.approved);
 
-    const approval = await this.humanLoopAgent.requestApproval(filtered.approved, {
-      iteration: iterationNum,
-      risk,
-      estimatedCost,
-    });
+    let approval;
+    if (this.config.approvalCallback) {
+      // Use web-based approval via callback
+      const runId = path.basename(this.config.outputDir);
+      approval = await this.config.approvalCallback(
+        runId,
+        iterationNum,
+        filtered.approved,
+        risk,
+        estimatedCost
+      );
+    } else {
+      // Use terminal-based approval
+      approval = await this.humanLoopAgent.requestApproval(filtered.approved, {
+        iteration: iterationNum,
+        risk,
+        estimatedCost,
+      });
+    }
 
     if (!approval.approved) {
       throw new Error(`Human approval denied: ${approval.reason || 'No reason provided'}`);

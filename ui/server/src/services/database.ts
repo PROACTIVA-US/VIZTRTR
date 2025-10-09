@@ -90,12 +90,27 @@ export class VIZTRTRDatabase {
       )
     `);
 
+    // Create iteration_approvals table for human-in-the-loop workflow
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS iteration_approvals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_id TEXT NOT NULL,
+        iteration_id INTEGER NOT NULL,
+        action TEXT NOT NULL CHECK(action IN ('approve', 'reject', 'skip', 'modify')),
+        feedback TEXT,
+        reason TEXT,
+        created_at TEXT NOT NULL,
+        UNIQUE(run_id, iteration_id)
+      )
+    `);
+
     // Create indexes
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_runs_projectId ON runs(projectId);
       CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
       CREATE INDEX IF NOT EXISTS idx_iterations_runId ON iterations(runId);
       CREATE INDEX IF NOT EXISTS idx_iterations_status ON iterations(status);
+      CREATE INDEX IF NOT EXISTS idx_approvals_runId ON iteration_approvals(run_id);
     `);
   }
 

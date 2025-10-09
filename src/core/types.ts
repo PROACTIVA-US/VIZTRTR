@@ -160,6 +160,13 @@ export interface VIZTRTRConfig {
 
   // Layer 4: Human-in-the-loop
   humanLoop?: HumanLoopConfig;
+  approvalCallback?: (
+    runId: string,
+    iteration: number,
+    recommendations: Recommendation[],
+    risk: 'low' | 'medium' | 'high',
+    estimatedCost: number
+  ) => Promise<ApprovalResponse>;
 
   // Chrome DevTools MCP config
   useChromeDevTools?: boolean; // Enable hybrid scoring with real metrics
