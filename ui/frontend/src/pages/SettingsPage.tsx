@@ -34,7 +34,8 @@ function SettingsPage() {
       'gpt-3.5-turbo'
     ],
     google: [
-      'gemini-2.0-flash-exp',
+      'gemini-2.5-computer-use-preview-10-2025', // Computer Use (Implementation)
+      'gemini-2.0-flash-exp', // Latest Flash (Vision)
       'gemini-1.5-pro',
       'gemini-1.5-flash',
       'gemini-1.0-pro'
@@ -246,10 +247,11 @@ function SettingsPage() {
       <div className="mt-8 bg-blue-900/20 border border-blue-800/30 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-blue-300 mb-2">💡 Cost Optimization Tips</h3>
         <ul className="text-sm text-slate-300 space-y-1">
-          <li>• Use <strong>Gemini 2.0 Flash</strong> for evaluation (FREE during preview)</li>
-          <li>• Use <strong>GPT-4o-mini</strong> for implementation (only $0.15/$0.60 per 1M tokens)</li>
+          <li>• Use <strong>Gemini 2.0 Flash</strong> for vision (97% cheaper than Claude Opus)</li>
+          <li>• Use <strong>Gemini 2.5 Computer Use</strong> for implementation with browser automation</li>
+          <li>• Use <strong>GPT-4o-mini</strong> for evaluation (only $0.15/$0.60 per 1M tokens)</li>
           <li>• Enable caching to reduce redundant API calls by 50-70%</li>
-          <li>• Mix providers based on task complexity</li>
+          <li>• Mix providers based on task complexity and budget</li>
         </ul>
       </div>
     </div>
