@@ -114,15 +114,40 @@ export class ControlPanelAgentV2 {
         const expectedLine = plannedChange.lineContent.trim();
         const actualLineTrimmed = actualLine.trim();
 
+        let targetLineNumber = plannedChange.lineNumber;
+
         if (expectedLine !== actualLineTrimmed) {
-          console.warn(`         ⚠️  Line content mismatch:`);
+          console.warn(`         ⚠️  Line content mismatch at line ${plannedChange.lineNumber}:`);
           console.warn(`            Expected: ${expectedLine}`);
           console.warn(`            Actual:   ${actualLineTrimmed}`);
-          console.warn(`         Skipping this change`);
-          continue;
-        }
+          console.log(`         🔍 Searching nearby lines (±5)...`);
 
-        console.log(`         ✅ Line content verified`);
+          // Fallback: search nearby lines for the expected content
+          const searchRadius = 5;
+          const startLine = Math.max(0, plannedChange.lineNumber - 1 - searchRadius);
+          const endLine = Math.min(lines.length - 1, plannedChange.lineNumber - 1 + searchRadius);
+
+          let foundLine = -1;
+          for (let i = startLine; i <= endLine; i++) {
+            if (lines[i].trim() === expectedLine) {
+              foundLine = i + 1; // Convert back to 1-indexed
+              break;
+            }
+          }
+
+          if (foundLine === -1) {
+            console.warn(`         ❌ Could not find expected content in nearby lines`);
+            console.warn(`         Skipping this change for safety`);
+            continue;
+          }
+
+          console.log(
+            `         ✅ Found matching content at line ${foundLine} (offset: ${foundLine - plannedChange.lineNumber})`
+          );
+          targetLineNumber = foundLine;
+        } else {
+          console.log(`         ✅ Line content verified at line ${plannedChange.lineNumber}`);
+        }
 
         let result: MicroChangeResult;
 
@@ -131,7 +156,7 @@ export class ControlPanelAgentV2 {
             const params = plannedChange.params as UpdateClassNameParams;
             result = await this.toolkit.updateClassName({
               filePath: plannedChange.filePath,
-              lineNumber: plannedChange.lineNumber,
+              lineNumber: targetLineNumber,
               oldClassName: params.oldClassName,
               newClassName: params.newClassName,
             });
@@ -142,7 +167,7 @@ export class ControlPanelAgentV2 {
             const params = plannedChange.params as UpdateStyleValueParams;
             result = await this.toolkit.updateStyleValue({
               filePath: plannedChange.filePath,
-              lineNumber: plannedChange.lineNumber,
+              lineNumber: targetLineNumber,
               property: params.property,
               oldValue: params.oldValue,
               newValue: params.newValue,
@@ -154,7 +179,7 @@ export class ControlPanelAgentV2 {
             const params = plannedChange.params as UpdateTextContentParams;
             result = await this.toolkit.updateTextContent({
               filePath: plannedChange.filePath,
-              lineNumber: plannedChange.lineNumber,
+              lineNumber: targetLineNumber,
               oldText: params.oldText,
               newText: params.newText,
             });
@@ -165,7 +190,7 @@ export class ControlPanelAgentV2 {
             const params = plannedChange.params as AppendToClassNameParams;
             result = await this.toolkit.appendToClassName({
               filePath: plannedChange.filePath,
-              lineNumber: plannedChange.lineNumber,
+              lineNumber: targetLineNumber,
               classesToAdd: params.classesToAdd,
             });
             break;
