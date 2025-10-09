@@ -11,6 +11,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { DesignSpec, Recommendation, Changes, FileChange } from '../core/types';
 import { ControlPanelAgentV2 } from './specialized/ControlPanelAgentV2'; // V2: PRODUCTION READY ✅
+import { DiscoveryAgent } from './specialized/DiscoveryAgent'; // Two-Phase Workflow ✅
 // import { ControlPanelAgent } from './specialized/ControlPanelAgent'; // V1: DEPRECATED ❌
 import { TeleprompterAgent } from './specialized/TeleprompterAgent';
 import {
@@ -38,12 +39,15 @@ export class OrchestratorAgent {
 
   private apiKey: string;
   private teleprompterAgent: TeleprompterAgent;
+  private discoveryAgent: DiscoveryAgent;
   private discoveredFiles: DiscoveredFile[] = [];
   private fileCache = new Map<string, DiscoveredFile[]>();
 
   constructor(apiKey: string) {
     this.client = new Anthropic({ apiKey });
     this.apiKey = apiKey;
+    // Two-Phase Workflow: DiscoveryAgent + ControlPanelAgentV2
+    this.discoveryAgent = new DiscoveryAgent(apiKey);
     // Note: ControlPanelAgentV2 is instantiated per-request with projectPath
     this.teleprompterAgent = new TeleprompterAgent(apiKey);
   }
@@ -104,9 +108,8 @@ export class OrchestratorAgent {
 
     for (const decision of routingPlan.decisions) {
       if (decision.agent === 'ControlPanelAgent' && decision.recommendations.length > 0) {
-        // V2: Instantiate with projectPath (constrained tools architecture)
-        const controlPanelAgentV2 = new ControlPanelAgentV2(this.apiKey, projectPath);
-        tasks.push(controlPanelAgentV2.implement(decision.recommendations, projectPath));
+        // Two-Phase Workflow: Discovery → Execution
+        tasks.push(this.executeTwoPhaseWorkflow(decision.recommendations, projectPath));
       } else if (decision.agent === 'TeleprompterAgent' && decision.recommendations.length > 0) {
         tasks.push(this.teleprompterAgent.implement(decision.recommendations, projectPath));
       }
@@ -127,6 +130,56 @@ export class OrchestratorAgent {
       buildCommand: 'npm run build',
       testCommand: 'npm test',
     };
+  }
+
+  /**
+   * Execute two-phase workflow for Control Panel recommendations
+   * Phase 1: DiscoveryAgent creates precise change plans
+   * Phase 2: ControlPanelAgentV2 executes plans with constrained tools
+   */
+  private async executeTwoPhaseWorkflow(
+    recommendations: Recommendation[],
+    projectPath: string
+  ): Promise<FileChange[]> {
+    console.log(`\n   🔄 Two-Phase Workflow: ${recommendations.length} recommendations`);
+    console.log(`      Phase 1: Discovery (analyzing files, creating change plans)`);
+    console.log(`      Phase 2: Execution (applying changes with constrained tools)`);
+
+    const changes: FileChange[] = [];
+    const controlPanelAgentV2 = new ControlPanelAgentV2(this.apiKey, projectPath);
+
+    for (const rec of recommendations) {
+      try {
+        // Phase 1: Discovery - Create change plan
+        console.log(`\n   📍 Phase 1: DiscoveryAgent analyzing "${rec.title}"...`);
+        const changePlan = await this.discoveryAgent.createChangePlan(rec, projectPath);
+
+        if (!changePlan || changePlan.changes.length === 0) {
+          console.warn(`   ⚠️  No change plan created for: ${rec.title}`);
+          continue;
+        }
+
+        console.log(`   ✅ Change plan created with ${changePlan.changes.length} changes`);
+
+        // Phase 2: Execution - Execute change plan
+        console.log(`   📍 Phase 2: ControlPanelAgentV2 executing change plan...`);
+        const fileChange = await controlPanelAgentV2.executeChangePlan(changePlan, projectPath);
+
+        if (fileChange) {
+          changes.push(fileChange);
+          console.log(`   ✅ Changes applied successfully`);
+        } else {
+          console.warn(`   ⚠️  Change plan execution failed`);
+        }
+      } catch (error) {
+        console.error(`   ❌ Two-phase workflow error for "${rec.title}":`, error);
+      }
+    }
+
+    console.log(
+      `\n   🎯 Two-Phase Workflow Complete: ${changes.length}/${recommendations.length} recommendations implemented`
+    );
+    return changes;
   }
 
   /**

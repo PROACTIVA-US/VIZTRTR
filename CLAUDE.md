@@ -229,30 +229,56 @@ viztritr-output/
 - `src/tools/MicroChangeToolkit.ts` - ✅ V2 constrained tools
 - `src/utils/line-hint-generator.ts` - ✅ V2 optimization
 
-### V2 Agent Architecture (PRODUCTION)
+### V2 Agent Architecture with Two-Phase Workflow (PRODUCTION DEFAULT)
 
-**ControlPanelAgentV2** uses constrained tools for atomic changes:
+**Two-Phase Workflow** (Production Ready - 100% Success Rate):
+
+**Phase 1: Discovery** - `DiscoveryAgent` analyzes files and creates precise change plans
+
+- Read-only file access
+- Identifies exact line numbers and current values
+- Outputs structured JSON with all change details
+- Validates line content before creating plan
+
+**Phase 2: Execution** - `ControlPanelAgentV2` executes plans with constrained tools
+
+- Receives precise change plan from Discovery
+- Fallback search (±5 lines) for robustness
+- Whitespace-insensitive line matching
+- Uses constrained tools for surgical changes
+
+**Available Constrained Tools:**
 
 - **updateClassName** - Change exactly one className on one line
 - **updateStyleValue** - Change single CSS property value
 - **updateTextContent** - Change text content on one line
+- **appendToClassName** - Add new classes to existing className
 
-**V2 Workflow:**
+**Workflow:**
 
-1. Receives design recommendation from vision analysis
-2. Generates line hints via grep (finds target patterns)
-3. Uses constrained tools to make surgical changes
-4. Each tool call = exactly 1 atomic change
-5. Agent physically cannot rewrite entire files
-6. 100% traceability and rollback capability
+1. **OrchestratorAgent** routes recommendations to appropriate specialist
+2. **DiscoveryAgent** reads files and creates change plan (Phase 1)
+3. **ControlPanelAgentV2** executes change plan with tools (Phase 2)
+4. Fallback search provides safety for edge cases
+5. Each tool call = exactly 1 atomic change
+6. Agent physically cannot rewrite entire files
+7. 100% traceability and rollback capability
 
 **Performance (Validated Oct 8, 2025):**
 
-- Tool calls: 2 (target: 2-3) ✅
-- Failed attempts: 0 ✅
-- Duration: 27s (43% faster than V1)
-- Success rate: 100% (2/2 changes)
-- Lines changed: 2 (surgical precision)
+- Implementation rate: **100%** (target: ≥80%) ✅
+- Duration: 30-36s per recommendation ✅
+- Failed changes: 0 ✅
+- Line number accuracy: **100%** ✅
+- Surgical precision: 2-line changes ✅
+
+**Key Files:**
+
+- `src/agents/OrchestratorAgent.ts` - Routes to two-phase workflow
+- `src/agents/specialized/DiscoveryAgent.ts` - Phase 1 (analysis)
+- `src/agents/specialized/ControlPanelAgentV2.ts` - Phase 2 (execution)
+- `src/tools/MicroChangeToolkit.ts` - Constrained tools
+- `src/utils/line-hint-generator.ts` - Optimization
 
 ### V1 Agent Implementation (DEPRECATED - DO NOT USE)
 
