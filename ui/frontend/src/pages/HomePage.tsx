@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen bg-slate-900 pt-32">
+    <div className="flex flex-col items-center justify-start min-h-screen bg-slate-900 pt-16">
       {/* Hero Section */}
       <div className="text-center mb-8">
         <h1 className="text-6xl font-bold mb-6 text-gradient">VIZTRTR</h1>
