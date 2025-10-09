@@ -94,17 +94,12 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
               <p className="text-slate-400">Run ID: {runId}</p>
             </div>
             <div className="flex items-center gap-4">
-              <div
-                className={`px-3 py-1.5 rounded-full text-sm font-medium border ${riskColors[risk]}`}
-              >
+              <div className={`px-3 py-1.5 rounded-full text-sm font-medium border ${riskColors[risk]}`}>
                 <RiskIcon className="w-4 h-4 inline mr-1.5" />
                 {risk.toUpperCase()} RISK
               </div>
               <div className="text-sm text-slate-400">
-                Est. Cost:{' '}
-                <span className="text-white font-bold text-lg">
-                  ${(estimatedCost / 100).toFixed(2)}
-                </span>
+                Est. Cost: <span className="text-white font-medium">${(estimatedCost / 100).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -171,7 +166,7 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
                         </div>
                         <div className="text-right ml-4">
                           <div className="text-xs text-slate-500">Impact/Effort</div>
-                          <div className="text-white font-bold text-lg">
+                          <div className="text-white font-medium">
                             {rec.impact}/10 · {rec.effort}/10
                           </div>
                           <div className="text-xs text-green-400">
@@ -188,39 +183,23 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
               {scoreComparison && scoreComparison.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-3">Score Comparison</h3>
-                  <div
-                    className="grid grid-cols-2 gap-3"
-                    role="list"
-                    aria-label="Score comparison statistics"
-                  >
+                  <div className="grid grid-cols-2 gap-3">
                     {scoreComparison.map((score, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-slate-900 p-3 rounded-lg border border-slate-700 shadow-sm"
-                        role="listitem"
-                        aria-label="Score metric"
-                      >
+                      <div key={idx} className="bg-slate-900 p-3 rounded-lg border border-slate-700 shadow-sm">
                         <div className="text-sm text-slate-400 mb-1">{score.dimension}</div>
                         <div className="flex items-center justify-between">
-                          <div className="text-white font-bold text-base">
+                          <div className="text-white font-medium">
                             {score.before.toFixed(1)} → {score.after.toFixed(1)}
                           </div>
-                          <div
-                            className={`flex items-center text-sm font-medium ${
-                              score.delta > 0
-                                ? 'text-green-400'
-                                : score.delta < 0
-                                  ? 'text-red-400'
-                                  : 'text-slate-400'
-                            }`}
-                          >
+                          <div className={`flex items-center text-sm font-medium ${
+                            score.delta > 0 ? 'text-green-400' : score.delta < 0 ? 'text-red-400' : 'text-slate-400'
+                          }`}>
                             {score.delta > 0 ? (
                               <TrendingUp className="w-4 h-4 mr-1" />
                             ) : score.delta < 0 ? (
                               <TrendingDown className="w-4 h-4 mr-1" />
                             ) : null}
-                            {score.delta > 0 ? '+' : ''}
-                            {score.delta.toFixed(1)}
+                            {score.delta > 0 ? '+' : ''}{score.delta.toFixed(1)}
                           </div>
                         </div>
                       </div>
@@ -238,14 +217,22 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
                 <div>
                   <h3 className="text-sm font-semibold text-white mb-2">Before</h3>
                   <div className="bg-slate-900 rounded-lg border border-slate-700 p-2">
-                    <img src={beforeScreenshot} alt="Before" className="w-full rounded" />
+                    <img
+                      src={beforeScreenshot}
+                      alt="Before"
+                      className="w-full rounded"
+                    />
                   </div>
                 </div>
                 {afterScreenshot && (
                   <div>
                     <h3 className="text-sm font-semibold text-white mb-2">After (Preview)</h3>
                     <div className="bg-slate-900 rounded-lg border border-slate-700 p-2">
-                      <img src={afterScreenshot} alt="After" className="w-full rounded" />
+                      <img
+                        src={afterScreenshot}
+                        alt="After"
+                        className="w-full rounded"
+                      />
                     </div>
                   </div>
                 )}
@@ -278,7 +265,7 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
             </label>
             <textarea
               value={feedback}
-              onChange={e => setFeedback(e.target.value)}
+              onChange={(e) => setFeedback(e.target.value)}
               placeholder="Add any comments or feedback about these changes..."
               className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
               rows={2}
@@ -302,7 +289,7 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
               </button>
               <button
                 onClick={() => onApprove(feedback || undefined)}
-                className="px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800"
+                className="px-6 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all flex items-center gap-2"
               >
                 <CheckCircle className="w-5 h-5" />
                 Approve & Continue
@@ -322,7 +309,7 @@ export const IterationReview: React.FC<IterationReviewProps> = ({
             </p>
             <textarea
               value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
+              onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Please provide a reason for rejection..."
               className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-red-500 mb-4 resize-none"
               rows={3}

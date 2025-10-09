@@ -91,7 +91,7 @@ export function LiveBuildView() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleStop}
-            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors"
           >
             ⏹ Stop
           </motion.button>
@@ -201,8 +201,6 @@ export function LiveBuildView() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-slate-800 rounded-lg p-6 shadow-xl shadow-blue-500/20 border border-slate-700"
-            role="region"
-            aria-label="Overall quality score statistics"
           >
             <h3 className="text-xl font-semibold text-slate-100 mb-4">Overall Quality Score</h3>
 
@@ -261,19 +259,11 @@ export function LiveBuildView() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-slate-800 rounded-lg p-6"
-          role="region"
-          aria-labelledby="quality-dimensions-heading"
+          className="bg-slate-800 rounded-lg p-6 role-region aria-labelledby"
         >
-          <h3 id="quality-dimensions-heading" className="text-lg font-semibold text-slate-100 mb-4">
-            Quality Dimensions
-          </h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-4 role-heading aria-level-3">Quality Dimensions</h3>
 
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-            role="list"
-            aria-label="Quality dimension scores"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 role-list">
             {currentIterationData.scores.map((dimension, idx) => {
               const isHighest =
                 dimension.score === Math.max(...currentIterationData.scores.map(d => d.score));
@@ -284,17 +274,16 @@ export function LiveBuildView() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * idx, duration: 0.3 }}
-                  className="space-y-2"
-                  role="listitem"
+                  className="space-y-2 role-listitem focus-visible:outline-2 focus-visible:outline-blue-500"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-200 font-medium text-base">
+                    <span className="text-sm text-slate-300 font-medium text-base">
                       {dimension.name}
                       {isHighest && (
                         <span className="ml-2 text-xs text-yellow-400">⭐ Highest</span>
                       )}
                     </span>
-                    <span className="text-2xl font-bold text-white">
+                    <span className="text-xl font-semibold text-slate-100">
                       {dimension.score.toFixed(1)}
                     </span>
                   </div>
