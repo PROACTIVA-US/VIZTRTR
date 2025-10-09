@@ -1,6 +1,6 @@
 # VIZTRTR Project Memory
 
-**Last Updated:** 2025-10-08 17:05:00
+**Last Updated:** 2025-10-08 23:59:00
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:** https://github.com/PROACTIVA-US/VIZTRTR.git
 
@@ -1018,6 +1018,60 @@ npm run test:performia
   - Begin Phase 1 (Week 1): Implement TypographyExpertAgent
   - Set up feature branch in phase1-scoring worktree
   - Start 8-week development cycle
+
+### October 08, 2025 - V2 Production Validation & Two-Phase Architecture Discovery
+
+- Branch: main
+- Status: ⚠️ **Partial Success** - Critical architectural findings documented
+- **What was accomplished:**
+  1. ✅ **Fixed V2 production bugs**
+     - Fixed line hint generator crash (undefined dimension/description check)
+     - Installed missing lucide-react dependency in ui/frontend
+     - Ensured build system fully operational for testing
+  2. ✅ **Implemented appendToClassName tool**
+     - Added AppendClassNameChange interface to MicroChangeToolkit.ts
+     - Created appendToClassName method supporting class addition (vs replacement)
+     - Added tool definition to micro-change-tools.ts (SDK integration)
+     - Integrated into ControlPanelAgentV2 tool execution handler
+  3. ✅ **Discovered V2 architectural limitation**
+     - Ran V2 line hint validation test (v2-line-hint-validation.ts)
+     - Agent hit `end_turn` requesting file contents (cannot make changes)
+     - **Root cause:** Constrained tools architecture requires file access
+     - Agent needs to identify exact line numbers and existing values
+     - Tool-only API prevents reading files for target identification
+  4. ✅ **Validated two-phase workflow necessity**
+     - Confirmed that V2 alone is insufficient for blind file modification
+     - Two-phase architecture required: Discovery agent (V1, read-only) + Execution agent (V2, constrained tools)
+     - Discovery agent outputs change plans with exact line numbers
+     - Execution agent applies changes using constrained tools
+- **Test Results:**
+  - V2 validation on VIZTRTR UI (22 components, 5 recommendations)
+  - Implementation rate: 0% (0/5 changes made)
+  - Agent behavior: Requested file contents instead of making changes
+  - Tool calls: 0 (agent cannot proceed without file access)
+- **Files created:**
+  - `examples/v2-line-hint-validation.ts` - Validation test script
+  - `docs/V2_PRODUCTION_VALIDATION_2025_10_08.md` - Comprehensive findings report
+  - `v2-append-test.log` - Test execution log
+- **Files modified:**
+  - `src/utils/line-hint-generator.ts:153` - Added safety check for undefined values
+  - `ui/frontend/package.json` - Added lucide-react dependency
+  - `src/tools/MicroChangeToolkit.ts:11-90` - Added appendToClassName method
+  - `src/tools/micro-change-tools.ts:128-165,179` - Added tool definition
+  - `src/agents/specialized/ControlPanelAgentV2.ts:143-146,290` - Integrated tool
+- **Key findings:**
+  1. **V2 constrained tools work perfectly** - When given exact line numbers
+  2. **File access is non-negotiable** - Agent must identify targets before applying tools
+  3. **Two-phase workflow is the solution** - Discovery phase provides targets, execution phase applies changes
+  4. **Line hints insufficient alone** - Need actual file content for context and validation
+- **Commits:**
+  - `dcd70ac` - fix: V2 production validation findings and bug fixes
+  - `f39c299` - feat: add appendToClassName tool for focus indicators
+- **Next steps:**
+  - Implement two-phase workflow (Discovery + Execution agents) - estimated 2-3 hours
+  - Create DiscoveryAgent (V1 variant, read-only, outputs JSON)
+  - Modify ControlPanelAgentV2 to accept change plans from discovery
+  - Test integrated workflow with target: 80%+ implementation rate
 
 ### October 03, 2025 - Migration to unified session system v3.0
 
