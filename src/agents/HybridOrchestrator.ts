@@ -11,10 +11,10 @@
  * 3. Feedback loop for continuous improvement
  */
 
-import { DiscoveryAgent } from './specialized/DiscoveryAgent';
+import { DiscoveryAgent, ChangePlan } from './specialized/DiscoveryAgent';
 import { ControlPanelAgentV2 } from './specialized/ControlPanelAgentV2';
 import { UXValidationAgent, UXValidationReport } from './specialized/UXValidationAgent';
-import { Recommendation, Changes } from '../core/types';
+import { Recommendation, Changes, FileChange } from '../core/types';
 
 export interface HybridExecutionResult {
   phase1: {
@@ -80,12 +80,10 @@ export class HybridOrchestrator {
     this.config = {
       ...config,
       phase1: {
-        enabled: true,
         waitForHMR: 3000,
         ...config.phase1,
       },
       phase2: {
-        enabled: true,
         testWCAG: true,
         testKeyboard: true,
         detectRegression: true,
@@ -98,7 +96,7 @@ export class HybridOrchestrator {
 
     // Initialize agents
     this.discoveryAgent = new DiscoveryAgent(config.anthropicApiKey);
-    this.controlPanelAgent = new ControlPanelAgentV2(config.anthropicApiKey);
+    this.controlPanelAgent = new ControlPanelAgentV2(config.anthropicApiKey, config.projectPath);
     this.uxValidationAgent = new UXValidationAgent(config.geminiApiKey);
 
     if (config.verbose) {
@@ -141,7 +139,7 @@ export class HybridOrchestrator {
 
         try {
           // Discovery phase
-          const changePlan = await this.discoveryAgent.analyzeAndPlanChanges(
+          const changePlan: ChangePlan | null = await this.discoveryAgent.createChangePlan(
             recommendation,
             this.config.projectPath
           );
@@ -158,18 +156,31 @@ export class HybridOrchestrator {
           }
 
           // Execution phase
-          const changes = await this.controlPanelAgent.executeChangePlan(
+          const changes: FileChange | null = await this.controlPanelAgent.executeChangePlan(
             changePlan,
             this.config.projectPath
           );
 
+          // Handle null return
+          if (!changes) {
+            console.warn(`⚠️  Execution returned no changes for: ${recommendation.title}`);
+            phase1Results.push({
+              recommendation,
+              changes: { files: [], summary: 'Execution returned no changes' },
+              success: false,
+              error: 'Execution returned null',
+            });
+            continue;
+          }
+
+          // Wrap FileChange in Changes structure
           phase1Results.push({
             recommendation,
-            changes,
-            success: changes.files.length > 0,
+            changes: { files: [changes], summary: 'Single file change' },
+            success: true,
           });
 
-          console.log(`✅ Implemented: ${recommendation.title} (${changes.files.length} files modified)`);
+          console.log(`✅ Implemented: ${recommendation.title} (1 file modified)`);
         } catch (error: any) {
           console.error(`❌ Failed to implement: ${recommendation.title}`);
           console.error(`   Error: ${error.message}`);
@@ -192,7 +203,9 @@ export class HybridOrchestrator {
       phase1Duration = Date.now() - phase1Start;
 
       const successCount = phase1Results.filter(r => r.success).length;
-      console.log(`\n✅ Phase 1 Complete: ${successCount}/${recommendations.length} implemented in ${phase1Duration}ms`);
+      console.log(
+        `\n✅ Phase 1 Complete: ${successCount}/${recommendations.length} implemented in ${phase1Duration}ms`
+      );
     }
 
     // Phase 2: UX Validation
@@ -207,17 +220,14 @@ export class HybridOrchestrator {
       console.log('-'.repeat(80) + '\n');
 
       try {
-        validationReport = await this.uxValidationAgent.validate(
-          this.config.frontendUrl,
-          {
-            beforeScreenshot,
-            testWCAG: this.config.phase2.testWCAG,
-            testKeyboard: this.config.phase2.testKeyboard,
-            testFlows: this.config.phase2.userFlows || [],
-            detectRegression: this.config.phase2.detectRegression,
-            headless: this.config.phase2.headless,
-          }
-        );
+        validationReport = await this.uxValidationAgent.validate(this.config.frontendUrl, {
+          beforeScreenshot,
+          testWCAG: this.config.phase2.testWCAG,
+          testKeyboard: this.config.phase2.testKeyboard,
+          testFlows: this.config.phase2.userFlows || [],
+          detectRegression: this.config.phase2.detectRegression,
+          headless: this.config.phase2.headless,
+        });
 
         phase2Duration = Date.now() - phase2Start;
 
@@ -295,7 +305,8 @@ export class HybridOrchestrator {
 
     // Generate summary
     const overallSuccess = phase1Results.some(r => r.success) && validationReport.overallPassed;
-    const needsIteration = !validationReport.overallPassed && validationReport.recommendations.length > 0;
+    const needsIteration =
+      !validationReport.overallPassed && validationReport.recommendations.length > 0;
 
     const summary = this.generateSummary(
       phase1Results,
@@ -324,7 +335,14 @@ export class HybridOrchestrator {
         dimension: r.dimension,
         title: r.title,
         description: r.description,
-        impact: r.priority === 'critical' ? 10 : r.priority === 'high' ? 8 : r.priority === 'medium' ? 5 : 3,
+        impact:
+          r.priority === 'critical'
+            ? 10
+            : r.priority === 'high'
+              ? 8
+              : r.priority === 'medium'
+                ? 5
+                : 3,
         effort: 3, // UX fixes typically moderate effort
       })),
       summary,
@@ -394,8 +412,25 @@ export class HybridOrchestrator {
     const finalValidation = iterations[iterations.length - 1]?.phase2.validationReport || {
       timestamp: new Date(),
       frontendUrl: this.config.frontendUrl,
-      wcagCompliance: { compliant: false, totalViolations: 0, criticalCount: 0, seriousCount: 0, moderateCount: 0, minorCount: 0, violations: [], passes: [], incomplete: [] },
-      keyboardNavigation: { passed: false, tabOrder: [], focusVisible: false, escapeWorks: false, enterWorks: false, issues: [] },
+      wcagCompliance: {
+        compliant: false,
+        totalViolations: 0,
+        criticalCount: 0,
+        seriousCount: 0,
+        moderateCount: 0,
+        minorCount: 0,
+        violations: [],
+        passes: [],
+        incomplete: [],
+      },
+      keyboardNavigation: {
+        passed: false,
+        tabOrder: [],
+        focusVisible: false,
+        escapeWorks: false,
+        enterWorks: false,
+        issues: [],
+      },
       userFlows: [],
       visualRegression: { detected: false, details: 'No iterations completed' },
       overallPassed: false,
@@ -410,8 +445,12 @@ export class HybridOrchestrator {
     console.log(`Total iterations: ${iterations.length}`);
     console.log(`Total duration: ${(totalDuration / 1000).toFixed(1)}s`);
     console.log(`WCAG compliant: ${finalValidation.wcagCompliance.compliant ? '✅ YES' : '❌ NO'}`);
-    console.log(`Keyboard navigation: ${finalValidation.keyboardNavigation.passed ? '✅ PASSED' : '❌ FAILED'}`);
-    console.log(`Visual regressions: ${finalValidation.visualRegression.detected ? '❌ DETECTED' : '✅ NONE'}`);
+    console.log(
+      `Keyboard navigation: ${finalValidation.keyboardNavigation.passed ? '✅ PASSED' : '❌ FAILED'}`
+    );
+    console.log(
+      `Visual regressions: ${finalValidation.visualRegression.detected ? '❌ DETECTED' : '✅ NONE'}`
+    );
     console.log('█'.repeat(80) + '\n');
 
     return {
@@ -443,17 +482,27 @@ export class HybridOrchestrator {
 
     // Phase 2 summary
     lines.push(`Phase 2:`);
-    lines.push(`  WCAG:     ${validationReport.wcagCompliance.compliant ? '✅ COMPLIANT' : `❌ ${validationReport.wcagCompliance.totalViolations} violations`}`);
-    lines.push(`  Keyboard: ${validationReport.keyboardNavigation.passed ? '✅ PASSED' : `❌ ${validationReport.keyboardNavigation.issues.length} issues`}`);
-    lines.push(`  Flows:    ${validationReport.userFlows.length === 0 ? 'N/A' : validationReport.userFlows.every(f => f.passed) ? '✅ PASSED' : '❌ FAILED'}`);
-    lines.push(`  Visual:   ${validationReport.visualRegression.detected ? '❌ REGRESSION' : '✅ NO REGRESSION'}`);
+    lines.push(
+      `  WCAG:     ${validationReport.wcagCompliance.compliant ? '✅ COMPLIANT' : `❌ ${validationReport.wcagCompliance.totalViolations} violations`}`
+    );
+    lines.push(
+      `  Keyboard: ${validationReport.keyboardNavigation.passed ? '✅ PASSED' : `❌ ${validationReport.keyboardNavigation.issues.length} issues`}`
+    );
+    lines.push(
+      `  Flows:    ${validationReport.userFlows.length === 0 ? 'N/A' : validationReport.userFlows.every(f => f.passed) ? '✅ PASSED' : '❌ FAILED'}`
+    );
+    lines.push(
+      `  Visual:   ${validationReport.visualRegression.detected ? '❌ REGRESSION' : '✅ NO REGRESSION'}`
+    );
     lines.push('');
 
     // Overall status
     if (overallSuccess) {
       lines.push('✅ Status: SUCCESS - All tests passed');
     } else if (needsIteration) {
-      lines.push(`⚠️  Status: NEEDS ITERATION - ${validationReport.recommendations.length} issues found`);
+      lines.push(
+        `⚠️  Status: NEEDS ITERATION - ${validationReport.recommendations.length} issues found`
+      );
     } else {
       lines.push('❌ Status: FAILED - No improvements possible');
     }

@@ -104,7 +104,9 @@ export class UXValidationAgent {
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 
     if (!this.apiKey) {
-      throw new Error('Gemini API key is required for UX validation. Set GEMINI_API_KEY or GOOGLE_API_KEY env var.');
+      throw new Error(
+        'Gemini API key is required for UX validation. Set GEMINI_API_KEY or GOOGLE_API_KEY env var.'
+      );
     }
 
     // Use Gemini 2.0 Flash for vision analysis
@@ -163,6 +165,7 @@ export class UXValidationAgent {
       await this.page.waitForFunction(() => typeof (window as any).axe !== 'undefined');
 
       // Run axe accessibility tests
+
       const results = await this.page.evaluate(() => {
         return (window as any).axe.run({
           runOnly: {
@@ -196,7 +199,9 @@ export class UXValidationAgent {
       const compliant = criticalCount === 0 && seriousCount === 0;
 
       console.log(`✅ WCAG tests complete: ${violations.length} violations found`);
-      console.log(`   Critical: ${criticalCount}, Serious: ${seriousCount}, Moderate: ${moderateCount}, Minor: ${minorCount}`);
+      console.log(
+        `   Critical: ${criticalCount}, Serious: ${seriousCount}, Moderate: ${moderateCount}, Minor: ${minorCount}`
+      );
 
       return {
         compliant,
@@ -253,15 +258,17 @@ export class UXValidationAgent {
           if (!el || el === document.body) return null;
 
           // Get CSS selector
-          const selector = el.tagName.toLowerCase() +
+          const selector =
+            el.tagName.toLowerCase() +
             (el.id ? `#${el.id}` : '') +
             (el.className ? `.${el.className.split(' ').join('.')}` : '');
 
           // Check if focus outline is visible
           const styles = window.getComputedStyle(el);
-          const hasOutline = styles.outline !== 'none' &&
-                            styles.outlineWidth !== '0px' &&
-                            styles.outlineColor !== 'transparent';
+          const hasOutline =
+            styles.outline !== 'none' &&
+            styles.outlineWidth !== '0px' &&
+            styles.outlineColor !== 'transparent';
           const hasRing = styles.boxShadow.includes('rgb'); // Tailwind ring-*
 
           return {
@@ -286,7 +293,13 @@ export class UXValidationAgent {
         if (!button) return true; // No button to test
 
         let clicked = false;
-        button.addEventListener('click', () => { clicked = true; }, { once: true });
+        button.addEventListener(
+          'click',
+          () => {
+            clicked = true;
+          },
+          { once: true }
+        );
         button.focus();
 
         // Simulate Enter key
@@ -308,7 +321,13 @@ export class UXValidationAgent {
         let closed = false;
         const closeButton = modal.querySelector('[aria-label*="close" i]');
         if (closeButton) {
-          (closeButton as HTMLElement).addEventListener('click', () => { closed = true; }, { once: true });
+          (closeButton as HTMLElement).addEventListener(
+            'click',
+            () => {
+              closed = true;
+            },
+            { once: true }
+          );
         }
 
         // Simulate Escape key
@@ -353,7 +372,12 @@ export class UXValidationAgent {
   /**
    * Test user flows (e.g., form submission, navigation)
    */
-  async testUserFlows(flows: Array<{ name: string; steps: Array<{ action: string; selector?: string; value?: string }> }>): Promise<UserFlowTest[]> {
+  async testUserFlows(
+    flows: Array<{
+      name: string;
+      steps: Array<{ action: string; selector?: string; value?: string }>;
+    }>
+  ): Promise<UserFlowTest[]> {
     if (!this.page) {
       throw new Error('Browser not initialized');
     }
@@ -390,7 +414,7 @@ export class UXValidationAgent {
             action: step.action,
             selector: step.selector,
             success: false,
-            error: error.message
+            error: error.message,
           });
           flowPassed = false;
           break; // Stop flow on first error
@@ -432,7 +456,10 @@ export class UXValidationAgent {
   /**
    * Detect visual regression by comparing screenshots
    */
-  async detectVisualRegression(beforeScreenshot: string, afterScreenshot: string): Promise<{ detected: boolean; details: string }> {
+  async detectVisualRegression(
+    beforeScreenshot: string,
+    afterScreenshot: string
+  ): Promise<{ detected: boolean; details: string }> {
     console.log('🔍 Checking for visual regressions...');
 
     try {
@@ -478,7 +505,9 @@ RULES:
 
       const parsed = JSON.parse(jsonMatch[0]);
 
-      console.log(`✅ Visual regression check: ${parsed.regressionDetected ? 'REGRESSION DETECTED' : 'PASSED'}`);
+      console.log(
+        `✅ Visual regression check: ${parsed.regressionDetected ? 'REGRESSION DETECTED' : 'PASSED'}`
+      );
 
       return {
         detected: parsed.regressionDetected,
@@ -583,7 +612,11 @@ RULES:
       }
 
       // Generate recommendations from violations
-      const recommendations = this.generateRecommendations(wcagCompliance, keyboardNavigation, userFlows);
+      const recommendations = this.generateRecommendations(
+        wcagCompliance,
+        keyboardNavigation,
+        userFlows
+      );
 
       // Determine overall pass/fail
       const overallPassed =
@@ -595,10 +628,18 @@ RULES:
       console.log(`\n${'='.repeat(60)}`);
       console.log(`UX VALIDATION ${overallPassed ? '✅ PASSED' : '❌ FAILED'}`);
       console.log(`${'='.repeat(60)}`);
-      console.log(`WCAG Compliance:       ${wcagCompliance.compliant ? '✅ PASSED' : `❌ FAILED (${wcagCompliance.totalViolations} violations)`}`);
-      console.log(`Keyboard Navigation:   ${keyboardNavigation.passed ? '✅ PASSED' : `❌ FAILED (${keyboardNavigation.issues.length} issues)`}`);
-      console.log(`User Flows:            ${userFlows.length === 0 ? 'N/A' : userFlows.every(f => f.passed) ? '✅ PASSED' : `❌ FAILED`}`);
-      console.log(`Visual Regression:     ${visualRegression.detected ? '❌ DETECTED' : '✅ NONE'}`);
+      console.log(
+        `WCAG Compliance:       ${wcagCompliance.compliant ? '✅ PASSED' : `❌ FAILED (${wcagCompliance.totalViolations} violations)`}`
+      );
+      console.log(
+        `Keyboard Navigation:   ${keyboardNavigation.passed ? '✅ PASSED' : `❌ FAILED (${keyboardNavigation.issues.length} issues)`}`
+      );
+      console.log(
+        `User Flows:            ${userFlows.length === 0 ? 'N/A' : userFlows.every(f => f.passed) ? '✅ PASSED' : `❌ FAILED`}`
+      );
+      console.log(
+        `Visual Regression:     ${visualRegression.detected ? '❌ DETECTED' : '✅ NONE'}`
+      );
       console.log(`Recommendations:       ${recommendations.length}`);
       console.log(`${'='.repeat(60)}\n`);
 
@@ -634,9 +675,14 @@ RULES:
         dimension: 'accessibility',
         title: `Fix ${violation.rule}: ${violation.description}`,
         description: `WCAG ${violation.wcagReference} violation. ${violation.nodes.length} element(s) affected. ${violation.nodes[0]?.failureSummary || ''}`,
-        priority: violation.impact === 'critical' ? 'critical' :
-                  violation.impact === 'serious' ? 'high' :
-                  violation.impact === 'moderate' ? 'medium' : 'low',
+        priority:
+          violation.impact === 'critical'
+            ? 'critical'
+            : violation.impact === 'serious'
+              ? 'high'
+              : violation.impact === 'moderate'
+                ? 'medium'
+                : 'low',
       });
     }
 
