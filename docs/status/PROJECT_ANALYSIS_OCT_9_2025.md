@@ -19,17 +19,20 @@
 ### ✅ YES - Strong Product-Market Fit
 
 **Core Value Proposition:**
+
 - Autonomous UI/UX improvement without hiring designers
 - AI vision analysis + code implementation + verification loop
 - 8-dimension scoring system (accessibility-first)
 - Learns from past attempts via memory system
 
 **Market Position:**
+
 - **Competitors**: Mostly manual (Figma, Sketch) or simple linters (Lighthouse, axe)
 - **Differentiation**: End-to-end autonomous improvement with code generation
 - **Use Cases**: Pre-launch QA, accessibility audits, design system compliance
 
 **Technical Foundation:**
+
 - 4,206+ files (robust codebase)
 - Multi-agent architecture (Orchestrator, Reflection, Verification, specialized agents)
 - Plugin system (extensible for multiple AI providers)
@@ -79,6 +82,7 @@
 ### Current Gemini Integration (Today's Work)
 
 **✅ Implemented:**
+
 - `src/plugins/vision-gemini.ts` - Vision analysis with Gemini 2.0 Flash
 - `src/plugins/implementation-gemini.ts` - Implementation with Gemini 2.5 Computer Use Preview
 - Multi-provider configuration support
@@ -86,6 +90,7 @@
 - Demo script (`examples/gemini-demo.ts`)
 
 **Current Implementation Approach:**
+
 ```typescript
 // Gemini generates file changes via JSON plan
 const plan = await this.generateImplementationPlan(spec, projectPath, recommendation);
@@ -100,6 +105,7 @@ const fileChanges = await this.executeFileChanges(plan, projectPath);
 
 **Current**: Gemini generates JSON plans, VIZTRTR executes file changes
 **Potential**: Gemini Computer Use can directly:
+
 - Navigate browser UI
 - Click elements
 - Fill forms
@@ -107,6 +113,7 @@ const fileChanges = await this.executeFileChanges(plan, projectPath);
 - Execute file operations
 
 **Recommendation**: Create hybrid mode where Gemini Computer Use:
+
 1. Uses browser automation for visual validation
 2. Directly edits files via Computer Use API
 3. Verifies changes by re-screenshotting
@@ -123,6 +130,7 @@ const result = await this.model.generateContent([prompt, screenshot]);
 ```
 
 **Integration Opportunity**:
+
 ```typescript
 // Proposed: src/plugins/gemini-computer-use.ts
 export class GeminiComputerUsePlugin implements VIZTRTRPlugin {
@@ -141,12 +149,14 @@ export class GeminiComputerUsePlugin implements VIZTRTRPlugin {
 **File**: `src/plugins/gemini-computer-use-full.ts`
 
 **Capabilities**:
+
 - Visual UI testing (click buttons, verify text changes)
 - Real-time feedback loop (edit → reload → verify)
 - Multi-step workflows (e.g., "improve form, test submission")
 - Screenshot diffing for verification
 
 **Benefits**:
+
 - Higher confidence (visual proof of changes)
 - Catches CSS conflicts immediately
 - Tests interactivity, not just appearance
@@ -167,12 +177,14 @@ ANTHROPIC_API_KEY=sk-ant-api03-***[REDACTED]***
 
 **Status**: ✅ Active and working
 **Models Available**:
+
 - claude-opus-4-20250514 (vision)
 - claude-sonnet-4-20250514 (implementation)
 - claude-sonnet-4.5-20250402 (evaluation)
 - claude-haiku-4-20250402 (fast operations)
 
 **Used For**:
+
 - Vision analysis (default)
 - Code implementation with extended thinking
 - UI evaluation
@@ -187,13 +199,16 @@ ANTHROPIC_API_KEY=sk-ant-api03-***[REDACTED]***
 
 **Status**: ❌ NOT CONFIGURED
 **Required For**:
+
 - Gemini 2.0 Flash (vision)
 - Gemini 2.5 Computer Use Preview (implementation)
 - Gemini 1.5 Pro/Flash (evaluation)
 
 **How to Fix**:
-1. Get key from: https://makersuite.google.com/app/apikey
+
+1. Get key from: <https://makersuite.google.com/app/apikey>
 2. Add to `.env`:
+
    ```bash
    GEMINI_API_KEY=your-actual-key-here
    # or
@@ -209,13 +224,16 @@ ANTHROPIC_API_KEY=sk-ant-api03-***[REDACTED]***
 
 **Status**: ❌ NOT CONFIGURED
 **Required For**:
+
 - GPT-4o (vision - future)
 - GPT-4 Turbo (implementation - future)
 - GPT-4o-mini (fast operations - future)
 
 **How to Fix**:
-1. Get key from: https://platform.openai.com/api-keys
+
+1. Get key from: <https://platform.openai.com/api-keys>
 2. Add to `.env`:
+
    ```bash
    OPENAI_API_KEY=sk-proj-your-actual-key-here
    ```
@@ -223,6 +241,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-***[REDACTED]***
 ### Dependencies Check
 
 **✅ All Required Packages Installed**:
+
 ```json
 {
   "@anthropic-ai/sdk": "^0.65.0",  // ✅ Claude
@@ -249,6 +268,7 @@ GEMINI_API_KEY=get-from-https://makersuite.google.com/app/apikey
 **Why**: Unlocks cost-effective Gemini models you already integrated today
 
 **Test It**:
+
 ```bash
 npm run build
 node dist/examples/gemini-demo.js
@@ -257,12 +277,14 @@ node dist/examples/gemini-demo.js
 #### 2. Test Gemini Integration
 
 **Vision Test**:
+
 ```bash
 # Start your UI on port 5173
 node dist/examples/gemini-demo.js
 ```
 
 **Implementation Test**:
+
 ```bash
 # With --implement flag
 node dist/examples/gemini-demo.js --implement
@@ -273,12 +295,14 @@ node dist/examples/gemini-demo.js --implement
 **New Plugin**: `src/plugins/gemini-computer-use-full.ts`
 
 **Approach**:
+
 1. Import your `/Users/danielconnolly/gemini-ui-testing/` code
 2. Extend `GeminiImplementationPlugin` with browser automation
 3. Add visual verification step
 4. Create rollback on visual regression
 
 **Benefits**:
+
 - Catches CSS conflicts immediately
 - Visual proof of changes
 - Real-time feedback loop
@@ -289,6 +313,7 @@ node dist/examples/gemini-demo.js --implement
 #### 4. Add OpenAI Support
 
 Once you have budget/need for GPT-4V:
+
 ```bash
 OPENAI_API_KEY=sk-proj-your-key
 ```
@@ -301,6 +326,7 @@ Current: AI-only scoring
 Opportunity: Combine AI scores with real metrics
 
 **Already Supported in Code**:
+
 ```typescript
 // src/core/types.ts lines 181-195
 useChromeDevTools?: boolean;
@@ -312,6 +338,7 @@ scoringWeights?: {
 ```
 
 **Enable It**:
+
 ```typescript
 const config: VIZTRTRConfig = {
   useChromeDevTools: true,
@@ -327,6 +354,7 @@ const config: VIZTRTRConfig = {
 **Current State**: Full-stack UI running on ports 3001 (backend) + 5173 (frontend)
 
 **Opportunities**:
+
 - Add Gemini model selection dropdown
 - Show cost estimates per iteration
 - Display Computer Use automation videos
@@ -337,6 +365,7 @@ const config: VIZTRTRConfig = {
 #### 7. Video Analysis
 
 **Files Already Created** (skip extensions to enable):
+
 - `src/plugins/vision-video-claude.ts.skip`
 - `src/plugins/video-processor.ts.skip`
 
@@ -345,6 +374,7 @@ const config: VIZTRTRConfig = {
 #### 8. Design System Validation
 
 Validate against brand guidelines automatically:
+
 ```typescript
 projectContext: {
   type: 'control-panel',
@@ -363,11 +393,13 @@ projectContext: {
 ### Current Setup (Anthropic Only)
 
 **Claude Opus 4** (Vision):
+
 - Input: $15/1M tokens
 - Output: $75/1M tokens
 - **Typical VIZTRTR run**: $0.50-$2.00/iteration
 
 **Claude Sonnet 4** (Implementation):
+
 - Input: $3/1M tokens
 - Output: $15/1M tokens
 - **With extended thinking**: +$0.20-$0.50/iteration
@@ -377,19 +409,23 @@ projectContext: {
 ### With Gemini (Hybrid Recommended)
 
 **Gemini 2.0 Flash** (Vision):
+
 - Input: $0.10/1M tokens
 - Output: $0.40/1M tokens
 - **Savings vs Claude Opus**: ~97% cheaper
 
 **Gemini 2.5 Computer Use** (Implementation):
+
 - Preview pricing (TBD)
 - Expected: Similar to Flash models
 
 **Claude Sonnet 4.5** (Evaluation only):
+
 - Input: $3/1M tokens
 - Output: $15/1M tokens
 
 **Recommended Hybrid**:
+
 ```typescript
 {
   vision: 'gemini-2.0-flash-exp',        // $0.10 vs $15
@@ -460,12 +496,14 @@ projectContext: {
 ### Summary
 
 **VIZTRTR absolutely makes sense**:
+
 - ✅ Strong product-market fit (autonomous UI improvement)
 - ✅ Solid architecture (multi-agent, memory, V2 agents)
 - ✅ Production-ready code (TypeScript, testing, linting)
 - ✅ Real-world validation (Performia project, self-improvement)
 
 **Gemini integration is half-done**:
+
 - ✅ Plugins created (vision + implementation)
 - ✅ Documentation complete
 - ✅ SDK installed
@@ -473,6 +511,7 @@ projectContext: {
 - ❌ Computer Use underutilized (only JSON planning)
 
 **API keys need attention**:
+
 - ✅ Anthropic: Working
 - ❌ Gemini: Not configured (add to `.env`)
 - ❌ OpenAI: Not configured (optional)

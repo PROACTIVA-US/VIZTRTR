@@ -78,6 +78,7 @@ This creates a feedback loop that ensures changes actually improve the UI, not j
 Main plugin implementing the full visual verification loop.
 
 **Key Methods:**
+
 - `initializeBrowser(frontendUrl)` - Launch Playwright browser
 - `captureScreenshotInternal()` - Capture base64 screenshot
 - `analyzeUIVisually(screenshot, context)` - Get quality score from Gemini
@@ -89,6 +90,7 @@ Main plugin implementing the full visual verification loop.
 - `implementChanges(spec, path, url)` - **Main entry point**
 
 **Security Features:**
+
 - Path validation (only files within project)
 - Blacklist protection (node_modules, .git, .env, etc.)
 - Automatic backup before changes
@@ -101,12 +103,14 @@ Main plugin implementing the full visual verification loop.
 Demo script showing end-to-end usage of the full Computer Use plugin.
 
 **Usage:**
+
 ```bash
 npm run build
 node dist/examples/gemini-full-demo.js
 ```
 
 **What it does:**
+
 1. Captures screenshot of `http://localhost:5173`
 2. Analyzes with Gemini Vision
 3. Implements top recommendation with visual verification
@@ -243,6 +247,7 @@ const report = await orchestrator.run();
 **Solution**: Visual verification detects when changes don't produce the expected result.
 
 **Example**:
+
 ```
 Plan: "Change button background to blue (#3B82F6)"
 Execution: Modifies CSS correctly
@@ -257,6 +262,7 @@ Decision: ROLLBACK - conflicting CSS selector has higher specificity
 **Solution**: Before/after screenshot comparison with AI analysis.
 
 **Example**:
+
 ```
 Before Score: 7.2/10
 After Score: 8.1/10
@@ -272,6 +278,7 @@ Decision: SUCCESS - changes improved UI quality
 **Solution**: Gemini analyzes entire screenshot for unintended side effects.
 
 **Example**:
+
 ```
 Plan: "Increase button padding"
 Execution: Adds padding successfully
@@ -286,6 +293,7 @@ Decision: ROLLBACK - visual regression detected
 **Solution**: Detailed verification breakdown with confidence scores.
 
 **Example**:
+
 ```json
 {
   "beforeScore": 7.2,
@@ -313,6 +321,7 @@ Decision: ROLLBACK - visual regression detected
 - **Typical 5-iteration run**: $0.50-$2.00 - **83% cost savings**
 
 **Breakdown per iteration:**
+
 ```
 Before/After Screenshots: 2 × $0.01 = $0.02
 Implementation Plan: ~10K tokens × $0.10/1M = $0.001
@@ -328,11 +337,13 @@ Savings: 95-98%
 ### Gemini 2.5 Computer Use Preview (API)
 
 **Pros:**
+
 - Official Google API
 - Direct browser control
 - Structured action format
 
 **Cons:**
+
 - ❌ Free tier quota limits (0 requests/day for preview)
 - ❌ Requires paid tier
 - ❌ Not available in all regions
@@ -343,6 +354,7 @@ Savings: 95-98%
 ### Gemini Computer Use Full Plugin (This Implementation)
 
 **Pros:**
+
 - ✅ Uses Gemini 2.0 Flash (quota-friendly, FREE during preview)
 - ✅ Full visual verification loop
 - ✅ Automatic rollback on regression
@@ -351,6 +363,7 @@ Savings: 95-98%
 - ✅ Available globally
 
 **Cons:**
+
 - Manual browser automation (not AI-controlled)
 - Requires frontend to be running locally
 
@@ -444,8 +457,9 @@ Potential improvements for future versions:
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/anthropics/viztrtr/issues
-- Documentation: https://github.com/anthropics/viztrtr/docs
+
+- GitHub Issues: <https://github.com/anthropics/viztrtr/issues>
+- Documentation: <https://github.com/anthropics/viztrtr/docs>
 
 ---
 

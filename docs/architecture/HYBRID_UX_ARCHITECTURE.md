@@ -79,18 +79,21 @@ This architecture combines the surgical precision of file-based edits with the c
 ## Phase 1: Visual Design (Constrained Tools)
 
 ### **What It Does**
+
 - Surgical file modifications for visual/layout improvements
 - Changes CSS classes, inline styles, text content
 - Fast, precise, file-based edits
 - No browser needed
 
 ### **Technologies**
+
 - **DiscoveryAgent** - Analyzes files and creates change plans
 - **ControlPanelAgentV2** - Executes changes via constrained tools
 - **MicroChangeToolkit** - Enforces atomic, single-line changes
 - **Claude Sonnet 4.5** - Powers the agents
 
 ### **Example Changes**
+
 ```typescript
 // Before
 <button className="text-sm px-2 py-1">Submit</button>
@@ -100,6 +103,7 @@ This architecture combines the surgical precision of file-based edits with the c
 ```
 
 ### **Success Metrics**
+
 - ✅ 100% implementation rate (validated Oct 8, 2025)
 - ✅ 2-line average change size
 - ✅ 30-36s per recommendation
@@ -110,6 +114,7 @@ This architecture combines the surgical precision of file-based edits with the c
 ## Phase 2: Interactive UX Validation (Computer Use)
 
 ### **What It Does**
+
 - Opens real browser with Playwright
 - Tests interface like a real user would
 - Validates keyboard navigation, focus states, aria labels
@@ -118,6 +123,7 @@ This architecture combines the surgical precision of file-based edits with the c
 - Finds UX issues invisible to static analysis
 
 ### **Technologies**
+
 - **Playwright** - Browser automation (Chrome/Firefox/Safari)
 - **Gemini 2.0 Flash** - Vision analysis for verification
 - **axe-core** - WCAG 2.1 automated accessibility testing
@@ -126,6 +132,7 @@ This architecture combines the surgical precision of file-based edits with the c
 ### **Test Categories**
 
 #### 1. **Keyboard Accessibility**
+
 ```javascript
 // Test keyboard navigation
 await page.keyboard.press('Tab');
@@ -140,6 +147,7 @@ await page.keyboard.press('Enter');
 ```
 
 #### 2. **WCAG Compliance (axe-core)**
+
 ```javascript
 // Inject axe-core into page
 await page.addScriptTag({ url: 'https://unpkg.com/axe-core' });
@@ -157,6 +165,7 @@ const results = await page.evaluate(() => {
 ```
 
 #### 3. **Interactive Flows**
+
 ```javascript
 // Test user flows
 // Example: Form submission
@@ -172,6 +181,7 @@ await page.click('button[type="submit"]');
 ```
 
 #### 4. **Visual Regression**
+
 ```javascript
 // Capture before screenshot
 const beforeScreenshot = await page.screenshot();
@@ -199,20 +209,24 @@ if (comparison.regressionDetected) {
 ### **WCAG 2.1 Level AA Coverage**
 
 #### **Perceivable**
+
 - ✅ 1.1.1 Non-text Content (Alt text)
 - ✅ 1.4.3 Contrast (Minimum)
 - ✅ 1.4.11 Non-text Contrast
 
 #### **Operable**
+
 - ✅ 2.1.1 Keyboard
 - ✅ 2.4.7 Focus Visible
 - ✅ 2.5.5 Target Size (Enhanced)
 
 #### **Understandable**
+
 - ✅ 3.2.1 On Focus (No unexpected changes)
 - ✅ 3.3.2 Labels or Instructions
 
 #### **Robust**
+
 - ✅ 4.1.2 Name, Role, Value (Proper ARIA)
 
 ---
@@ -288,12 +302,14 @@ interface ProjectConfig {
 ```
 
 **User Configuration:**
+
 - **Vision Model** - Choose based on budget/quality
   - Claude Opus 4: Best quality, most expensive
   - Gemini 2.0 Flash: 97% cheaper, good quality
   - GPT-4V: Middle ground
 
 **Fixed (No User Choice):**
+
 - Phase 1 always uses ControlPanelAgentV2 (proven, reliable)
 - Phase 2 always uses Gemini Computer Use + Playwright (comprehensive)
 
@@ -302,18 +318,21 @@ interface ProjectConfig {
 ## Benefits
 
 ### **Compared to LLM-Only Approach**
+
 - ✅ File rewrites eliminated (constrained tools)
 - ✅ Interactive validation (browser automation)
 - ✅ WCAG compliance guaranteed (axe-core)
 - ✅ User flow testing (real browser simulation)
 
 ### **Compared to Tools-Only Approach**
+
 - ✅ UX validation beyond static analysis
 - ✅ Accessibility testing with real browser
 - ✅ Visual regression detection
 - ✅ Comprehensive WCAG coverage
 
 ### **Hybrid Advantages**
+
 - ✅ Surgical precision (Phase 1)
 - ✅ Comprehensive validation (Phase 2)
 - ✅ WCAG 2.1 Level AA compliance
@@ -324,6 +343,7 @@ interface ProjectConfig {
 ## Implementation Status
 
 ### **Completed** ✅
+
 - ✅ ControlPanelAgentV2 (Phase 1)
 - ✅ DiscoveryAgent (Phase 1)
 - ✅ MicroChangeToolkit (Phase 1)
@@ -337,6 +357,7 @@ interface ProjectConfig {
 - ✅ UI updates (Vision Model selection only) - **NEW**
 
 ### **TODO**
+
 - ⏳ User flow testing framework (partial - basic support added)
 - ⏳ Screen reader simulation
 - ⏳ Mobile responsiveness testing

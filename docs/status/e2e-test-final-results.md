@@ -8,7 +8,7 @@ All three phases are **architecturally integrated** and the human approval workf
 
 ## Test Configuration
 
-- **Frontend URL:** http://localhost:5173
+- **Frontend URL:** <http://localhost:5173>
 - **Project Path:** `ui/frontend`
 - **Target Score:** 8.0/10
 - **Max Standard Iterations:** 2
@@ -16,6 +16,7 @@ All three phases are **architecturally integrated** and the human approval workf
 - **Max Refinement Iterations:** 1
 
 **Phases Configured:**
+
 - ✅ Phase 1: UI Consistency Validation - ENABLED
 - ✅ Phase 2: Human Approval Workflow - ENABLED
 - ✅ Phase 3: Excellence Refinement - ENABLED
@@ -23,6 +24,7 @@ All three phases are **architecturally integrated** and the human approval workf
 ## Test Results Summary
 
 ### Final Scores
+
 - **Starting Score:** 5.80/10
 - **Final Score:** 6.80/10
 - **Improvement:** +1.00 points
@@ -35,6 +37,7 @@ All three phases are **architecturally integrated** and the human approval workf
 ### Iterations Breakdown
 
 #### Iteration 0
+
 - **Before Score:** 5.8/10
 - **After Score:** 6.2/10
 - **Delta:** +0.4
@@ -43,6 +46,7 @@ All three phases are **architecturally integrated** and the human approval workf
 - **Approval:** ✅ APPROVED (auto-approved via `yes "y"`)
 
 #### Iteration 1
+
 - **Before Score:** 6.2/10
 - **After Score:** 6.8/10
 - **Delta:** +0.6
@@ -57,6 +61,7 @@ All three phases are **architecturally integrated** and the human approval workf
 **Status:** ⚠️ **INTEGRATED BUT NOT ACTIVATED**
 
 **Evidence:**
+
 ```
 Line 156: // Initialize UIConsistencyAgent for this project
 Line 157: if (!this.uiConsistencyAgent) {
@@ -64,35 +69,41 @@ Line 158:   this.uiConsistencyAgent = new UIConsistencyAgent(this.apiKey, projec
 ```
 
 **Why Not Activated:**
+
 - UIConsistencyAgent only validates after DiscoveryAgent creates a change plan
 - No change plan was created because file discovery found 0 files
 - With 0 files discovered, the two-phase workflow never executed Phase 1.5 validation
 
 **Architectural Issue Confirmed:**
+
 - UI Consistency validation happens at the correct abstraction level (validates code changes, not text recommendations)
 - But validation occurs **after** human approval, creating potential UX issue where approved changes get rejected later
 
 **Design System Violations Found:**
 
 From Iteration 0, Recommendation #5:
+
 ```typescript
 className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm'
 //          ↑ LIGHT MODE   ↑ LIGHT MODE
 ```
 
 From Iteration 1, Recommendation #3:
+
 ```typescript
 className='... hover:bg-blue-50 hover:border-blue-200 focus:ring-2'
 //                    ↑ LIGHT MODE     ↑ LIGHT MODE
 ```
 
 From Iteration 1, Recommendation #5:
+
 ```typescript
 className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm'
 //          ↑ LIGHT MODE   ↑ LIGHT MODE
 ```
 
 **Conclusion:**
+
 - Phase 1 is correctly integrated but wasn't tested due to file discovery bug
 - Would have blocked these violations if Discovery had created change plans
 - Vision analysis generates recommendations without design system context
@@ -135,6 +146,7 @@ className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm'
 ```
 
 **Functionality Validated:**
+
 1. ✅ Approval workflow triggered after vision analysis
 2. ✅ Risk assessment displayed (MEDIUM risk level)
 3. ✅ Cost estimation calculated ($0.24 and $0.30)
@@ -144,6 +156,7 @@ className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm'
 7. ✅ Rejection handling tested earlier (empty string → rejection)
 
 **Auto-Approval Fix:**
+
 - **Before:** `yes ""` sent empty strings → interpreted as rejection
 - **After:** `yes "y"` sent "y" characters → correctly approved
 
@@ -152,11 +165,13 @@ className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm'
 **Status:** ❌ **NOT TESTED** (target score not reached)
 
 **Why Not Activated:**
+
 - Refinement requires reaching target score (8.0/10)
 - Final score was only 6.8/10
 - Never reached threshold for Phase 3 activation
 
 **Expected Behavior (Not Tested):**
+
 - ExpertReviewAgent for near-perfect UI analysis
 - Progressive refinement thresholds (8.5 → 9.0 → 9.5 → 10.0)
 - Plateau detection (stops if improvement < 0.05 for 3 iterations)
@@ -167,6 +182,7 @@ className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm'
 ### The Problem
 
 **Symptom:**
+
 ```
 🎯 OrchestratorAgent analyzing recommendations...
 🔍 Discovered 0 component files in project  ❌
@@ -175,6 +191,7 @@ Files Modified: 0
 ```
 
 **Impact:**
+
 - Zero files discovered in `ui/frontend` despite React components existing
 - No change plans created by DiscoveryAgent
 - No code changes implemented despite approved recommendations
@@ -183,6 +200,7 @@ Files Modified: 0
 **Root Cause Analysis:**
 
 The `discoverComponentFiles` function in `src/utils/file-discovery.ts` likely has issues with:
+
 1. Incorrect glob patterns for React components
 2. Wrong project path resolution
 3. File extension filtering problems
@@ -190,6 +208,7 @@ The `discoverComponentFiles` function in `src/utils/file-discovery.ts` likely ha
 **Evidence of Paradox:**
 
 ReflectionAgent correctly identified this contradiction:
+
 ```
 The results are contradictory and concerning. We achieved a +0.4 score
 improvement despite the implementation reporting 'No component files found'
@@ -200,11 +219,13 @@ is not properly locating the UI files.
 **Score Improvements Without Changes:**
 
 This paradox suggests:
+
 1. **Vision model variance:** Claude Opus 4 evaluated same UI differently at different times
 2. **Measurement error:** Random variance in AI-based scoring
 3. **Actual browser changes:** Frontend rebuild may have shown different content
 
 **Files Modified Counter:**
+
 - Iteration 0: 0 files
 - Iteration 1: 0 files (cached discovery: 0 files)
 
@@ -255,6 +276,7 @@ ATTEMPTED RECOMMENDATIONS (5 total):
 **ReflectionAgent Analysis:**
 
 All recommendations marked as "success" with the reasoning:
+
 ```
 "The results are contradictory and concerning. We achieved a +0.4 score
 improvement despite the implementation reporting 'No component files found'
@@ -267,6 +289,7 @@ were made."
 ```
 
 **Memory System Features Working:**
+
 - ✅ Tracking attempted recommendations
 - ✅ Recording outcomes (success/failed)
 - ✅ Storing reasoning for each recommendation
@@ -283,10 +306,12 @@ were made."
 - **Design Context Awareness:** ❌ NO (suggested forbidden light mode classes)
 
 **Recommendations Per Iteration:**
+
 - Iteration 0: 5 recommendations (all different dimensions)
 - Iteration 1: 5 recommendations (adjusted based on score changes)
 
 **ROI Metrics:**
+
 - Highest: 9.0:1 (Fix statistics value contrast)
 - Medium: 3.0-4.5:1 (Interactive states, ARIA labels)
 - Lowest: 2.3:1 (Visual hierarchy enhancements)
@@ -315,12 +340,14 @@ were made."
 #### 1. Fix File Discovery Bug
 
 **Investigation needed in:**
+
 - `src/utils/file-discovery.ts`
 - Glob patterns for React components
 - Project path resolution
 - File extension filtering
 
 **Expected Fix:**
+
 ```typescript
 // Check glob patterns match:
 - *.tsx files
@@ -349,16 +376,19 @@ Avoid suggesting any light mode classes in your recommendations.`;
 **Options:**
 
 **Option A:** Move approval after validation (recommended for short-term)
+
 - User only sees validated recommendations
 - Prevents "approved but rejected" UX problem
 - Wastes fewer API calls on rejected changes
 
 **Option B:** Add pre-validation keyword filter
+
 - Quick text-based filtering before approval
 - Catches obvious violations early
 - Still do code validation before execution
 
 **Option C:** Two-stage approval (future enhancement)
+
 - Stage 1: Approve strategic direction
 - Stage 2: Approve specific implementation
 - Best UX but more complex workflow
@@ -375,6 +405,7 @@ Avoid suggesting any light mode classes in your recommendations.`;
 6. Monitor if scores improve with real changes
 
 **Expected Results:**
+
 - 10-20 component files discovered
 - Change plans created for approved recommendations
 - Design violations blocked by Phase 1
@@ -386,6 +417,7 @@ Avoid suggesting any light mode classes in your recommendations.`;
 **To activate refinement workflow:**
 
 **Option 1:** Lower target score temporarily
+
 ```typescript
 targetScore: 6.5, // Instead of 8.0
 continueToExcellence: {
@@ -396,6 +428,7 @@ continueToExcellence: {
 **Option 2:** Use different test project with higher starting score
 
 **Option 3:** Manual trigger for testing
+
 ```typescript
 // Force refinement mode for testing
 if (process.env.TEST_REFINEMENT === 'true') {
@@ -418,16 +451,19 @@ if (process.env.TEST_REFINEMENT === 'true') {
 **Test Status:** ✅ **PASS** (architectural integration validated)
 
 **Production Readiness:**
+
 - Phase 1: ⚠️ Ready but not tested (blocked by file discovery bug)
 - Phase 2: ✅ Production-ready (fully tested and working)
 - Phase 3: ⚠️ Ready but not tested (score threshold not reached)
 
 **Blockers for Full Production Deployment:**
+
 1. ❌ File discovery bug must be fixed
 2. ❌ Design system context for vision analysis
 3. ⚠️ Consider approval workflow timing (UX improvement)
 
 **Recommended Actions:**
+
 1. Fix file discovery as highest priority
 2. Re-run E2E test to validate full workflow
 3. Add design system constraints to vision prompts
@@ -437,18 +473,21 @@ if (process.env.TEST_REFINEMENT === 'true') {
 ### Evidence Summary
 
 **Files Generated:**
+
 - Test output: `/tmp/e2e-test-full-run.log` (272 lines)
 - Test report: `viztritr-output/e2e-test-phases-1-2-3/report.json`
 - Screenshots: `iteration_0/before.png`, `iteration_0/after.png`, etc.
 - This document: `docs/status/e2e-test-final-results.md`
 
 **Commits Ready:**
+
 - Commit 1 (7b12c9b): Phases 1 & 2 implementation
 - Commit 2 (f9182f1): Phase 3 implementation
 - Commit 3 (pending): E2E test results and fixes
 
 **Next Deliverable:**
 Comprehensive PR with:
+
 - All commits (Phases 1-3)
 - E2E test results
 - File discovery bug fix

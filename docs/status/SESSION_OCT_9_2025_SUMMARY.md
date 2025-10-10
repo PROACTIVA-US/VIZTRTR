@@ -51,6 +51,7 @@
 **YES - 9.5/10 Confidence**
 
 **Strengths**:
+
 - Strong product-market fit (autonomous UI improvement)
 - Excellent architecture (multi-agent, memory system)
 - Production-ready code quality (TypeScript, testing, linting)
@@ -58,6 +59,7 @@
 - V2 agents: 100% success rate, 83% fewer tool calls
 
 **Market Position**:
+
 - Competitors: Mostly manual (Figma, Sketch) or simple linters (Lighthouse)
 - Differentiation: End-to-end autonomous improvement with code generation
 - Use cases: Pre-launch QA, accessibility audits, design system compliance
@@ -65,6 +67,7 @@
 ### Gemini Integration Status
 
 **50% Complete**:
+
 - ✅ Plugins created (vision + implementation)
 - ✅ Documentation complete
 - ✅ API key configured
@@ -73,6 +76,7 @@
 - ❌ **Missing**: Visual verification loop
 
 **Opportunity**: Create `src/plugins/gemini-computer-use-full.ts`
+
 - Import browser automation from `/Users/danielconnolly/gemini-ui-testing/`
 - Add visual verification (edit → reload → verify)
 - Real-time feedback loop
@@ -94,6 +98,7 @@
 **Current (Claude only)**: $5-$15 per 5-iteration run
 
 **With Gemini Hybrid**:
+
 - Vision: Gemini 2.0 Flash ($0.10/1M vs Claude Opus $15/1M)
 - Implementation: Gemini 2.5 Computer Use (preview pricing)
 - Evaluation: Claude Sonnet 4.5 ($3/1M)
@@ -142,6 +147,7 @@
 **Problem**: Hardcoded port 3000 defaults crashed user's service
 **Solution**: Never default to common ports (3000, 8080, etc.)
 **Best Practice**:
+
 - Use empty string → force user specification
 - Or use uncommon ports (3001, 3002, 5173)
 - Document port requirements clearly
@@ -150,12 +156,14 @@
 
 **Discovery**: User has `~/.config/api-keys/.env.api-keys`
 **Benefits**:
+
 - Single source of truth
 - Easy to sync across projects
 - Secure with proper permissions (600)
 - Helper script for management
 
 **Integration**:
+
 ```bash
 # Copy keys to project
 cp ~/.config/api-keys/.env.api-keys .env
@@ -201,6 +209,7 @@ source ~/.config/api-keys/.env.api-keys
 ### Test Results
 
 **Gemini Vision Demo**:
+
 ```
 ✅ Screenshot captured successfully
 ✅ Analysis complete
@@ -220,18 +229,22 @@ source ~/.config/api-keys/.env.api-keys
 ### Scenario 1: High-Volume Testing (100 runs/month)
 
 **Current (Claude only)**:
+
 - 100 runs × $10 avg = $1,000/month
 
 **With Gemini Hybrid**:
+
 - 100 runs × $2 avg = $200/month
 - **Savings**: $800/month (80%)
 
 ### Scenario 2: Development Phase (500 runs/month)
 
 **Current (Claude only)**:
+
 - 500 runs × $10 avg = $5,000/month
 
 **With Gemini Hybrid**:
+
 - 500 runs × $2 avg = $1,000/month
 - **Savings**: $4,000/month (80%)
 
@@ -276,6 +289,7 @@ source ~/.config/api-keys/.env.api-keys
 ## 📞 Final Status
 
 **VIZTRTR is production-ready** with:
+
 - ✅ Multi-provider AI support (Claude, Gemini, OpenAI)
 - ✅ 100% implementation success rate (V2 agents)
 - ✅ Comprehensive documentation
