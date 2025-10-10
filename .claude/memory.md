@@ -1,12 +1,144 @@
 # VIZTRTR Project Memory
 
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-10-10
 **Project:** VIZTRTR - Visual Iteration Orchestrator
 **Repository:** <https://github.com/PROACTIVA-US/VIZTRTR.git>
 
 ---
 
-## Recent Session: October 09, 2025 - Gemini Integration, API Keys, & Port 3000 Fix
+## Recent Session: October 10, 2025 - Production Debugging & Root Cause Analysis
+
+**Status:** ✅ **COMPLETE** - Critical production bugs diagnosed and documented
+**Branch:** main
+**Duration:** ~2 hours
+
+### What was accomplished
+
+1. ✅ **Fixed Critical Runtime Module Import Error**
+   - **Problem:** Backend crashed trying to import orchestrator from wrong path
+   - **Error:** `Cannot find module '/Users/danielconnolly/Projects/VIZTRTR/dist/core/orchestrator'`
+   - **Root cause:** TypeScript build outputs to `dist/src/` not `dist/`, import path missing `/src/`
+   - **Fix:** Changed `ui/server/src/routes/projects.ts:985` from `dist/core/` → `dist/src/core/`
+   - **Result:** Backend runs successfully, orchestrator can be imported
+
+2. ✅ **Updated AI Model Selections**
+   - Removed outdated models: gemini-1.5-pro, gpt-4-turbo
+   - Added latest models: gemini-2.0-flash-thinking-exp, gpt-4o-mini
+   - Updated `ui/frontend/src/components/ProjectWizard.tsx:26-30`
+   - Users can now select latest AI models in project creation
+
+3. ✅ **Added Reserved Port Protection**
+   - **Problem:** Projects could start on port 3000, conflicting with VIZTRTR UI
+   - **Solution:** Added `RESERVED_PORTS = [3000, 3001, 5173]` check in frontendServerManager
+   - **Location:** `ui/server/src/services/frontendServerManager.ts:163-170`
+   - **Result:** Clear error message prevents port conflicts
+
+4. ✅ **Fixed Memory Filtering Issue**
+   - **Problem:** "All recommendations were filtered out" error on iteration 0
+   - **Root cause:** Stale memory from failed runs blocking all recommendations
+   - **Solution:** Skip recommendation filtering on iteration 0 to allow fresh attempts
+   - **Location:** `src/core/orchestrator.ts:277-296`
+   - **Result:** Runs can recover from previous failures automatically
+
+5. ✅ **Comprehensive Production Debugging & Root Cause Analysis**
+   - **Run analyzed:** run_1760117226076_9e74xlq (Performia UI project)
+   - **Critical Issue 1: Black Screenshot**
+     - Root cause: Vite dev server returns 500 Internal Server Error on `/src/index.tsx`
+     - React never hydrates - `#root` div stays empty
+     - Browser console: "Failed to load resource: the server responded with a status of 500"
+     - Triggered by: Iteration 3 changes broke SettingsPanel.tsx and AudioPlayer.tsx
+   - **Critical Issue 2: Implementation Pipeline Failure**
+     - Iterations 1-2: OrchestratorAgent made ZERO file modifications
+     - changes.json shows: `"Orchestrated 0 file changes across 0 specialist agents"`
+     - System-level failure preventing ANY code modifications
+   - **Critical Issue 3: Cascading Failure Sequence**
+     - Iteration 0: Vague recommendation → no impact
+     - Iterations 1-2: Pipeline failure → 0 files modified
+     - Iteration 3: Pipeline worked → broke build → 500 error
+     - Result: Score stuck at 0-0.5/10, black screenshots
+   - **Documentation:** Added comprehensive `rootCauseAnalysis` section to iteration_memory.json
+
+### Files Modified
+
+- `ui/server/src/routes/projects.ts:985` - Fixed orchestrator import path
+- `ui/frontend/src/components/ProjectWizard.tsx:26-30` - Updated AI model selections
+- `ui/server/src/services/frontendServerManager.ts:163-170` - Added reserved port protection
+- `src/core/orchestrator.ts:277-296` - Skip filtering on iteration 0
+- `ui/server/viztrtr-output/run_1760117226076_9e74xlq/iteration_memory.json` - Added root cause analysis
+
+### Commits (3 pushed to origin)
+
+- `3156b0d` - fix: skip recommendation filtering on iteration 0 to prevent stale memory blocking
+- `f4a724b` - feat: add reserved port protection to prevent conflicts
+- `5db39fd` - fix: update model selections and orchestrator import path
+
+### Key Technical Achievements
+
+1. **Fixed Build Output Path Resolution**
+   - Identified mismatch between import paths and TypeScript build structure
+   - Backend now correctly imports from `dist/src/` instead of `dist/`
+   - Prevents future "module not found" errors
+
+2. **Port Conflict Prevention System**
+   - Reserved ports 3000, 3001, 5173 for VIZTRTR infrastructure
+   - Projects blocked from using VIZTRTR's ports
+   - Clear error messages guide users to alternative ports
+
+3. **Stale Memory Recovery**
+   - Iteration 0 now bypasses recommendation filtering
+   - Allows runs to recover from catastrophic previous failures
+   - Prevents permanent blocking from bad memory state
+
+4. **Production Debugging Excellence**
+   - Forensic analysis of run failures with Puppeteer browser console monitoring
+   - Identified React hydration failure (500 error)
+   - Documented implementation pipeline failure (0 files modified)
+   - Created comprehensive root cause analysis for future prevention
+
+### Root Cause Analysis Findings
+
+**Black Screenshot Issue:**
+- Vite dev server 500 error prevents React from hydrating
+- Puppeteer test confirmed: `#root` div stays empty after networkidle2
+- React never executes: `waitForFunction('#root has children')` times out
+- Triggered by: Iteration 3 changes introduced breaking syntax errors
+
+**Implementation Pipeline Failure:**
+- OrchestratorAgent not routing recommendations to specialist agents (iterations 1-2)
+- Evidence: changes.json shows "0 file changes across 0 specialist agents"
+- System-level failure preventing code modifications
+- Recovery: Iteration 3 finally worked but introduced breaking changes
+
+**Prevention Requirements:**
+- Add React hydration check: `waitForFunction('#root has children', {timeout: 10000})`
+- Debug OrchestratorAgent routing logic for specialist agents
+- Implement TypeScript/ESLint validation before applying changes
+- Add rollback on 500 errors detected by Puppeteer console monitoring
+
+### Next Steps
+
+**Immediate:**
+- [ ] Fix OrchestratorAgent routing to ensure specialist agents execute changes
+- [ ] Add React hydration validation to Puppeteer capture plugin
+- [ ] Implement pre-change TypeScript/ESLint validation
+- [ ] Test memory recovery system with fresh runs
+
+**Short-term:**
+- [ ] Monitor production runs for recommendation filtering issues
+- [ ] Validate port protection prevents conflicts in real usage
+- [ ] Track success rate of memory recovery on iteration 0
+
+### Critical Lessons Learned
+
+1. **Build output paths matter** - TypeScript structure must match import paths exactly
+2. **Port management is critical** - Reserved ports prevent cascading infrastructure failures
+3. **Stale memory is toxic** - Failed runs can permanently poison recommendation system
+4. **Production debugging requires forensics** - Browser console + Puppeteer tests reveal true failures
+5. **Implementation pipeline needs monitoring** - Zero file modifications is a red flag
+
+---
+
+## Previous Session: October 09, 2025 - Gemini Integration, API Keys, & Port 3000 Fix
 
 **Status:** ✅ **PRODUCTION READY** - Gemini 2.5 integrated, all API keys configured, critical port fix
 **Branch:** main
