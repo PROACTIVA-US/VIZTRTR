@@ -41,6 +41,7 @@ export class VIZTRTRDatabase {
       { column: 'projectType', type: 'TEXT' },
       { column: 'analysisConfidence', type: 'REAL' },
       { column: 'status', type: 'TEXT', default: "'created'" },
+      { column: 'modelSettings', type: 'TEXT' }, // JSON: { vision: { provider, model } }
     ];
 
     for (const migration of migrations) {
@@ -154,12 +155,38 @@ export class VIZTRTRDatabase {
 
   getProject(id: string): Project | null {
     const stmt = this.db.prepare('SELECT * FROM projects WHERE id = ?');
-    return stmt.get(id) as Project | null;
+    const row = stmt.get(id) as any;
+
+    if (!row) return null;
+
+    // Parse modelSettings if it exists
+    if (row.modelSettings) {
+      try {
+        row.modelSettings = JSON.parse(row.modelSettings);
+      } catch {
+        // Invalid JSON, ignore
+        delete row.modelSettings;
+      }
+    }
+
+    return row as Project;
   }
 
   listProjects(): Project[] {
     const stmt = this.db.prepare('SELECT * FROM projects ORDER BY updatedAt DESC');
-    return stmt.all() as Project[];
+    const rows = stmt.all() as any[];
+
+    // Parse modelSettings for each project
+    return rows.map(row => {
+      if (row.modelSettings) {
+        try {
+          row.modelSettings = JSON.parse(row.modelSettings);
+        } catch {
+          delete row.modelSettings;
+        }
+      }
+      return row as Project;
+    });
   }
 
   updateProject(id: string, updates: Partial<Project>): void {
@@ -176,6 +203,10 @@ export class VIZTRTRDatabase {
           // Convert boolean to integer for SQLite (0/1)
           if (k === 'hasProductSpec' && typeof v === 'boolean') {
             return v ? 1 : 0;
+          }
+          // Serialize modelSettings to JSON
+          if (k === 'modelSettings' && typeof v === 'object') {
+            return JSON.stringify(v);
           }
           return v;
         });

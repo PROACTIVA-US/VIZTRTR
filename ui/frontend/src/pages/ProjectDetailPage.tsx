@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { Project, ProductSpec, ComponentSpec } from '../../../shared/types';
 
+type ModelProvider = 'anthropic' | 'openai' | 'google' | 'zai';
+
+interface ModelSettings {
+  vision: { provider: ModelProvider; model: string };
+  implementation: { provider: ModelProvider; model: string };
+}
+
 interface UploadedDocument {
   id: string;
   name: string;
@@ -28,6 +35,54 @@ export default function ProjectDetailPage() {
   >([]);
   const [chatInput, setChatInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [modelSettings, setModelSettings] = useState<ModelSettings>({
+    vision: { provider: 'anthropic', model: 'claude-opus-4-20250514' },
+    implementation: { provider: 'anthropic', model: 'claude-sonnet-4.5-20250402' }
+  });
+
+  const modelsByProvider: Record<ModelProvider, string[]> = {
+    anthropic: [
+      'claude-opus-4-20250514',
+      'claude-sonnet-4-20250514',
+      'claude-sonnet-4.5-20250402',
+      'claude-haiku-4-20250402'
+    ],
+    openai: [
+      'gpt-4o',
+      'gpt-4o-mini',
+      'gpt-4-turbo',
+      'gpt-4',
+      'gpt-3.5-turbo'
+    ],
+    google: [
+      'gemini-2.0-flash-exp',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash'
+    ],
+    zai: ['zai-default']
+  };
+
+  const handleProviderChange = (role: keyof ModelSettings, provider: ModelProvider) => {
+    const firstModel = modelsByProvider[provider][0];
+    setModelSettings(prev => ({
+      ...prev,
+      [role]: { provider, model: firstModel }
+    }));
+  };
+
+  const handleModelChange = (role: keyof ModelSettings, model: string) => {
+    setModelSettings(prev => ({
+      ...prev,
+      [role]: { ...prev[role], model }
+    }));
+  };
+
+  const handleSaveModelConfig = () => {
+    if (!projectId) return;
+    // Save to localStorage for now (later: save to backend)
+    localStorage.setItem(`viztrtr_project_${projectId}_model_settings`, JSON.stringify(modelSettings));
+    alert('Model configuration saved successfully!');
+  };
 
   useEffect(() => {
     if (!projectId) return;
@@ -47,6 +102,16 @@ export default function ProjectDetailPage() {
           const specData = await specRes.json();
           setProductSpec(specData);
           setSpecContent(JSON.stringify(specData, null, 2));
+        }
+
+        // Load saved model settings from localStorage
+        const savedModelSettings = localStorage.getItem(`viztrtr_project_${projectId}_model_settings`);
+        if (savedModelSettings) {
+          try {
+            setModelSettings(JSON.parse(savedModelSettings));
+          } catch (e) {
+            console.error('Failed to parse saved model settings:', e);
+          }
         }
 
         // Load documents (TODO: implement backend endpoint)
@@ -552,15 +617,33 @@ export default function ProjectDetailPage() {
                   </span>
                 </label>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <select className="bg-slate-700 text-white px-4 py-2 rounded border border-slate-600">
-                    <option>Anthropic (Claude)</option>
-                    <option>OpenAI (GPT)</option>
-                    <option>Google (Gemini)</option>
-                  </select>
-                  <select className="bg-slate-700 text-white px-4 py-2 rounded border border-slate-600">
-                    <option>claude-opus-4-20250514</option>
-                    <option>claude-sonnet-4.5-20250402</option>
-                  </select>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Provider</label>
+                    <select
+                      value={modelSettings.vision.provider}
+                      onChange={(e) => handleProviderChange('vision', e.target.value as ModelProvider)}
+                      className="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="openai">OpenAI (GPT)</option>
+                      <option value="google">Google (Gemini)</option>
+                      <option value="zai">Z.AI</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Model ({modelSettings.vision.provider})
+                    </label>
+                    <select
+                      value={modelSettings.vision.model}
+                      onChange={(e) => handleModelChange('vision', e.target.value)}
+                      className="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                      {modelsByProvider[modelSettings.vision.provider].map(model => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -573,19 +656,41 @@ export default function ProjectDetailPage() {
                   </span>
                 </label>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <select className="bg-slate-700 text-white px-4 py-2 rounded border border-slate-600">
-                    <option>Anthropic (Claude)</option>
-                    <option>OpenAI (GPT)</option>
-                  </select>
-                  <select className="bg-slate-700 text-white px-4 py-2 rounded border border-slate-600">
-                    <option>claude-sonnet-4.5-20250402</option>
-                    <option>gpt-4o</option>
-                  </select>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Provider</label>
+                    <select
+                      value={modelSettings.implementation.provider}
+                      onChange={(e) => handleProviderChange('implementation', e.target.value as ModelProvider)}
+                      className="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="anthropic">Anthropic (Claude)</option>
+                      <option value="openai">OpenAI (GPT)</option>
+                      <option value="google">Google (Gemini)</option>
+                      <option value="zai">Z.AI</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Model ({modelSettings.implementation.provider})
+                    </label>
+                    <select
+                      value={modelSettings.implementation.model}
+                      onChange={(e) => handleModelChange('implementation', e.target.value)}
+                      className="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                      {modelsByProvider[modelSettings.implementation.provider].map(model => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* Save Button */}
-              <button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all">
+              <button
+                onClick={handleSaveModelConfig}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all"
+              >
                 Save Configuration
               </button>
             </div>

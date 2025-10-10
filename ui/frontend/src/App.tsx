@@ -3,7 +3,6 @@ import HomePage from './pages/HomePage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import RunPage from './pages/RunPage';
-import SettingsPage from './pages/SettingsPage';
 import FeaturesPage from './pages/FeaturesPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -19,7 +18,6 @@ function App() {
           <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
           <Route path="/runs/:runId" element={<RunPage />} />
           <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>
       <Footer />

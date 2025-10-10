@@ -38,15 +38,54 @@ export class RunManager extends EventEmitter {
     // Update status to running
     this.db.updateRun(run.id, { status: 'running' });
 
+    // Get model settings from project or use defaults
+    const modelSettings = project.modelSettings || {
+      vision: { provider: 'anthropic', model: 'claude-opus-4-20250514' }
+    };
+
+    // Map provider to API key
+    const getApiKey = (provider: string): string => {
+      switch (provider) {
+        case 'anthropic':
+          return process.env.ANTHROPIC_API_KEY || '';
+        case 'google':
+          return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+        case 'openai':
+          return process.env.OPENAI_API_KEY || '';
+        default:
+          return process.env.ANTHROPIC_API_KEY || ''; // fallback
+      }
+    };
+
     // Build VIZTRTR config
     const config: VIZTRTRConfig = {
       projectPath: project.projectPath,
       frontendUrl: project.frontendUrl,
       targetScore: project.targetScore,
       maxIterations: project.maxIterations,
-      visionModel: 'claude-opus',
-      implementationModel: 'claude-sonnet',
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+      // Use project-specific vision model
+      models: {
+        vision: {
+          provider: modelSettings.vision.provider as any,
+          model: modelSettings.vision.model,
+        },
+        // Implementation is always ControlPanelAgentV2 (automatic)
+        implementation: {
+          provider: 'anthropic',
+          model: 'claude-sonnet-4.5-20250402',
+        },
+        // Evaluation uses same as vision
+        evaluation: {
+          provider: modelSettings.vision.provider as any,
+          model: modelSettings.vision.model,
+        },
+      },
+      // Provider credentials
+      providers: {
+        anthropic: { apiKey: process.env.ANTHROPIC_API_KEY || '' },
+        google: { apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '' },
+        openai: { apiKey: process.env.OPENAI_API_KEY || '' },
+      },
       screenshotConfig: {
         width: 1440,
         height: 900,
