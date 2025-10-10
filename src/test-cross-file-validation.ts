@@ -92,7 +92,9 @@ export default function PromptInput({ value, placeholder }: PromptInputProps) {
       console.log('\n🔴 Breaking Changes Detected:');
       result.breakingChanges.forEach((change, index) => {
         const icon = change.impact === 'high' ? '🔴' : change.impact === 'medium' ? '🟡' : '🟢';
-        console.log(`\n   ${index + 1}. ${icon} [${change.type}] Impact: ${change.impact.toUpperCase()}`);
+        console.log(
+          `\n   ${index + 1}. ${icon} [${change.type}] Impact: ${change.impact.toUpperCase()}`
+        );
         console.log(`      Description: ${change.description}`);
         console.log(`      Before: ${change.before}`);
         console.log(`      After:  ${change.after}`);
@@ -115,7 +117,6 @@ export default function PromptInput({ value, placeholder }: PromptInputProps) {
     } else {
       console.log('\n❌ TEST FAILED: Did not detect onSubmit removal');
     }
-
   } catch (error) {
     console.error('\n❌ Test failed with error:', error);
     process.exit(1);
@@ -168,16 +169,20 @@ export default function Input({ value, className }: Props) {
     console.log('📊 Results:');
     console.log(`   Valid: ${safeResult.valid ? '✅ YES' : '❌ NO'}`);
     console.log(`   Breaking Changes: ${safeResult.breakingChanges.length}`);
-    console.log(`   High Impact Changes: ${safeResult.breakingChanges.filter(c => c.impact === 'high').length}`);
+    console.log(
+      `   High Impact Changes: ${safeResult.breakingChanges.filter(c => c.impact === 'high').length}`
+    );
 
     console.log('\n' + '='.repeat(60));
 
-    if (safeResult.valid || safeResult.breakingChanges.filter(c => c.impact === 'high').length === 0) {
+    if (
+      safeResult.valid ||
+      safeResult.breakingChanges.filter(c => c.impact === 'high').length === 0
+    ) {
       console.log('\n✅ TEST PASSED: Correctly allowed safe change!');
     } else {
       console.log('\n⚠️  TEST WARNING: Flagged a safe change as breaking');
     }
-
   } catch (error) {
     console.error('\n❌ Test failed with error:', error);
   }

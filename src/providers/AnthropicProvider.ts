@@ -16,14 +16,14 @@ export class AnthropicProvider extends ModelProvider {
     'claude-opus-4-20250514': { input: 15.0, output: 75.0 },
     'claude-sonnet-4-20250514': { input: 3.0, output: 15.0 },
     'claude-sonnet-4.5-20250402': { input: 3.0, output: 15.0, thinking: 3.0 },
-    'claude-haiku-4-20250402': { input: 0.8, output: 4.0 }
+    'claude-haiku-4-20250402': { input: 0.8, output: 4.0 },
   };
 
   constructor(config: ModelConfig, apiKey: string, baseUrl?: string) {
     super(config, apiKey, baseUrl);
     this.client = new Anthropic({
       apiKey,
-      ...(baseUrl && { baseURL: baseUrl })
+      ...(baseUrl && { baseURL: baseUrl }),
     });
   }
 
@@ -38,8 +38,8 @@ export class AnthropicProvider extends ModelProvider {
           source: {
             type: 'base64',
             media_type: 'image/png',
-            data: image
-          }
+            data: image,
+          },
         } as Anthropic.ImageBlockParam);
       }
     }
@@ -47,14 +47,14 @@ export class AnthropicProvider extends ModelProvider {
     // Add text prompt
     messageContent.push({
       type: 'text',
-      text: request.userPrompt
+      text: request.userPrompt,
     } as Anthropic.TextBlockParam);
 
     const messages: Anthropic.MessageParam[] = [
       {
         role: 'user',
-        content: messageContent
-      }
+        content: messageContent,
+      },
     ];
 
     // Build request parameters
@@ -63,14 +63,14 @@ export class AnthropicProvider extends ModelProvider {
       max_tokens: request.maxTokens || this.config.maxTokens || 4096,
       temperature: request.temperature ?? this.config.temperature ?? 1.0,
       system: request.systemPrompt,
-      messages
+      messages,
     };
 
     // Add extended thinking if supported and requested
     if (this.supportsExtendedThinking() && request.thinkingBudget) {
       (params as any).thinking = {
         type: 'enabled',
-        budget_tokens: request.thinkingBudget
+        budget_tokens: request.thinkingBudget,
       };
     }
 
@@ -98,11 +98,11 @@ export class AnthropicProvider extends ModelProvider {
         totalCost: this.calculateCost({
           inputTokens: response.usage.input_tokens,
           outputTokens: response.usage.output_tokens,
-          thinkingTokens: (response.usage as any).thinking_tokens
-        })
+          thinkingTokens: (response.usage as any).thinking_tokens,
+        }),
       },
       model: response.model,
-      provider: 'anthropic'
+      provider: 'anthropic',
     };
   }
 
@@ -116,7 +116,7 @@ export class AnthropicProvider extends ModelProvider {
     const response = await this.complete({
       systemPrompt: 'You are an expert UI/UX designer and analyst.',
       userPrompt: prompt,
-      images: [screenshot.data]
+      images: [screenshot.data],
     });
 
     return this.parseDesignSpec(response.content);
@@ -133,7 +133,7 @@ export class AnthropicProvider extends ModelProvider {
     const response = await this.complete({
       systemPrompt: 'You are an expert UI/UX evaluator.',
       userPrompt: prompt,
-      images: [screenshot.data]
+      images: [screenshot.data],
     });
 
     return this.parseEvaluation(response.content);
@@ -231,7 +231,7 @@ Return a JSON object with:
         currentIssues: parsed.currentIssues || [],
         recommendations: parsed.recommendations || [],
         prioritizedChanges: parsed.recommendations || [],
-        estimatedNewScore: parsed.estimatedNewScore || 0
+        estimatedNewScore: parsed.estimatedNewScore || 0,
       };
     } catch (error) {
       console.error('Failed to parse design spec:', error);
@@ -243,7 +243,7 @@ Return a JSON object with:
         currentIssues: [],
         recommendations: [],
         prioritizedChanges: [],
-        estimatedNewScore: 5.0
+        estimatedNewScore: 5.0,
       };
     }
   }
@@ -266,7 +266,7 @@ Return a JSON object with:
         strengths: parsed.strengths || [],
         weaknesses: parsed.weaknesses || [],
         summary: parsed.summary || '',
-        priorityImprovements: []
+        priorityImprovements: [],
       };
     } catch (error) {
       console.error('Failed to parse evaluation:', error);
@@ -282,13 +282,13 @@ Return a JSON object with:
           component_design: 5,
           animation_interaction: 5,
           accessibility: 5,
-          overall_aesthetic: 5
+          overall_aesthetic: 5,
         },
         dimensions: {},
         strengths: [],
         weaknesses: [],
         summary: 'Failed to evaluate',
-        priorityImprovements: []
+        priorityImprovements: [],
       };
     }
   }

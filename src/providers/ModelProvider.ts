@@ -60,10 +60,7 @@ export abstract class ModelProvider {
   /**
    * Implementation: Generate code changes from design spec
    */
-  abstract implementChanges(
-    spec: DesignSpec,
-    projectPath: string
-  ): Promise<any>;
+  abstract implementChanges(spec: DesignSpec, projectPath: string): Promise<any>;
 
   /**
    * Evaluation: Score a design
@@ -88,7 +85,11 @@ export abstract class ModelProvider {
   /**
    * Calculate cost for a completion
    */
-  calculateCost(usage: { inputTokens: number; outputTokens: number; thinkingTokens?: number }): number {
+  calculateCost(usage: {
+    inputTokens: number;
+    outputTokens: number;
+    thinkingTokens?: number;
+  }): number {
     const costs = this.getCostPer1M();
     let total = 0;
     total += (usage.inputTokens / 1_000_000) * costs.input;

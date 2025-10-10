@@ -16,7 +16,7 @@ export class GoogleProvider extends ModelProvider {
     'gemini-2.0-flash-exp': { input: 0.0, output: 0.0 }, // Free during preview
     'gemini-1.5-pro': { input: 1.25, output: 5.0 },
     'gemini-1.5-flash': { input: 0.075, output: 0.3 },
-    'gemini-1.0-pro': { input: 0.5, output: 1.5 }
+    'gemini-1.0-pro': { input: 0.5, output: 1.5 },
   };
 
   constructor(config: ModelConfig, apiKey: string, baseUrl?: string) {
@@ -26,7 +26,7 @@ export class GoogleProvider extends ModelProvider {
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {
     const model = this.client.getGenerativeModel({
-      model: this.config.model
+      model: this.config.model,
     });
 
     // Build content parts
@@ -38,8 +38,8 @@ export class GoogleProvider extends ModelProvider {
         parts.push({
           inlineData: {
             mimeType: 'image/png',
-            data: image
-          }
+            data: image,
+          },
         });
       }
     }
@@ -56,8 +56,8 @@ export class GoogleProvider extends ModelProvider {
       contents: [{ role: 'user', parts }],
       generationConfig: {
         temperature: request.temperature ?? this.config.temperature ?? 1.0,
-        maxOutputTokens: request.maxTokens || this.config.maxTokens || 4096
-      }
+        maxOutputTokens: request.maxTokens || this.config.maxTokens || 4096,
+      },
     });
 
     const response = result.response;
@@ -66,7 +66,7 @@ export class GoogleProvider extends ModelProvider {
     // Extract usage (Gemini doesn't always provide detailed usage)
     const usage = {
       inputTokens: response.usageMetadata?.promptTokenCount || 0,
-      outputTokens: response.usageMetadata?.candidatesTokenCount || 0
+      outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
     };
 
     return {
@@ -75,10 +75,10 @@ export class GoogleProvider extends ModelProvider {
       usage: {
         inputTokens: usage.inputTokens,
         outputTokens: usage.outputTokens,
-        totalCost: this.calculateCost(usage)
+        totalCost: this.calculateCost(usage),
       },
       model: this.config.model,
-      provider: 'google'
+      provider: 'google',
     };
   }
 
@@ -92,7 +92,7 @@ export class GoogleProvider extends ModelProvider {
     const response = await this.complete({
       systemPrompt: 'You are an expert UI/UX designer and analyst.',
       userPrompt: prompt,
-      images: [screenshot.data]
+      images: [screenshot.data],
     });
 
     return this.parseDesignSpec(response.content);
@@ -108,7 +108,7 @@ export class GoogleProvider extends ModelProvider {
     const response = await this.complete({
       systemPrompt: 'You are an expert UI/UX evaluator.',
       userPrompt: prompt,
-      images: [screenshot.data]
+      images: [screenshot.data],
     });
 
     return this.parseEvaluation(response.content);
@@ -205,7 +205,7 @@ Return a JSON object with:
         currentIssues: parsed.currentIssues || [],
         recommendations: parsed.recommendations || [],
         prioritizedChanges: parsed.recommendations || [],
-        estimatedNewScore: parsed.estimatedNewScore || 0
+        estimatedNewScore: parsed.estimatedNewScore || 0,
       };
     } catch (error) {
       console.error('Failed to parse design spec:', error);
@@ -216,7 +216,7 @@ Return a JSON object with:
         currentIssues: [],
         recommendations: [],
         prioritizedChanges: [],
-        estimatedNewScore: 5.0
+        estimatedNewScore: 5.0,
       };
     }
   }
@@ -239,7 +239,7 @@ Return a JSON object with:
         strengths: parsed.strengths || [],
         weaknesses: parsed.weaknesses || [],
         summary: parsed.summary || '',
-        priorityImprovements: []
+        priorityImprovements: [],
       };
     } catch (error) {
       console.error('Failed to parse evaluation:', error);
@@ -255,13 +255,13 @@ Return a JSON object with:
           component_design: 5,
           animation_interaction: 5,
           accessibility: 5,
-          overall_aesthetic: 5
+          overall_aesthetic: 5,
         },
         dimensions: {},
         strengths: [],
         weaknesses: [],
         summary: 'Failed to evaluate',
-        priorityImprovements: []
+        priorityImprovements: [],
       };
     }
   }

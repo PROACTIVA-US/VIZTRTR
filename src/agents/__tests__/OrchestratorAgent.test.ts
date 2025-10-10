@@ -138,8 +138,16 @@ describe('OrchestratorAgent', () => {
       await agent.implementChanges(mockSpec, '/project2');
 
       expect(fileDiscovery.discoverComponentFiles).toHaveBeenCalledTimes(2);
-      expect(fileDiscovery.discoverComponentFiles).toHaveBeenNthCalledWith(1, '/project1', expect.any(Object));
-      expect(fileDiscovery.discoverComponentFiles).toHaveBeenNthCalledWith(2, '/project2', expect.any(Object));
+      expect(fileDiscovery.discoverComponentFiles).toHaveBeenNthCalledWith(
+        1,
+        '/project1',
+        expect.any(Object)
+      );
+      expect(fileDiscovery.discoverComponentFiles).toHaveBeenNthCalledWith(
+        2,
+        '/project2',
+        expect.any(Object)
+      );
     });
   });
 });

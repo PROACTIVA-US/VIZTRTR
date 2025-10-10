@@ -32,7 +32,7 @@ export class CacheService<T = any> {
       enabled: config.enabled,
       ttl: config.ttl ?? 3600,
       maxSize: config.maxSize ?? 100,
-      cacheDir: config.cacheDir ?? './.cache'
+      cacheDir: config.cacheDir ?? './.cache',
     };
 
     this.cacheDir = path.resolve(this.config.cacheDir);
@@ -80,7 +80,7 @@ export class CacheService<T = any> {
       key,
       value,
       timestamp: Date.now(),
-      expiresAt: Date.now() + (this.config.ttl * 1000)
+      expiresAt: Date.now() + this.config.ttl * 1000,
     };
 
     // Evict oldest entry if cache is full
@@ -100,10 +100,7 @@ export class CacheService<T = any> {
    * Generate cache key from screenshot data
    */
   generateKey(data: string, prefix: string = 'vision'): string {
-    const hash = crypto.createHash('sha256')
-      .update(data)
-      .digest('hex')
-      .substring(0, 16);
+    const hash = crypto.createHash('sha256').update(data).digest('hex').substring(0, 16);
     return `${prefix}-${hash}`;
   }
 
@@ -138,7 +135,7 @@ export class CacheService<T = any> {
       maxSize: this.config.maxSize,
       hitRate: 0, // Would need to track hits/misses
       oldestEntry: timestamps.length > 0 ? Math.min(...timestamps) : 0,
-      newestEntry: timestamps.length > 0 ? Math.max(...timestamps) : 0
+      newestEntry: timestamps.length > 0 ? Math.max(...timestamps) : 0,
     };
   }
 
@@ -214,15 +211,18 @@ export class CacheService<T = any> {
 
   private startCleanupTimer(): void {
     // Clean up expired entries every 5 minutes
-    setInterval(() => {
-      const now = Date.now();
-      for (const [key, entry] of this.memoryCache.entries()) {
-        if (now > entry.expiresAt) {
-          this.memoryCache.delete(key);
-          this.deleteFromDisk(key);
+    setInterval(
+      () => {
+        const now = Date.now();
+        for (const [key, entry] of this.memoryCache.entries()) {
+          if (now > entry.expiresAt) {
+            this.memoryCache.delete(key);
+            this.deleteFromDisk(key);
+          }
         }
-      }
-    }, 5 * 60 * 1000);
+      },
+      5 * 60 * 1000
+    );
   }
 }
 
@@ -236,7 +236,7 @@ export class CacheManager {
     if (!this.instances.has('vision')) {
       const cacheConfig = {
         ...config,
-        cacheDir: path.join(config.cacheDir || './.cache', 'vision')
+        cacheDir: path.join(config.cacheDir || './.cache', 'vision'),
       };
       this.instances.set('vision', new CacheService(cacheConfig));
     }
@@ -247,7 +247,7 @@ export class CacheManager {
     if (!this.instances.has('metrics')) {
       const cacheConfig = {
         ...config,
-        cacheDir: path.join(config.cacheDir || './.cache', 'metrics')
+        cacheDir: path.join(config.cacheDir || './.cache', 'metrics'),
       };
       this.instances.set('metrics', new CacheService(cacheConfig));
     }

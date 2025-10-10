@@ -53,7 +53,9 @@ async function main() {
 
     console.log(`Starting Score:    ${report.startingScore.toFixed(1)}/10`);
     console.log(`Final Score:       ${report.finalScore.toFixed(1)}/10`);
-    console.log(`Improvement:       ${report.improvement > 0 ? '+' : ''}${report.improvement.toFixed(1)} points`);
+    console.log(
+      `Improvement:       ${report.improvement > 0 ? '+' : ''}${report.improvement.toFixed(1)} points`
+    );
     console.log(`Target Reached:    ${report.targetReached ? '✅ YES' : '❌ NO'}`);
     console.log(`Total Iterations:  ${report.totalIterations}`);
     console.log(`Best Iteration:    #${report.bestIteration}`);
@@ -65,7 +67,7 @@ async function main() {
     console.log('║              META-STRATEGY INSIGHTS                           ║');
     console.log('╚═══════════════════════════════════════════════════════════════╝\n');
 
-    console.log('This run demonstrates VIZTRTR\'s capability to:');
+    console.log("This run demonstrates VIZTRTR's capability to:");
     console.log('  • Analyze its own user interface objectively');
     console.log('  • Identify design issues autonomously');
     console.log('  • Implement code changes to improve itself');
