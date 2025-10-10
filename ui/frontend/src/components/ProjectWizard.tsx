@@ -17,37 +17,28 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
   const [projectPath, setProjectPath] = useState('');
   const [name, setName] = useState('');
   const [modelSettings, setModelSettings] = useState<ModelSettings>({
-    vision: { provider: 'anthropic', model: 'claude-opus-4-20250514' }
+    vision: { provider: 'anthropic', model: 'claude-opus-4-20250514' },
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showBrowser, setShowBrowser] = useState(false);
 
   const visionModelsByProvider: Record<VisionProvider, string[]> = {
-    anthropic: [
-      'claude-opus-4-20250514',
-      'claude-sonnet-4-20250514'
-    ],
-    google: [
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-pro'
-    ],
-    openai: [
-      'gpt-4o',
-      'gpt-4-turbo'
-    ]
+    anthropic: ['claude-opus-4-20250514', 'claude-sonnet-4-20250514'],
+    google: ['gemini-2.0-flash-exp', 'gemini-2.0-flash-thinking-exp'],
+    openai: ['gpt-4o', 'gpt-4o-mini'],
   };
 
   const handleProviderChange = (provider: VisionProvider) => {
     const firstModel = visionModelsByProvider[provider][0];
     setModelSettings({
-      vision: { provider, model: firstModel }
+      vision: { provider, model: firstModel },
     });
   };
 
   const handleModelChange = (model: string) => {
     setModelSettings(prev => ({
-      vision: { ...prev.vision, model }
+      vision: { ...prev.vision, model },
     }));
   };
 
@@ -113,7 +104,10 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
       const project = await res.json();
 
       // Save model settings to localStorage
-      localStorage.setItem(`viztrtr_project_${project.id}_model_settings`, JSON.stringify(modelSettings));
+      localStorage.setItem(
+        `viztrtr_project_${project.id}_model_settings`,
+        JSON.stringify(modelSettings)
+      );
 
       // Project created successfully - navigate to it
       onComplete(project.id);
@@ -195,7 +189,9 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
                   placeholder="My Awesome Project"
                   className="input w-full"
                 />
-                <p className="text-sm text-slate-400 mt-2">A friendly name to identify your project</p>
+                <p className="text-sm text-slate-400 mt-2">
+                  A friendly name to identify your project
+                </p>
               </div>
             </>
           ) : (
@@ -204,7 +200,8 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
               <div className="bg-blue-900/20 border border-blue-800/30 rounded-lg p-4 mb-4">
                 <h3 className="text-sm font-semibold text-blue-300 mb-2">🤖 AI Configuration</h3>
                 <p className="text-sm text-slate-300">
-                  Choose the vision model for analyzing your UI. Implementation uses our proven hybrid approach automatically.
+                  Choose the vision model for analyzing your UI. Implementation uses our proven
+                  hybrid approach automatically.
                 </p>
               </div>
 
@@ -221,7 +218,7 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
                     <label className="block text-xs text-slate-400 mb-1">Provider</label>
                     <select
                       value={modelSettings.vision.provider}
-                      onChange={(e) => handleProviderChange(e.target.value as VisionProvider)}
+                      onChange={e => handleProviderChange(e.target.value as VisionProvider)}
                       className="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="anthropic">Anthropic (Claude)</option>
@@ -235,11 +232,13 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
                     </label>
                     <select
                       value={modelSettings.vision.model}
-                      onChange={(e) => handleModelChange(e.target.value)}
+                      onChange={e => handleModelChange(e.target.value)}
                       className="w-full bg-slate-700 text-white px-4 py-2 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
                     >
                       {visionModelsByProvider[modelSettings.vision.provider].map(model => (
-                        <option key={model} value={model}>{model}</option>
+                        <option key={model} value={model}>
+                          {model}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -248,7 +247,9 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
 
               {/* Hybrid Implementation Info */}
               <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">⚡ Automatic Implementation Strategy</h3>
+                <h3 className="text-sm font-semibold text-slate-300 mb-2">
+                  ⚡ Automatic Implementation Strategy
+                </h3>
                 <div className="text-sm text-slate-300 space-y-2">
                   <div>
                     <strong className="text-blue-400">Phase 1: Visual Design</strong>
@@ -269,9 +270,15 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
               <div className="bg-blue-900/20 border border-blue-800/30 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-blue-300 mb-2">💡 Vision Model Guide</h3>
                 <ul className="text-sm text-slate-300 space-y-1">
-                  <li>• <strong>Claude Opus 4:</strong> Best quality, most accurate (recommended)</li>
-                  <li>• <strong>Gemini 2.0 Flash:</strong> 97% cheaper, good for testing</li>
-                  <li>• <strong>GPT-4o:</strong> Fast, balanced quality/cost</li>
+                  <li>
+                    • <strong>Claude Opus 4:</strong> Best quality, most accurate (recommended)
+                  </li>
+                  <li>
+                    • <strong>Gemini 2.0 Flash:</strong> 97% cheaper, good for testing
+                  </li>
+                  <li>
+                    • <strong>GPT-4o:</strong> Fast, balanced quality/cost
+                  </li>
                 </ul>
               </div>
             </>
@@ -282,11 +289,7 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
         <div className="p-6 border-t border-slate-700 shrink-0 flex justify-between gap-3">
           <div>
             {step === 2 && (
-              <button
-                onClick={() => setStep(1)}
-                disabled={loading}
-                className="btn-secondary"
-              >
+              <button onClick={() => setStep(1)} disabled={loading} className="btn-secondary">
                 ← Back
               </button>
             )}
@@ -304,11 +307,7 @@ export default function ProjectWizard({ onClose, onComplete }: ProjectWizardProp
                 Next: Choose Models →
               </button>
             ) : (
-              <button
-                onClick={handleCreate}
-                disabled={loading}
-                className="btn-primary"
-              >
+              <button onClick={handleCreate} disabled={loading} className="btn-primary">
                 {loading ? 'Creating...' : 'Create Project'}
               </button>
             )}
