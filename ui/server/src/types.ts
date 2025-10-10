@@ -2,6 +2,15 @@
  * Shared types between frontend and backend
  */
 
+export type VisionProvider = 'anthropic' | 'google' | 'openai';
+
+export interface ModelSettings {
+  vision: {
+    provider: VisionProvider;
+    model: string;
+  };
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -17,6 +26,7 @@ export interface Project {
   projectType?: string;
   analysisConfidence?: number;
   status?: 'created' | 'analyzing' | 'analyzed' | 'ready';
+  modelSettings?: ModelSettings;
 }
 
 export interface Run {

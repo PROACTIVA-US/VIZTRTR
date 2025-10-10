@@ -3,13 +3,14 @@
 ## Test Configuration
 
 **Test File:** `examples/test-phases-1-2-3-e2e.ts`
-**Frontend URL:** http://localhost:5173
+**Frontend URL:** <http://localhost:5173>
 **Target Score:** 8.0/10
 **Max Standard Iterations:** 2
 **Refinement Target:** 8.5/10
 **Max Refinement Iterations:** 1
 
 **Phases Enabled:**
+
 - ✅ Phase 1: UI Consistency Validation
 - ✅ Phase 2: Human Approval Workflow
 - ✅ Phase 3: Excellence Refinement
@@ -60,6 +61,7 @@
 **Status:** ✅ **WORKING CORRECTLY**
 
 **Evidence Collected:**
+
 1. ✅ Human approval workflow triggered at correct point (after vision analysis)
 2. ✅ Risk assessment shown (MEDIUM risk level)
 3. ✅ Cost estimation calculated ($0.24)
@@ -68,6 +70,7 @@
 6. ✅ Rejection handling worked (test ended gracefully)
 
 **Notes:**
+
 - Auto-approval mechanism (`yes ""`) didn't work as intended (sent empty strings → interpreted as rejection)
 - This is actually good - proves the approval workflow is robust
 
@@ -76,6 +79,7 @@
 **Status:** ⚠️ **INTEGRATED BUT TIMING ISSUE**
 
 **Evidence:**
+
 1. ✅ UIConsistencyAgent instantiated in OrchestratorAgent.ts:156-158
 2. ✅ Validation logic present at OrchestratorAgent.ts:202-217
 3. ❌ **Critical Issue:** Validation runs AFTER human approval, not before
@@ -83,12 +87,14 @@
 **Design System Violations Found in Recommendations:**
 
 From recommendation #3:
+
 ```typescript
 className='... hover:bg-gray-50 rounded-lg p-4 transition-colors cursor-pointer'
 //                ↑ LIGHT MODE CLASS - should be blocked!
 ```
 
 From recommendation #4:
+
 ```typescript
 className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm tran...
 //          ↑ LIGHT MODE    ↑ LIGHT MODE - both should be blocked!
@@ -97,6 +103,7 @@ className='bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-sm tran
 **Root Cause Analysis:**
 
 Current workflow:
+
 1. Vision analysis → text recommendations
 2. **Phase 2: Human approval** (shows recommendations with forbidden classes)
 3. Phase 1: Discovery → creates code change plan
@@ -104,16 +111,19 @@ Current workflow:
 5. Phase 2: Execution → applies changes
 
 **The Problem:**
+
 - UIConsistencyAgent validates at step 4, but user sees recommendations at step 2
 - User is shown recommendations with design violations that will be blocked later
 - This creates a confusing UX where approved changes get rejected
 
 **Architectural Issue:**
+
 - Vision analysis returns text descriptions, not code changes
 - Can't validate className changes until DiscoveryAgent creates change plan
 - But human approval happens before DiscoveryAgent runs
 
 **Possible Solutions:**
+
 1. Move human approval AFTER Phase 1 (Discovery + Validation)
    - Pro: User only sees validated changes
    - Con: Delays human input, wastes API calls if rejected
@@ -129,6 +139,7 @@ Current workflow:
 **Status:** ❌ **NOT TESTED** (test ended before reaching refinement phase)
 
 **Expected Behavior:**
+
 - Activates when score reaches 8.0/10 (target score)
 - Runs ExpertReviewAgent for detailed analysis
 - Attempts up to 1 refinement iteration
@@ -136,6 +147,7 @@ Current workflow:
 - Requires human approval for refinements
 
 **Why Not Tested:**
+
 - Test ended at iteration 0 due to human approval rejection
 - Never reached 8.0/10 target score (starting score was 7.2/10)
 - Need successful iteration completion to test refinement
@@ -147,6 +159,7 @@ Current workflow:
 **Recommendations Generated:** 4
 
 **Quality of Recommendations:**
+
 - ✅ Valid accessibility improvements (contrast, focus indicators)
 - ✅ Proper ROI calculations
 - ❌ 50% contained design system violations (light mode classes)
@@ -155,6 +168,7 @@ Current workflow:
 ## Test Duration
 
 **Total Time:** 18 seconds
+
 - Screenshot capture: ~2s
 - Vision analysis (Claude Opus 4): ~15s
 - Approval prompt display: ~1s
@@ -181,6 +195,7 @@ Current workflow:
 ### Test Re-Run Plan
 
 1. Fix auto-approval script:
+
    ```bash
    yes "y" | timeout 600 node dist/examples/test-phases-1-2-3-e2e.js
    ```
