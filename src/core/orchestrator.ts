@@ -275,14 +275,25 @@ export class VIZTRTROrchestrator {
     console.log(`   Recommendations: ${designSpec.recommendations.length}`);
 
     // Step 2.5: Filter recommendations (Layer 2)
-    const filtered = this.filterAgent.filterRecommendations(
-      designSpec.recommendations,
-      this.memory
-    );
-    this.filterAgent.logResults(filtered);
+    // On iteration 0, skip filtering to allow fresh attempts (memory may be stale)
+    const filtered =
+      iterationNum === 0
+        ? { approved: designSpec.recommendations, rejected: [] }
+        : this.filterAgent.filterRecommendations(designSpec.recommendations, this.memory);
+
+    if (iterationNum > 0) {
+      this.filterAgent.logResults(filtered);
+    } else {
+      console.log('   ⚠️  Skipping filtering on iteration 0 (fresh start)');
+    }
 
     if (filtered.approved.length === 0) {
-      throw new Error('All recommendations were filtered out. Cannot proceed with iteration.');
+      console.warn('⚠️  All recommendations were filtered out.');
+      console.warn('   This usually means memory from a previous run is blocking all changes.');
+      console.warn('   Consider deleting iteration_memory.json to reset learning.');
+      throw new Error(
+        'All recommendations were filtered out. Delete iteration_memory.json in output directory to reset.'
+      );
     }
 
     // Update design spec with approved recommendations only
