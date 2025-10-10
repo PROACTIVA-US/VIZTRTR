@@ -160,6 +160,15 @@ export class FrontendServerManager {
       // Detect expected port from config or script
       const expectedPort = this.detectExpectedPort(projectPath, devScript);
       if (expectedPort) {
+        // Prevent VIZTRTR's reserved ports (3000, 3001, 5173)
+        const RESERVED_PORTS = [3000, 3001, 5173];
+        if (RESERVED_PORTS.includes(expectedPort)) {
+          return {
+            success: false,
+            error: `Port ${expectedPort} is reserved for VIZTRTR UI. Please configure your project to use a different port (e.g., 5001, 5174, 4000).`,
+          };
+        }
+
         const portAvailable = await this.isPortAvailable(expectedPort);
         if (!portAvailable) {
           return {
