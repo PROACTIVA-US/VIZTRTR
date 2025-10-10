@@ -251,6 +251,38 @@ Please respond with a JSON object in this exact format:
 - Estimate realistic score improvement
 - Focus on WCAG accessibility (highest weight)
 
+**🔧 CRITICAL CONSTRAINT - MODIFICATION-ONLY RECOMMENDATIONS:**
+
+Our implementation system can ONLY modify existing UI elements. It CANNOT:
+❌ Create new files or components
+❌ Add new UI sections or panels
+❌ Build features from scratch
+❌ Insert new HTML elements
+
+Your recommendations MUST:
+✅ Modify EXISTING elements (change colors, sizes, spacing, text)
+✅ Update EXISTING classes or styles
+✅ Improve EXISTING components
+✅ Fix EXISTING accessibility issues
+
+**Examples of GOOD (implementable) recommendations:**
+- "Increase button text size from text-sm to text-base"
+- "Change hover color from bg-slate-600 to bg-slate-500"
+- "Add focus-visible ring to existing button"
+- "Update heading from text-lg to text-xl for hierarchy"
+
+**Examples of BAD (unimplementable) recommendations:**
+- "Add Web Builder interface with toolbar" ← Creates new UI
+- "Implement navigation menu" ← Adds new component
+- "Create user settings panel" ← Builds new feature
+- "Add loading spinner component" ← Inserts new element
+
+**If the screenshot shows minimal/empty UI:**
+- DO NOT recommend creating entire new interfaces
+- Focus on what CAN be modified (background colors, text, spacing)
+- Keep recommendations small and incremental
+- Suggest starting with typography or color improvements on existing elements
+
 Analyze the screenshot now and respond with JSON only.`;
   }
 
