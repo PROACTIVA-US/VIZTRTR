@@ -38,12 +38,14 @@ export class GeminiComputerUsePlugin implements VIZTRTRPlugin {
   type = 'implementation' as const;
 
   private client: GoogleGenerativeAI;
+  private apiKey: string;
   private model: string = 'gemini-2.5-computer-use-preview-10-2025';
   private browser: puppeteer.Browser | null = null;
   private page: puppeteer.Page | null = null;
 
   constructor(apiKey: string) {
     this.client = new GoogleGenerativeAI(apiKey);
+    this.apiKey = apiKey;
   }
 
   /**
@@ -106,90 +108,200 @@ export class GeminiComputerUsePlugin implements VIZTRTRPlugin {
       throw new Error('Browser page not initialized');
     }
 
-    // Take screenshot of current state
+    // Take initial screenshot
     const screenshot = await this.page.screenshot({ encoding: 'base64' });
+    const viewport = this.page.viewport();
+    const currentUrl = this.page.url();
 
-    // Ask Gemini to generate actions
-    const model = this.client.getGenerativeModel({ model: this.model });
-
-    const prompt = `You are controlling a web browser to implement this UI change:
-
-**Recommendation:**
-- Title: ${recommendation.title}
-- Description: ${recommendation.description}
-- Impact: ${recommendation.impact}/10
-- Code hint: ${recommendation.code || 'N/A'}
+    const initialPrompt = `You are viewing a web browser at ${currentUrl} (viewport: ${viewport?.width}x${viewport?.height}).
 
 **Your Task:**
-Analyze the screenshot and generate browser actions to implement this change.
+${recommendation.title}
+
+**Details:**
+${recommendation.description}
+
+**Current State:**
+The screenshot shows the current UI. The browser is already open and you can see the page.
 
 **Available Actions:**
-1. click_at(x, y) - Click at normalized coordinates (0-1000)
-2. type_text_at(x, y, text) - Click and type text
-3. navigate(url) - Navigate to URL
-4. scroll(amount) - Scroll vertically
-5. wait(duration) - Wait in milliseconds
+Use the computer_use tool functions to interact with the page:
+- click(x, y) - Click at pixel coordinates
+- type(text) - Type text (after clicking an input)
+- scroll(amount) - Scroll vertically
+- wait(duration) - Wait in milliseconds
 
 **Important:**
-- Coordinates are on a 1000x1000 grid (normalize from actual dimensions)
-- Only generate actions that can be executed directly in the browser
-- Do NOT generate code - generate ACTIONS
-- Be precise with click coordinates
-- Use DevTools if needed (right-click → Inspect Element)
+1. The browser is ALREADY OPEN - do not call open_web_browser
+2. Use pixel coordinates from the screenshot (0,0 is top-left, ${viewport?.width},${viewport?.height} is bottom-right)
+3. To edit text: first click the element, then type
+4. Take multiple actions if needed to complete the task
 
-Respond with JSON:
-{
-  "reasoning": "Why these actions implement the recommendation",
-  "actions": [
-    {"type": "click_at", "x": 500, "y": 300},
-    {"type": "type_text_at", "x": 500, "y": 300, "text": "new text"}
-  ],
-  "completed": true
-}`;
+What actions will you take to implement this change? Start with your first action.`;
 
-    const result = await model.generateContent([
+    // Multi-turn conversation with the model
+    const contents: any[] = [
       {
-        inlineData: {
-          mimeType: 'image/png',
-          data: screenshot,
-        },
+        role: 'user',
+        parts: [
+          { text: initialPrompt },
+          {
+            inlineData: {
+              mimeType: 'image/png',
+              data: screenshot,
+            },
+          },
+        ],
       },
-      { text: prompt },
-    ]);
+    ];
 
-    const responseText = result.response.text();
-    console.log(`   💭 Gemini reasoning:`, responseText.substring(0, 200));
+    let allActions: Array<{ name: string; args: any }> = [];
+    let turnCount = 0;
+    const maxTurns = 5; // Prevent infinite loops
 
-    // Parse response
-    const response = this.parseComputerUseResponse(responseText);
+    while (turnCount < maxTurns) {
+      turnCount++;
+      console.log(`   🔄 Turn ${turnCount}/${maxTurns}...`);
 
-    if (!response || response.actions.length === 0) {
-      console.warn(`   ⚠️  No actions generated`);
+      // Call API
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents,
+            tools: [
+              {
+                computer_use: {
+                  environment: 'ENVIRONMENT_BROWSER',
+                },
+              },
+            ],
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`   ❌ API Error:`, errorText);
+        break;
+      }
+
+      const data = await response.json();
+      const candidate = data.candidates?.[0];
+
+      if (!candidate) {
+        console.warn(`   ⚠️  No candidate in response`);
+        break;
+      }
+
+      // Add model response to conversation
+      contents.push({
+        role: 'model',
+        parts: candidate.content.parts,
+      });
+
+      // Parse function calls
+      const functionCalls = this.parseFunctionCalls(data);
+
+      if (!functionCalls || functionCalls.length === 0) {
+        console.log(`   ✅ Model finished (no more actions)`);
+        break;
+      }
+
+      // Execute function calls
+      console.log(`   ⚡ Executing ${functionCalls.length} actions...`);
+      const functionResponses: any[] = [];
+
+      for (const call of functionCalls) {
+        try {
+          await this.executeFunctionCall(call);
+          allActions.push(call);
+
+          // Take screenshot after action for next turn
+          const newScreenshot = await this.page.screenshot({ encoding: 'base64' });
+          const newUrl = this.page.url();
+
+          functionResponses.push({
+            functionResponse: {
+              name: call.name,
+              response: {
+                success: true,
+                screenshot: newScreenshot,
+                url: newUrl,
+              },
+            },
+          });
+        } catch (error) {
+          console.error(`   ❌ Action failed:`, error);
+          functionResponses.push({
+            functionResponse: {
+              name: call.name,
+              response: {
+                success: false,
+                error: String(error),
+              },
+            },
+          });
+        }
+      }
+
+      // Add function responses to conversation
+      contents.push({
+        role: 'user',
+        parts: functionResponses,
+      });
+
+      // Check if model said it's done
+      const finishReason = candidate.finishReason;
+      if (finishReason === 'STOP' && functionCalls.length === 0) {
+        break;
+      }
+    }
+
+    if (allActions.length === 0) {
+      console.warn(`   ⚠️  No actions executed`);
       return null;
     }
-
-    // Execute actions
-    console.log(`   ⚡ Executing ${response.actions.length} browser actions...`);
-    for (const action of response.actions) {
-      await this.executeAction(action);
-    }
-
-    // Take "after" screenshot
-    const afterScreenshot = await this.page.screenshot({ encoding: 'base64' });
 
     return {
       path: 'browser-interaction',
       type: 'edit',
       oldContent: 'N/A - Direct browser control',
       newContent: 'N/A - Direct browser control',
-      diff: `Applied ${response.actions.length} browser actions:\n${response.actions.map(a => `- ${a.type} at (${a.x}, ${a.y})`).join('\n')}`,
+      diff: `Applied ${allActions.length} computer use actions over ${turnCount} turns:\n${allActions.map(c => `- ${c.name}(${JSON.stringify(c.args)})`).join('\n')}`,
     };
   }
 
   /**
-   * Execute a single browser action
+   * Parse function calls from Gemini Computer Use response
    */
-  private async executeAction(action: ComputerUseAction): Promise<void> {
+  private parseFunctionCalls(data: any): Array<{ name: string; args: any }> {
+    try {
+      const candidate = data.candidates?.[0];
+      const parts = candidate?.content?.parts || [];
+
+      const functionCalls = parts
+        .filter((part: any) => part.functionCall)
+        .map((part: any) => ({
+          name: part.functionCall.name,
+          args: part.functionCall.args || {},
+        }));
+
+      return functionCalls;
+    } catch (error) {
+      console.error('   ❌ Failed to parse function calls:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Execute a Computer Use function call
+   */
+  private async executeFunctionCall(call: { name: string; args: any }): Promise<void> {
     if (!this.page) {
       throw new Error('Browser page not initialized');
     }
@@ -199,72 +311,47 @@ Respond with JSON:
       throw new Error('Viewport not available');
     }
 
-    console.log(`      → ${action.type}`, action.x ? `at (${action.x}, ${action.y})` : '');
+    console.log(`      → ${call.name}`, JSON.stringify(call.args));
 
-    switch (action.type) {
-      case 'click_at':
-        if (action.x !== undefined && action.y !== undefined) {
-          // Convert normalized coordinates (0-1000) to actual pixels
-          const actualX = (action.x / 1000) * viewport.width;
-          const actualY = (action.y / 1000) * viewport.height;
-          await this.page.mouse.click(actualX, actualY);
+    // Map Computer Use function names to Puppeteer actions
+    switch (call.name) {
+      case 'click':
+      case 'tap':
+        if (call.args.x !== undefined && call.args.y !== undefined) {
+          await this.page.mouse.click(call.args.x, call.args.y);
         }
         break;
 
-      case 'type_text_at':
-        if (action.x !== undefined && action.y !== undefined && action.text) {
-          const actualX = (action.x / 1000) * viewport.width;
-          const actualY = (action.y / 1000) * viewport.height;
-          await this.page.mouse.click(actualX, actualY);
-          await this.page.keyboard.type(action.text);
-        }
-        break;
-
-      case 'navigate':
-        if (action.url) {
-          await this.page.goto(action.url, { waitUntil: 'networkidle2' });
+      case 'type':
+      case 'input_text':
+        if (call.args.text) {
+          await this.page.keyboard.type(call.args.text);
         }
         break;
 
       case 'scroll':
-        if (action.amount !== undefined) {
-          await this.page.evaluate(amount => window.scrollBy(0, amount), action.amount);
+        const scrollAmount = call.args.amount || call.args.y || 100;
+        await this.page.evaluate(amount => window.scrollBy(0, amount), scrollAmount);
+        break;
+
+      case 'open_web_browser':
+      case 'navigate':
+        if (call.args.url) {
+          await this.page.goto(call.args.url, { waitUntil: 'networkidle2' });
         }
         break;
 
       case 'wait':
-        if (action.duration) {
-          await new Promise(resolve => setTimeout(resolve, action.duration));
-        }
+        const duration = call.args.duration || call.args.ms || 1000;
+        await new Promise(resolve => setTimeout(resolve, duration));
         break;
 
       default:
-        console.warn(`   ⚠️  Unknown action type: ${action.type}`);
+        console.warn(`   ⚠️  Unknown function: ${call.name}`);
     }
 
     // Small delay between actions for stability
     await new Promise(resolve => setTimeout(resolve, 500));
-  }
-
-  /**
-   * Parse Gemini's response into actions
-   */
-  private parseComputerUseResponse(text: string): ComputerUseResponse | null {
-    try {
-      // Extract JSON from response
-      const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*\}/);
-
-      if (!jsonMatch) {
-        console.error('   ❌ No JSON found in response');
-        return null;
-      }
-
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
-      return JSON.parse(jsonStr);
-    } catch (error) {
-      console.error('   ❌ Failed to parse response:', error);
-      return null;
-    }
   }
 
   /**
