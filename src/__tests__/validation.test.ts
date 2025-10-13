@@ -185,9 +185,14 @@ export default MyComponent;
       const original = Array(100).fill('const x = 1;').join('\n');
       const modified = Array(140).fill('const x = 2;').join('\n'); // 40 lines changed
 
-      const result = validateFileChanges(original, modified, {
-        maxLineDelta: 100,
-      }, 3); // effort 3 allows up to 50 lines
+      const result = validateFileChanges(
+        original,
+        modified,
+        {
+          maxLineDelta: 100,
+        },
+        3
+      ); // effort 3 allows up to 50 lines
 
       // Note: May fail due to growth percent, but effort constraint passes
       const effortLimit = getEffortBasedLimit(3);

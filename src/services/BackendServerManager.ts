@@ -68,15 +68,11 @@ export class BackendServerManager {
     const resolvedPath = path.resolve(this.config.workingDirectory);
 
     if (!fs.existsSync(resolvedPath)) {
-      throw new Error(
-        `Backend working directory does not exist: ${this.config.workingDirectory}`
-      );
+      throw new Error(`Backend working directory does not exist: ${this.config.workingDirectory}`);
     }
 
     // Security: Validate path is within allowed prefixes
-    const isAllowedPath = ALLOWED_PATH_PREFIXES.some(prefix =>
-      resolvedPath.startsWith(prefix)
-    );
+    const isAllowedPath = ALLOWED_PATH_PREFIXES.some(prefix => resolvedPath.startsWith(prefix));
     if (!isAllowedPath) {
       throw new Error(
         `Suspicious working directory: ${resolvedPath}. Must start with one of: ${ALLOWED_PATH_PREFIXES.join(', ')}`
@@ -85,9 +81,7 @@ export class BackendServerManager {
 
     // Security: Check for shell metacharacters in entire command
     if (SHELL_METACHARACTERS.test(this.config.devCommand)) {
-      throw new Error(
-        `Command contains dangerous shell metacharacters: ${this.config.devCommand}`
-      );
+      throw new Error(`Command contains dangerous shell metacharacters: ${this.config.devCommand}`);
     }
 
     // Parse and validate command
@@ -95,9 +89,7 @@ export class BackendServerManager {
 
     // Security: Validate command is in whitelist
     if (!ALLOWED_COMMANDS.includes(cmd)) {
-      throw new Error(
-        `Unsafe command: ${cmd}. Only ${ALLOWED_COMMANDS.join(', ')} are allowed.`
-      );
+      throw new Error(`Unsafe command: ${cmd}. Only ${ALLOWED_COMMANDS.join(', ')} are allowed.`);
     }
 
     // Security: Filter environment variables
@@ -115,22 +107,22 @@ export class BackendServerManager {
 
     // Log output
     if (this.verbose) {
-      this.process.stdout?.on('data', (data) => {
+      this.process.stdout?.on('data', data => {
         console.log(`[Backend] ${data.toString().trim()}`);
       });
 
-      this.process.stderr?.on('data', (data) => {
+      this.process.stderr?.on('data', data => {
         console.error(`[Backend Error] ${data.toString().trim()}`);
       });
     }
 
     // Use 'once' to prevent memory leaks
-    this.process.once('error', (error) => {
+    this.process.once('error', error => {
       console.error(`[Backend Process Error] ${error.message}`);
       this.isRunning = false;
     });
 
-    this.process.once('exit', (code) => {
+    this.process.once('exit', code => {
       this.log(`Backend server exited with code ${code}`);
       this.isRunning = false;
       this.process = null;
@@ -197,7 +189,7 @@ export class BackendServerManager {
 
       // Exponential backoff: 500ms, 1s, 2s, 4s, 8s (max)
       const delay = Math.min(500 * Math.pow(2, attempt), 8000);
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay));
       attempt++;
     }
 
@@ -218,7 +210,7 @@ export class BackendServerManager {
 
     this.log('Stopping backend server...');
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (!this.process) {
         resolve();
         return;

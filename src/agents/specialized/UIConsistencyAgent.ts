@@ -85,7 +85,16 @@ export class UIConsistencyAgent {
     this.designSystem = {
       theme: 'dark' as const,
       forbidden: {
-        lightMode: ['bg-white', 'bg-gray-50', 'bg-gray-100', 'text-gray-900', 'text-gray-800', 'text-black', 'border-gray-200', 'border-gray-300'],
+        lightMode: [
+          'bg-white',
+          'bg-gray-50',
+          'bg-gray-100',
+          'text-gray-900',
+          'text-gray-800',
+          'text-black',
+          'border-gray-200',
+          'border-gray-300',
+        ],
         inconsistentColors: ['bg-gray-', 'text-gray-', 'border-gray-'],
         arbitrarySizes: ['text-[', 'w-[', 'h-['],
       },
@@ -334,18 +343,32 @@ export class UIConsistencyAgent {
     if (sizeClasses.length === 0) return null;
 
     // Define valid hierarchy (largest to smallest)
-    const hierarchy = ['text-4xl', 'text-3xl', 'text-2xl', 'text-xl', 'text-lg', 'text-base', 'text-sm', 'text-xs'];
+    const hierarchy = [
+      'text-4xl',
+      'text-3xl',
+      'text-2xl',
+      'text-xl',
+      'text-lg',
+      'text-base',
+      'text-sm',
+      'text-xs',
+    ];
 
     // Check if using a size not in hierarchy
     for (const sizeClass of sizeClasses) {
       const baseSize = sizeClass.split(' ')[0]; // Handle modifiers like 'text-4xl font-bold'
-      if (!hierarchy.includes(baseSize) && baseSize.startsWith('text-') && !baseSize.includes('-')) {
+      if (
+        !hierarchy.includes(baseSize) &&
+        baseSize.startsWith('text-') &&
+        !baseSize.includes('-')
+      ) {
         return {
           type: 'typography',
           severity: 'warning',
           className: sizeClass,
           reason: `Non-standard text size "${sizeClass}" - prefer design system typography scale`,
-          suggestion: 'Use text-4xl, text-3xl, text-2xl, text-xl, text-lg, text-base, text-sm, or text-xs',
+          suggestion:
+            'Use text-4xl, text-3xl, text-2xl, text-xl, text-lg, text-base, text-sm, or text-xs',
           file: change.file,
           line: change.lineNumber,
         };

@@ -62,10 +62,7 @@ export class HumanLoopAgent {
       case 'first-iteration':
         return context.iteration === 0;
       case 'high-risk':
-        return (
-          context.risk === 'high' ||
-          context.estimatedCost > this.config.costThreshold
-        );
+        return context.risk === 'high' || context.estimatedCost > this.config.costThreshold;
       case 'never':
         return false;
       default:
@@ -98,7 +95,9 @@ export class HumanLoopAgent {
     for (let i = 0; i < recommendations.length; i++) {
       const rec = recommendations[i];
       console.log(`   ${i + 1}. [${rec.dimension}] ${rec.title}`);
-      console.log(`      Impact: ${rec.impact}/10 | Effort: ${rec.effort}/10 | ROI: ${(rec.impact / rec.effort).toFixed(1)}:1`);
+      console.log(
+        `      Impact: ${rec.impact}/10 | Effort: ${rec.effort}/10 | ROI: ${(rec.impact / rec.effort).toFixed(1)}:1`
+      );
       console.log(`      ${rec.description}`);
       if (rec.code) {
         const preview = rec.code.substring(0, 80);
@@ -120,31 +119,28 @@ export class HumanLoopAgent {
     });
 
     return new Promise(resolve => {
-      rl.question(
-        '\n👉 Approve these recommendations? (y/n/s=skip iteration): ',
-        answer => {
-          rl.close();
+      rl.question('\n👉 Approve these recommendations? (y/n/s=skip iteration): ', answer => {
+        rl.close();
 
-          const choice = answer.toLowerCase().trim();
+        const choice = answer.toLowerCase().trim();
 
-          if (choice === 'y' || choice === 'yes') {
-            console.log('✅ Approved - proceeding with implementation\n');
-            resolve({ approved: true });
-          } else if (choice === 's' || choice === 'skip') {
-            console.log('⏭️  Skipped - moving to next iteration\n');
-            resolve({
-              approved: false,
-              reason: 'User skipped iteration',
-            });
-          } else {
-            console.log('❌ Rejected - ending iteration cycle\n');
-            resolve({
-              approved: false,
-              reason: 'User rejected recommendations',
-            });
-          }
+        if (choice === 'y' || choice === 'yes') {
+          console.log('✅ Approved - proceeding with implementation\n');
+          resolve({ approved: true });
+        } else if (choice === 's' || choice === 'skip') {
+          console.log('⏭️  Skipped - moving to next iteration\n');
+          resolve({
+            approved: false,
+            reason: 'User skipped iteration',
+          });
+        } else {
+          console.log('❌ Rejected - ending iteration cycle\n');
+          resolve({
+            approved: false,
+            reason: 'User rejected recommendations',
+          });
         }
-      );
+      });
     });
   }
 
@@ -179,7 +175,8 @@ export class HumanLoopAgent {
     // Very rough estimate based on number of recommendations
     // Real implementation would need actual token counting
     const baselineCost = 5; // cents per recommendation
-    const complexityMultiplier = recommendations.reduce((sum, r) => sum + r.effort, 0) / recommendations.length / 10;
+    const complexityMultiplier =
+      recommendations.reduce((sum, r) => sum + r.effort, 0) / recommendations.length / 10;
 
     return Math.ceil(recommendations.length * baselineCost * (1 + complexityMultiplier));
   }

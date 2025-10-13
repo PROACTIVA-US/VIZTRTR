@@ -115,6 +115,14 @@ function ProjectsPage() {
     }
   };
 
+  const handleAddPRD = (project: Project) => {
+    setOnboardingProject({
+      id: Number(project.id),
+      name: project.name,
+      path: project.projectPath,
+    });
+  };
+
   const handleDeleteProject = async () => {
     if (!deleteConfirm) return;
 
@@ -171,8 +179,15 @@ function ProjectsPage() {
           {projects.map(project => (
             <div key={project.id} className="card hover:border-blue-500 transition-colors">
               <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold mb-1">{project.name}</h3>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-xl font-semibold">{project.name}</h3>
+                    {!project.synthesizedPRD && !project.hasProductSpec && (
+                      <span className="bg-yellow-600/20 text-yellow-400 border border-yellow-600/50 px-2 py-0.5 rounded text-xs font-medium">
+                        ⚠️ PRD Required
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-slate-400">{project.projectPath}</p>
                 </div>
                 <button
@@ -212,9 +227,19 @@ function ProjectsPage() {
                 >
                   View Details
                 </button>
-                <button onClick={() => handleStartRun(project.id)} className="btn-primary flex-1">
-                  Start Run
-                </button>
+                {!project.synthesizedPRD && !project.hasProductSpec ? (
+                  <button
+                    onClick={() => handleAddPRD(project)}
+                    className="bg-yellow-600/20 text-yellow-400 border border-yellow-600/50 px-4 py-2 rounded hover:bg-yellow-600/30 transition-all flex-1 flex items-center justify-center gap-2"
+                  >
+                    <span>⚠️</span>
+                    <span>Add PRD First</span>
+                  </button>
+                ) : (
+                  <button onClick={() => handleStartRun(project.id)} className="btn-primary flex-1">
+                    Start Run
+                  </button>
+                )}
               </div>
             </div>
           ))}

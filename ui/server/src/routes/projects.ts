@@ -982,7 +982,7 @@ Your role:
  * Execute a VIZTRTR run in the background
  */
 async function executeRun(runId: string, project: any, db: VIZTRTRDatabase) {
-  const { VIZTRTROrchestrator } = await import('../../../../dist/core/orchestrator');
+  const { VIZTRTROrchestrator } = await import('../../../../dist/src/core/orchestrator');
 
   // Update status to running
   db.updateRun(runId, { status: 'running' });

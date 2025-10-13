@@ -64,7 +64,7 @@ export class IterationMemoryManager {
 
     // Track component modification frequency
     if (filesModified) {
-      filesModified.forEach((file) => {
+      filesModified.forEach(file => {
         if (!this.memory.contextAwareness.componentsModified.includes(file)) {
           this.memory.contextAwareness.componentsModified.push(file);
         }
@@ -113,7 +113,7 @@ export class IterationMemoryManager {
    */
   wasAttempted(recommendation: Recommendation): AttemptedRecommendation | undefined {
     return this.memory.attemptedRecommendations.find(
-      (attempt) =>
+      attempt =>
         attempt.title.toLowerCase() === recommendation.title.toLowerCase() ||
         attempt.description.toLowerCase().includes(recommendation.title.toLowerCase())
     );
@@ -124,7 +124,7 @@ export class IterationMemoryManager {
    */
   getFailedRecommendations(): AttemptedRecommendation[] {
     return this.memory.attemptedRecommendations.filter(
-      (attempt) => attempt.status === 'failed' || attempt.status === 'broke_build'
+      attempt => attempt.status === 'failed' || attempt.status === 'broke_build'
     );
   }
 
@@ -166,9 +166,9 @@ export class IterationMemoryManager {
   shouldAvoidComponent(componentPath: string, threshold: number = 5): boolean {
     const modificationCount = this.memory.contextAwareness.modificationCount[componentPath] || 0;
     const failedAttempts = this.memory.attemptedRecommendations.filter(
-      (rec) =>
+      rec =>
         (rec.status === 'failed' || rec.status === 'broke_build') &&
-        rec.filesModified?.some((file) => file.includes(componentPath))
+        rec.filesModified?.some(file => file.includes(componentPath))
     ).length;
 
     // If component has been modified many times with mostly failures, avoid it
@@ -180,7 +180,9 @@ export class IterationMemoryManager {
    */
   getAvoidedComponents(): string[] {
     const avoided: string[] = [];
-    for (const [component, count] of Object.entries(this.memory.contextAwareness.modificationCount)) {
+    for (const [component, count] of Object.entries(
+      this.memory.contextAwareness.modificationCount
+    )) {
       if (this.shouldAvoidComponent(component)) {
         avoided.push(component);
       }
@@ -208,7 +210,7 @@ export class IterationMemoryManager {
 
     // Attempted recommendations
     summary += `ATTEMPTED RECOMMENDATIONS (${this.memory.attemptedRecommendations.length} total):\n`;
-    this.memory.attemptedRecommendations.slice(-5).forEach((attempt) => {
+    this.memory.attemptedRecommendations.slice(-5).forEach(attempt => {
       summary += `- [Iter ${attempt.iteration}] ${attempt.title}: ${attempt.status}`;
       if (attempt.reason) summary += ` (${attempt.reason})`;
       summary += `\n`;
@@ -218,7 +220,7 @@ export class IterationMemoryManager {
     // Failed attempts
     if (failed.length > 0) {
       summary += `FAILED ATTEMPTS - DO NOT RETRY THESE:\n`;
-      failed.forEach((fail) => {
+      failed.forEach(fail => {
         summary += `- ${fail.title} (${fail.reason || 'Unknown reason'})\n`;
       });
       summary += `\n`;
@@ -227,7 +229,7 @@ export class IterationMemoryManager {
     // Frequently modified files
     if (frequentMods.length > 0) {
       summary += `FREQUENTLY MODIFIED COMPONENTS:\n`;
-      frequentMods.forEach((mod) => {
+      frequentMods.forEach(mod => {
         summary += `- ${mod.file}: ${mod.count} times\n`;
       });
       summary += `\n`;
@@ -243,7 +245,7 @@ export class IterationMemoryManager {
     const avoidedComponents = this.getAvoidedComponents();
     if (avoidedComponents.length > 0) {
       summary += `\n🚫 COMPONENTS TO AVOID (Repeated Failures):\n`;
-      avoidedComponents.forEach((comp) => {
+      avoidedComponents.forEach(comp => {
         const count = this.memory.contextAwareness.modificationCount[comp];
         summary += `- ${comp}: Modified ${count} times with consistent failures\n`;
       });

@@ -104,7 +104,15 @@ export class OrchestratorAgent {
       }
     });
 
-    // Step 2: Execute specialists in parallel
+    // Step 2.5: Filter out unimplementable recommendations (V2 constraint validation)
+    const filteredPlan = this.filterUnimplementableRecommendations(routingPlan);
+
+    if (filteredPlan.filtered > 0) {
+      console.log(`\n   🚫 Filtered ${filteredPlan.filtered} unimplementable recommendations:`);
+      filteredPlan.reasons.forEach(reason => console.log(`      - ${reason}`));
+    }
+
+    // Step 3: Execute specialists in parallel
     const allChanges: FileChange[] = [];
 
     const tasks: Promise<FileChange[]>[] = [];
@@ -119,6 +127,16 @@ export class OrchestratorAgent {
     }
 
     // Execute all specialist agents in parallel
+    if (tasks.length === 0) {
+      console.warn(`   ⚠️  No implementable recommendations after filtering`);
+      return {
+        files: [],
+        summary: 'All recommendations filtered (require file creation or major refactoring)',
+        buildCommand: 'npm run build',
+        testCommand: 'npm test',
+      };
+    }
+
     console.log(`   ⚡ Executing ${tasks.length} specialist agents in parallel...`);
     const results = await Promise.all(tasks);
 
@@ -177,7 +195,11 @@ export class OrchestratorAgent {
           let newClassName = '';
 
           // Extract className values based on tool type
-          if (change.tool === 'updateClassName' && 'oldClassName' in change.params && 'newClassName' in change.params) {
+          if (
+            change.tool === 'updateClassName' &&
+            'oldClassName' in change.params &&
+            'newClassName' in change.params
+          ) {
             oldClassName = change.params.oldClassName;
             newClassName = change.params.newClassName;
           } else if (change.tool === 'appendToClassName' && 'classesToAdd' in change.params) {
@@ -191,11 +213,12 @@ export class OrchestratorAgent {
             lineNumber: change.lineNumber,
             oldClassName,
             newClassName,
-            changeType: change.tool === 'updateClassName' || change.tool === 'appendToClassName'
-              ? 'className' as const
-              : change.tool === 'updateStyleValue'
-              ? 'styleValue' as const
-              : 'textContent' as const,
+            changeType:
+              change.tool === 'updateClassName' || change.tool === 'appendToClassName'
+                ? ('className' as const)
+                : change.tool === 'updateStyleValue'
+                  ? ('styleValue' as const)
+                  : ('textContent' as const),
           };
         });
 
@@ -378,6 +401,55 @@ Return a routing plan as JSON:
 - Both agents will dynamically find and modify the right files
 
 Think carefully about which changes are feasible, then provide your routing plan.`;
+  }
+
+  /**
+   * Filter out recommendations that cannot be implemented with V2 constrained tools
+   * V2 tools can only modify existing lines - they cannot create new files or add new components
+   */
+  private filterUnimplementableRecommendations(plan: RoutingPlan): {
+    filtered: number;
+    reasons: string[];
+  } {
+    const reasons: string[] = [];
+    let filteredCount = 0;
+
+    // Keywords that indicate creation/addition tasks (not modification)
+    const creationKeywords = [
+      'add new',
+      'create',
+      'implement',
+      'introduce',
+      'build',
+      'add a',
+      'add an',
+      'insert',
+      'include',
+    ];
+
+    for (const decision of plan.decisions) {
+      const filtered: Recommendation[] = [];
+
+      for (const rec of decision.recommendations) {
+        const titleLower = rec.title.toLowerCase();
+        const descLower = rec.description.toLowerCase();
+        const isCreation = creationKeywords.some(
+          keyword => titleLower.includes(keyword) || descLower.includes(keyword)
+        );
+
+        if (isCreation) {
+          filteredCount++;
+          reasons.push(`"${rec.title}" - requires creation/addition (V2 can only modify existing)`);
+          continue;
+        }
+
+        filtered.push(rec);
+      }
+
+      decision.recommendations = filtered;
+    }
+
+    return { filtered: filteredCount, reasons };
   }
 
   /**

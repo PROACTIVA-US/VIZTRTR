@@ -377,9 +377,7 @@ RULES:
 
       const comparison: VisualComparison = JSON.parse(jsonMatch[0]);
 
-      console.log(
-        `✅ Verification complete: ${comparison.beforeScore} → ${comparison.afterScore}`
-      );
+      console.log(`✅ Verification complete: ${comparison.beforeScore} → ${comparison.afterScore}`);
       return comparison;
     } catch (error) {
       console.error('❌ Failed to parse verification response:', error);
